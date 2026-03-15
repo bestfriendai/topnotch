@@ -1,0 +1,144 @@
+{
+  "source": "/Users/iamabillionaire/Downloads/topnotch/MyDynamicIsland/VideoPlayerContentView.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "Buffering...",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 117
+        }
+      },
+      {
+        "comment": "",
+        "key": "Video Unavailable",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 134
+        }
+      },
+      {
+        "comment": "",
+        "key": "Close",
+        "location": {
+          "startingColumn": 24,
+          "startingLine": 156
+        }
+      },
+      {
+        "comment": "",
+        "key": "Try Another",
+        "location": {
+          "startingColumn": 28,
+          "startingLine": 142
+        }
+      },
+      {
+        "comment": "",
+        "key": "Open in Safari",
+        "location": {
+          "startingColumn": 32,
+          "startingLine": 148
+        }
+      },
+      {
+        "comment": "",
+        "key": "Close",
+        "location": {
+          "startingColumn": 23,
+          "startingLine": 238
+        }
+      },
+      {
+        "comment": "",
+        "key": "/",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 281
+        }
+      },
+      {
+        "comment": "",
+        "key": "Pause",
+        "location": {
+          "startingColumn": 39,
+          "startingLine": 363
+        }
+      },
+      {
+        "comment": "",
+        "key": "Play",
+        "location": {
+          "startingColumn": 49,
+          "startingLine": 363
+        }
+      },
+      {
+        "comment": "",
+        "key": "Playback speed",
+        "location": {
+          "startingColumn": 15,
+          "startingLine": 440
+        }
+      },
+      {
+        "comment": "",
+        "key": "Picture in Picture",
+        "location": {
+          "startingColumn": 15,
+          "startingLine": 455
+        }
+      },
+      {
+        "comment": "",
+        "key": "Unmute",
+        "location": {
+          "startingColumn": 41,
+          "startingLine": 379
+        }
+      },
+      {
+        "comment": "",
+        "key": "Mute",
+        "location": {
+          "startingColumn": 52,
+          "startingLine": 379
+        }
+      },
+      {
+        "comment": "",
+        "key": "Normal",
+        "location": {
+          "startingColumn": 44,
+          "startingLine": 423
+        }
+      },
+      {
+        "comment": "",
+        "key": "%.2gx",
+        "location": {
+          "startingColumn": 55,
+          "startingLine": 423
+        }
+      },
+      {
+        "comment": "",
+        "key": "1x",
+        "location": {
+          "startingColumn": 52,
+          "startingLine": 431
+        }
+      },
+      {
+        "comment": "",
+        "key": "%.2gx",
+        "location": {
+          "startingColumn": 59,
+          "startingLine": 431
+        }
+      }
+    ]
+  },
+  "version": 1
+}

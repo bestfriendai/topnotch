@@ -1,0 +1,12 @@
+{
+  "/Users/iamabillionaire/Downloads/topnotch/MyDynamicIsland/DynamicIsland.swift" : {
+    "abi-baseline-json" : "/Users/iamabillionaire/Downloads/topnotch/build/Build/Intermediates.noindex/MyDynamicIsland.build/Release/MyDynamicIsland.build/Objects-normal/arm64/Top_Notch.abi.json",
+    "const-values" : "/Users/iamabillionaire/Downloads/topnotch/build/Build/Intermediates.noindex/MyDynamicIsland.build/Release/MyDynamicIsland.build/Objects-normal/arm64/MyDynamicIsland-primary.swiftconstvalues",
+    "dependencies" : "/Users/iamabillionaire/Downloads/topnotch/build/Build/Intermediates.noindex/MyDynamicIsland.build/Release/MyDynamicIsland.build/Objects-normal/arm64/MyDynamicIsland-primary.d",
+    "diagnostics" : "/Users/iamabillionaire/Downloads/topnotch/build/Build/Intermediates.noindex/MyDynamicIsland.build/Release/MyDynamicIsland.build/Objects-normal/arm64/MyDynamicIsland-primary.dia",
+    "objc-header" : "/Users/iamabillionaire/Downloads/topnotch/build/Build/Intermediates.noindex/MyDynamicIsland.build/Release/MyDynamicIsland.build/Objects-normal/arm64/Top_Notch-Swift.h",
+    "swiftdoc" : "/Users/iamabillionaire/Downloads/topnotch/build/Build/Intermediates.noindex/MyDynamicIsland.build/Release/MyDynamicIsland.build/Objects-normal/arm64/Top_Notch.swiftdoc",
+    "swiftmodule" : "/Users/iamabillionaire/Downloads/topnotch/build/Build/Intermediates.noindex/MyDynamicIsland.build/Release/MyDynamicIsland.build/Objects-normal/arm64/Top_Notch.swiftmodule",
+    "swiftsourceinfo" : "/Users/iamabillionaire/Downloads/topnotch/build/Build/Intermediates.noindex/MyDynamicIsland.build/Release/MyDynamicIsland.build/Objects-normal/arm64/Top_Notch.swiftsourceinfo"
+  }
+}

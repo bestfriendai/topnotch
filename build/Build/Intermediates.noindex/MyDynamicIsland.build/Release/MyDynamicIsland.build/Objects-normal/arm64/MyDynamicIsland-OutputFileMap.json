@@ -1,0 +1,86 @@
+{
+  "" : {
+    "const-values" : "/Users/iamabillionaire/Downloads/topnotch/build/Build/Intermediates.noindex/MyDynamicIsland.build/Release/MyDynamicIsland.build/Objects-normal/arm64/MyDynamicIsland-primary.swiftconstvalues",
+    "dependencies" : "/Users/iamabillionaire/Downloads/topnotch/build/Build/Intermediates.noindex/MyDynamicIsland.build/Release/MyDynamicIsland.build/Objects-normal/arm64/MyDynamicIsland-primary.d",
+    "diagnostics" : "/Users/iamabillionaire/Downloads/topnotch/build/Build/Intermediates.noindex/MyDynamicIsland.build/Release/MyDynamicIsland.build/Objects-normal/arm64/MyDynamicIsland-primary.dia",
+    "emit-module-dependencies" : "/Users/iamabillionaire/Downloads/topnotch/build/Build/Intermediates.noindex/MyDynamicIsland.build/Release/MyDynamicIsland.build/Objects-normal/arm64/MyDynamicIsland-primary-emit-module.d",
+    "emit-module-diagnostics" : "/Users/iamabillionaire/Downloads/topnotch/build/Build/Intermediates.noindex/MyDynamicIsland.build/Release/MyDynamicIsland.build/Objects-normal/arm64/MyDynamicIsland-primary-emit-module.dia",
+    "pch" : "/Users/iamabillionaire/Downloads/topnotch/build/Build/Intermediates.noindex/MyDynamicIsland.build/Release/MyDynamicIsland.build/Objects-normal/arm64/MyDynamicIsland-primary-Bridging-header.pch",
+    "swift-dependencies" : "/Users/iamabillionaire/Downloads/topnotch/build/Build/Intermediates.noindex/MyDynamicIsland.build/Release/MyDynamicIsland.build/Objects-normal/arm64/MyDynamicIsland-primary.swiftdeps"
+  },
+  "/Users/iamabillionaire/Downloads/topnotch/MyDynamicIsland/DynamicIsland.swift" : {
+    "index-unit-output-path" : "/MyDynamicIsland.build/Release/MyDynamicIsland.build/Objects-normal/arm64/DynamicIsland.o",
+    "llvm-bc" : "/Users/iamabillionaire/Downloads/topnotch/build/Build/Intermediates.noindex/MyDynamicIsland.build/Release/MyDynamicIsland.build/Objects-normal/arm64/DynamicIsland.bc",
+    "object" : "/Users/iamabillionaire/Downloads/topnotch/build/Build/Intermediates.noindex/MyDynamicIsland.build/Release/MyDynamicIsland.build/Objects-normal/arm64/DynamicIsland.o"
+  },
+  "/Users/iamabillionaire/Downloads/topnotch/MyDynamicIsland/IslandView.swift" : {
+    "index-unit-output-path" : "/MyDynamicIsland.build/Release/MyDynamicIsland.build/Objects-normal/arm64/IslandView.o",
+    "llvm-bc" : "/Users/iamabillionaire/Downloads/topnotch/build/Build/Intermediates.noindex/MyDynamicIsland.build/Release/MyDynamicIsland.build/Objects-normal/arm64/IslandView.bc",
+    "object" : "/Users/iamabillionaire/Downloads/topnotch/build/Build/Intermediates.noindex/MyDynamicIsland.build/Release/MyDynamicIsland.build/Objects-normal/arm64/IslandView.o"
+  },
+  "/Users/iamabillionaire/Downloads/topnotch/MyDynamicIsland/MediaControlView.swift" : {
+    "index-unit-output-path" : "/MyDynamicIsland.build/Release/MyDynamicIsland.build/Objects-normal/arm64/MediaControlView.o",
+    "llvm-bc" : "/Users/iamabillionaire/Downloads/topnotch/build/Build/Intermediates.noindex/MyDynamicIsland.build/Release/MyDynamicIsland.build/Objects-normal/arm64/MediaControlView.bc",
+    "object" : "/Users/iamabillionaire/Downloads/topnotch/build/Build/Intermediates.noindex/MyDynamicIsland.build/Release/MyDynamicIsland.build/Objects-normal/arm64/MediaControlView.o"
+  },
+  "/Users/iamabillionaire/Downloads/topnotch/MyDynamicIsland/MediaKeyManager.swift" : {
+    "index-unit-output-path" : "/MyDynamicIsland.build/Release/MyDynamicIsland.build/Objects-normal/arm64/MediaKeyManager.o",
+    "llvm-bc" : "/Users/iamabillionaire/Downloads/topnotch/build/Build/Intermediates.noindex/MyDynamicIsland.build/Release/MyDynamicIsland.build/Objects-normal/arm64/MediaKeyManager.bc",
+    "object" : "/Users/iamabillionaire/Downloads/topnotch/build/Build/Intermediates.noindex/MyDynamicIsland.build/Release/MyDynamicIsland.build/Objects-normal/arm64/MediaKeyManager.o"
+  },
+  "/Users/iamabillionaire/Downloads/topnotch/MyDynamicIsland/MediaRemoteController.swift" : {
+    "index-unit-output-path" : "/MyDynamicIsland.build/Release/MyDynamicIsland.build/Objects-normal/arm64/MediaRemoteController.o",
+    "llvm-bc" : "/Users/iamabillionaire/Downloads/topnotch/build/Build/Intermediates.noindex/MyDynamicIsland.build/Release/MyDynamicIsland.build/Objects-normal/arm64/MediaRemoteController.bc",
+    "object" : "/Users/iamabillionaire/Downloads/topnotch/build/Build/Intermediates.noindex/MyDynamicIsland.build/Release/MyDynamicIsland.build/Objects-normal/arm64/MediaRemoteController.o"
+  },
+  "/Users/iamabillionaire/Downloads/topnotch/MyDynamicIsland/MediaScrubber.swift" : {
+    "index-unit-output-path" : "/MyDynamicIsland.build/Release/MyDynamicIsland.build/Objects-normal/arm64/MediaScrubber.o",
+    "llvm-bc" : "/Users/iamabillionaire/Downloads/topnotch/build/Build/Intermediates.noindex/MyDynamicIsland.build/Release/MyDynamicIsland.build/Objects-normal/arm64/MediaScrubber.bc",
+    "object" : "/Users/iamabillionaire/Downloads/topnotch/build/Build/Intermediates.noindex/MyDynamicIsland.build/Release/MyDynamicIsland.build/Objects-normal/arm64/MediaScrubber.o"
+  },
+  "/Users/iamabillionaire/Downloads/topnotch/MyDynamicIsland/MyDynamicIslandApp.swift" : {
+    "index-unit-output-path" : "/MyDynamicIsland.build/Release/MyDynamicIsland.build/Objects-normal/arm64/MyDynamicIslandApp.o",
+    "llvm-bc" : "/Users/iamabillionaire/Downloads/topnotch/build/Build/Intermediates.noindex/MyDynamicIsland.build/Release/MyDynamicIsland.build/Objects-normal/arm64/MyDynamicIslandApp.bc",
+    "object" : "/Users/iamabillionaire/Downloads/topnotch/build/Build/Intermediates.noindex/MyDynamicIsland.build/Release/MyDynamicIsland.build/Objects-normal/arm64/MyDynamicIslandApp.o"
+  },
+  "/Users/iamabillionaire/Downloads/topnotch/MyDynamicIsland/NowPlayingInfo.swift" : {
+    "index-unit-output-path" : "/MyDynamicIsland.build/Release/MyDynamicIsland.build/Objects-normal/arm64/NowPlayingInfo.o",
+    "llvm-bc" : "/Users/iamabillionaire/Downloads/topnotch/build/Build/Intermediates.noindex/MyDynamicIsland.build/Release/MyDynamicIsland.build/Objects-normal/arm64/NowPlayingInfo.bc",
+    "object" : "/Users/iamabillionaire/Downloads/topnotch/build/Build/Intermediates.noindex/MyDynamicIsland.build/Release/MyDynamicIsland.build/Objects-normal/arm64/NowPlayingInfo.o"
+  },
+  "/Users/iamabillionaire/Downloads/topnotch/MyDynamicIsland/VideoPlayerContentView.swift" : {
+    "index-unit-output-path" : "/MyDynamicIsland.build/Release/MyDynamicIsland.build/Objects-normal/arm64/VideoPlayerContentView.o",
+    "llvm-bc" : "/Users/iamabillionaire/Downloads/topnotch/build/Build/Intermediates.noindex/MyDynamicIsland.build/Release/MyDynamicIsland.build/Objects-normal/arm64/VideoPlayerContentView.bc",
+    "object" : "/Users/iamabillionaire/Downloads/topnotch/build/Build/Intermediates.noindex/MyDynamicIsland.build/Release/MyDynamicIsland.build/Objects-normal/arm64/VideoPlayerContentView.o"
+  },
+  "/Users/iamabillionaire/Downloads/topnotch/MyDynamicIsland/VideoPlayerPanel.swift" : {
+    "index-unit-output-path" : "/MyDynamicIsland.build/Release/MyDynamicIsland.build/Objects-normal/arm64/VideoPlayerPanel.o",
+    "llvm-bc" : "/Users/iamabillionaire/Downloads/topnotch/build/Build/Intermediates.noindex/MyDynamicIsland.build/Release/MyDynamicIsland.build/Objects-normal/arm64/VideoPlayerPanel.bc",
+    "object" : "/Users/iamabillionaire/Downloads/topnotch/build/Build/Intermediates.noindex/MyDynamicIsland.build/Release/MyDynamicIsland.build/Objects-normal/arm64/VideoPlayerPanel.o"
+  },
+  "/Users/iamabillionaire/Downloads/topnotch/MyDynamicIsland/VideoWindowManager.swift" : {
+    "index-unit-output-path" : "/MyDynamicIsland.build/Release/MyDynamicIsland.build/Objects-normal/arm64/VideoWindowManager.o",
+    "llvm-bc" : "/Users/iamabillionaire/Downloads/topnotch/build/Build/Intermediates.noindex/MyDynamicIsland.build/Release/MyDynamicIsland.build/Objects-normal/arm64/VideoWindowManager.bc",
+    "object" : "/Users/iamabillionaire/Downloads/topnotch/build/Build/Intermediates.noindex/MyDynamicIsland.build/Release/MyDynamicIsland.build/Objects-normal/arm64/VideoWindowManager.o"
+  },
+  "/Users/iamabillionaire/Downloads/topnotch/MyDynamicIsland/YouTubePlayerState.swift" : {
+    "index-unit-output-path" : "/MyDynamicIsland.build/Release/MyDynamicIsland.build/Objects-normal/arm64/YouTubePlayerState.o",
+    "llvm-bc" : "/Users/iamabillionaire/Downloads/topnotch/build/Build/Intermediates.noindex/MyDynamicIsland.build/Release/MyDynamicIsland.build/Objects-normal/arm64/YouTubePlayerState.bc",
+    "object" : "/Users/iamabillionaire/Downloads/topnotch/build/Build/Intermediates.noindex/MyDynamicIsland.build/Release/MyDynamicIsland.build/Objects-normal/arm64/YouTubePlayerState.o"
+  },
+  "/Users/iamabillionaire/Downloads/topnotch/MyDynamicIsland/YouTubePlayerWebView.swift" : {
+    "index-unit-output-path" : "/MyDynamicIsland.build/Release/MyDynamicIsland.build/Objects-normal/arm64/YouTubePlayerWebView.o",
+    "llvm-bc" : "/Users/iamabillionaire/Downloads/topnotch/build/Build/Intermediates.noindex/MyDynamicIsland.build/Release/MyDynamicIsland.build/Objects-normal/arm64/YouTubePlayerWebView.bc",
+    "object" : "/Users/iamabillionaire/Downloads/topnotch/build/Build/Intermediates.noindex/MyDynamicIsland.build/Release/MyDynamicIsland.build/Objects-normal/arm64/YouTubePlayerWebView.o"
+  },
+  "/Users/iamabillionaire/Downloads/topnotch/MyDynamicIsland/YouTubeURLParser.swift" : {
+    "index-unit-output-path" : "/MyDynamicIsland.build/Release/MyDynamicIsland.build/Objects-normal/arm64/YouTubeURLParser.o",
+    "llvm-bc" : "/Users/iamabillionaire/Downloads/topnotch/build/Build/Intermediates.noindex/MyDynamicIsland.build/Release/MyDynamicIsland.build/Objects-normal/arm64/YouTubeURLParser.bc",
+    "object" : "/Users/iamabillionaire/Downloads/topnotch/build/Build/Intermediates.noindex/MyDynamicIsland.build/Release/MyDynamicIsland.build/Objects-normal/arm64/YouTubeURLParser.o"
+  },
+  "/Users/iamabillionaire/Downloads/topnotch/build/Build/Intermediates.noindex/MyDynamicIsland.build/Release/MyDynamicIsland.build/DerivedSources/GeneratedAssetSymbols.swift" : {
+    "index-unit-output-path" : "/MyDynamicIsland.build/Release/MyDynamicIsland.build/Objects-normal/arm64/GeneratedAssetSymbols.o",
+    "llvm-bc" : "/Users/iamabillionaire/Downloads/topnotch/build/Build/Intermediates.noindex/MyDynamicIsland.build/Release/MyDynamicIsland.build/Objects-normal/arm64/GeneratedAssetSymbols.bc",
+    "object" : "/Users/iamabillionaire/Downloads/topnotch/build/Build/Intermediates.noindex/MyDynamicIsland.build/Release/MyDynamicIsland.build/Objects-normal/arm64/GeneratedAssetSymbols.o"
+  }
+}
