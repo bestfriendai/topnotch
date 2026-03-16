@@ -140,12 +140,31 @@ final class NotchState: ObservableObject {
     @Published var notchHeight: CGFloat = 32
     @Published var detectedYouTubeURL: String? = nil
     @Published var showYouTubePrompt = false
-    @Published var isShowingInlineYouTubePlayer = false
     @Published var inlineYouTubeVideoID: String? = nil
     @Published var youtubePlayerWidth: CGFloat = 480
     @Published var youtubePlayerHeight: CGFloat = 270
-    @Published var isShowingInlineBrowser = false
     @Published var browserInitialURL: String = "https://m.youtube.com"
+
+    // Mutually exclusive inline panels — setting one closes the other
+    private var _isShowingInlineYouTubePlayer = false
+    var isShowingInlineYouTubePlayer: Bool {
+        get { _isShowingInlineYouTubePlayer }
+        set {
+            if newValue { _isShowingInlineBrowser = false }
+            _isShowingInlineYouTubePlayer = newValue
+            objectWillChange.send()
+        }
+    }
+
+    private var _isShowingInlineBrowser = false
+    var isShowingInlineBrowser: Bool {
+        get { _isShowingInlineBrowser }
+        set {
+            if newValue { _isShowingInlineYouTubePlayer = false }
+            _isShowingInlineBrowser = newValue
+            objectWillChange.send()
+        }
+    }
     @Published var activeDeckCard: NotchDeckCard = .home {
         didSet {
             UserDefaults.standard.set(activeDeckCard.rawValue, forKey: Self.activeDeckCardDefaultsKey)
@@ -169,7 +188,7 @@ final class DynamicIsland {
     private var lastChargingState = false
     private var nowPlayingTimer: Timer?
     private var clipboardTimer: Timer?
-    private var lastClipboardContent: String = ""
+    private var lastClipboardChangeCount: Int = 0
     private var lastMusicNotificationTime: Date = .distantPast
 
     init() {
@@ -458,19 +477,20 @@ final class DynamicIsland {
     // MARK: - YouTube Integration
     
     private func setupClipboardMonitoring() {
-        lastClipboardContent = NSPasteboard.general.string(forType: .string) ?? ""
-        
+        lastClipboardChangeCount = NSPasteboard.general.changeCount
+
         clipboardTimer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] _ in
             self?.checkClipboardForYouTubeURL()
         }
     }
-    
+
     private func checkClipboardForYouTubeURL() {
         guard UserDefaults.standard.object(forKey: "youtubeClipboardDetection") as? Bool ?? true else { return }
-        guard let clipboardString = NSPasteboard.general.string(forType: .string),
-              clipboardString != lastClipboardContent else { return }
-        
-        lastClipboardContent = clipboardString
+        let currentCount = NSPasteboard.general.changeCount
+        guard currentCount != lastClipboardChangeCount else { return }
+        lastClipboardChangeCount = currentCount
+
+        guard let clipboardString = NSPasteboard.general.string(forType: .string) else { return }
         
         if YouTubeURLParser.extractVideoID(from: clipboardString) != nil {
             DispatchQueue.main.async {

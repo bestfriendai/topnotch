@@ -31,48 +31,53 @@ struct MediaControlView: View {
                     .transition(.opacity)
             }
 
-            VStack(spacing: 10) {
-                // Main content row
+            VStack(spacing: 8) {
+                // Top row: artwork + track info
                 HStack(spacing: 12) {
-                    // Album artwork
+                    // Album artwork — fixed size
                     artworkView
+                        .frame(width: 56, height: 56)
 
-                    // Track info and controls
-                    VStack(alignment: .leading, spacing: 6) {
-                        // Track info
-                        trackInfoView
+                    // Track info fills remaining width
+                    trackInfoView
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                }
 
-                        // Progress scrubber with accent glow
-                        ZStack(alignment: .leading) {
-                            // Animated progress glow under scrubber
-                            GeometryReader { geo in
-                                RoundedRectangle(cornerRadius: 2, style: .continuous)
-                                    .fill(accentColor.opacity(0.25))
-                                    .frame(width: max(0, geo.size.width * info.progress), height: 6)
-                                    .blur(radius: 6)
-                                    .offset(y: 4)
-                                    .animation(.easeInOut(duration: 0.5), value: info.progress)
-                            }
-                            .frame(height: 3)
-
-                            MediaScrubber(
-                                progress: info.progress,
-                                elapsedTime: info.elapsedTimeString,
-                                remainingTime: info.remainingTimeString,
-                                isPlaying: info.isPlaying,
-                                accentColor: accentColor
-                            ) { progress in
-                                mediaController.seekToProgress(progress)
-                            }
-                        }
+                // Scrubber — full width
+                ZStack(alignment: .leading) {
+                    // Animated progress glow under scrubber
+                    GeometryReader { geo in
+                        RoundedRectangle(cornerRadius: 2, style: .continuous)
+                            .fill(accentColor.opacity(0.25))
+                            .frame(width: max(0, geo.size.width * info.progress), height: 6)
+                            .blur(radius: 6)
+                            .offset(y: 4)
+                            .animation(.easeInOut(duration: 0.5), value: info.progress)
                     }
+                    .frame(height: 3)
 
-                    // Playback controls
+                    MediaScrubber(
+                        progress: info.progress,
+                        elapsedTime: info.elapsedTimeString,
+                        remainingTime: info.remainingTimeString,
+                        isPlaying: info.isPlaying,
+                        accentColor: accentColor
+                    ) { progress in
+                        mediaController.seekToProgress(progress)
+                    }
+                }
+
+                // Playback controls — centered row
+                HStack {
+                    Spacer()
                     controlsView
+                    Spacer()
                 }
             }
         }
         .padding(.horizontal, 4)
+        .frame(maxWidth: .infinity)
+        .clipped()
         .onAppear {
             mediaController.refresh()
         }
@@ -150,6 +155,8 @@ struct MediaControlView: View {
                     .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
             }
         }
+        .frame(width: 56, height: 56)
+        .clipped()
         .onHover { hovering in
             artworkScale = hovering ? 1.05 : 1.0
         }
@@ -713,30 +720,10 @@ struct CompactNowPlayingCard: View {
                     // Artist with colored playing dot
                     HStack(spacing: 4) {
                         if info.isPlaying {
-                            ZStack {
-                                // Glow layer behind the dot
-                                Circle()
-                                    .fill(accentColor.opacity(playingDotOpacity * 0.4))
-                                    .frame(width: 10, height: 10)
-                                    .blur(radius: 3)
-
-                                Circle()
-                                    .fill(accentColor)
-                                    .frame(width: 5, height: 5)
-                            }
-                            .opacity(playingDotOpacity)
-                            .onAppear {
-                                withAnimation(
-                                    .easeInOut(duration: 1.0)
-                                    .repeatForever(autoreverses: true)
-                                ) {
-                                    playingDotOpacity = 0.35
-                                }
-                            }
-                            .onDisappear {
-                                playingDotOpacity = 1.0
-                            }
-                            .transition(.scale.combined(with: .opacity))
+                            Circle()
+                                .fill(accentColor)
+                                .frame(width: 5, height: 5)
+                                .transition(.scale.combined(with: .opacity))
                         }
 
                         Text(info.artist.isEmpty ? info.appName : info.artist)
@@ -758,58 +745,37 @@ struct CompactNowPlayingCard: View {
     // MARK: - Compact Artwork (48x48 with 10pt corners and subtle glow)
 
     private var compactArtwork: some View {
-        ZStack {
-            // Glow / shadow behind artwork
+        Group {
             if let artwork = info.artwork {
                 Image(nsImage: artwork)
                     .resizable()
                     .aspectRatio(contentMode: .fill)
-                    .frame(width: 48, height: 48)
-                    .blur(radius: 18)
-                    .opacity(0.45)
-                    .scaleEffect(1.2)
             } else {
-                RoundedRectangle(cornerRadius: 10, style: .continuous)
-                    .fill(accentColor.opacity(0.3))
-                    .frame(width: 48, height: 48)
-                    .blur(radius: 14)
-            }
-
-            // Main artwork
-            Group {
-                if let artwork = info.artwork {
-                    Image(nsImage: artwork)
-                        .resizable()
-                        .aspectRatio(contentMode: .fill)
-                } else {
-                    // Gradient placeholder with app icon
-                    ZStack {
-                        LinearGradient(
-                            colors: [accentColor.opacity(0.7), accentColor.opacity(0.3)],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        )
-                        Image(systemName: info.appIcon)
-                            .font(.system(size: 20, weight: .medium))
-                            .foregroundStyle(.white.opacity(0.9))
-                    }
+                ZStack {
+                    LinearGradient(
+                        colors: [accentColor.opacity(0.7), accentColor.opacity(0.3)],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    )
+                    Image(systemName: info.appIcon)
+                        .font(.system(size: 20, weight: .medium))
+                        .foregroundStyle(.white.opacity(0.9))
                 }
             }
-            .frame(width: 48, height: 48)
-            .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
-            .modifier(ShimmerEffect())
-            .shadow(color: .black.opacity(0.4), radius: 6, y: 3)
-            .scaleEffect(artworkAppeared ? 1.0 : 0.6)
-            .opacity(artworkAppeared ? 1.0 : 0.0)
-            .id(info.title)
-            .transition(.asymmetric(
-                insertion: .scale(scale: 0.8).combined(with: .opacity),
-                removal: .opacity
-            ))
-            .animation(.spring(duration: 0.45, bounce: 0.35), value: info.title)
         }
+        .frame(width: 48, height: 48)
+        .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+        .shadow(color: .black.opacity(0.3), radius: 4, y: 2)
+        .scaleEffect(artworkAppeared ? 1.0 : 0.85)
+        .opacity(artworkAppeared ? 1.0 : 0.0)
+        .id(info.title)
+        .transition(.asymmetric(
+            insertion: .scale(scale: 0.85).combined(with: .opacity),
+            removal: .opacity
+        ))
+        .animation(.spring(duration: 0.35, bounce: 0.25), value: info.title)
         .onAppear {
-            withAnimation(.spring(duration: 0.5, bounce: 0.4)) {
+            withAnimation(.spring(duration: 0.4, bounce: 0.3)) {
                 artworkAppeared = true
             }
         }

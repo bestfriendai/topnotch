@@ -133,19 +133,23 @@ struct YouTubePlayerWebView: NSViewRepresentable {
         }
         
         // MARK: - Time Update Timer
-        
+
+        @MainActor
         private func startTimeUpdateTimer() {
             timeUpdateTimer?.invalidate()
             timeUpdateTimer = Timer.scheduledTimer(withTimeInterval: 0.5, repeats: true) { [weak self] _ in
-                self?.requestTimeUpdate()
+                guard let self else { return }
+                Task { @MainActor in self.requestTimeUpdate() }
             }
         }
 
+        @MainActor
         func stopTimeUpdateTimer() {
             timeUpdateTimer?.invalidate()
             timeUpdateTimer = nil
         }
-        
+
+        @MainActor
         private func requestTimeUpdate() {
             webView?.evaluateJavaScript("sendTimeUpdate()", completionHandler: nil)
         }
