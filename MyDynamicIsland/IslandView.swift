@@ -1,6 +1,5 @@
 import Combine
-import IOKit.ps
-import ServiceManagement
+import EventKit
 import SwiftUI
 
 struct NotchContentView: View {
@@ -86,8 +85,36 @@ struct NotchContentView: View {
     }
 }
 
+// MARK: - NotchView
+
 struct NotchView: View {
     @ObservedObject var state: NotchState
+
+    private var currentDateDayName: String {
+        let f = DateFormatter()
+        f.dateFormat = "EEEE"
+        return f.string(from: Date())
+    }
+    
+    private var currentDateMonthDay: String {
+        let f = DateFormatter()
+        f.dateFormat = "MMM d"
+        return f.string(from: Date())
+    }
+
+    private func calendarEventRow(title: String, time: String, color: Color) -> some View {
+        HStack(spacing: 10) {
+            Circle().fill(color).frame(width: 6, height: 6)
+            VStack(alignment: .leading, spacing: 2) {
+                Text(title)
+                    .font(.system(size: 13, weight: .semibold))
+                    .foregroundStyle(NotchDesign.textPrimary)
+                Text(time)
+                    .font(.system(size: 11))
+                    .foregroundStyle(NotchDesign.textSecondary)
+            }
+        }
+    }
 
     @State private var hoverTimer: Timer?
     @State private var collapseTimer: Timer?
@@ -95,28 +122,42 @@ struct NotchView: View {
     @State private var audioTimerCancellable: AnyCancellable?
     @State private var youtubeURLInput = ""
     @State private var youtubeInputError: String?
+    @StateObject private var youtubeHistory = YouTubeHistoryStore()
     @State private var deckDragOffset: CGFloat = 0
-    @State private var idlePulse = false
-    @State private var expandBlur: CGFloat = 2
+
+    @State private var isClickExpanded = false
     @State private var chargingGlowPulse = false
     @State private var gearHovered = false
     @State private var chevronHovered = false
     @StateObject private var weatherStore = NotchWeatherStore()
+    @ObservedObject private var calendarStore = CalendarStore.shared
 
     @AppStorage("hudDisplayMode") private var hudDisplayMode = "progressBar"
     @AppStorage("showLockIndicator") private var showLockIndicator = true
     @AppStorage("showBatteryIndicator") private var showBatteryIndicator = true
     @AppStorage("showHapticFeedback") private var hapticFeedbackEnabled = true
     @AppStorage("notchWeatherCity") private var weatherCity = "San Francisco"
+    @AppStorage("youtubeEnabled") private var youtubeEnabled = true
+    @AppStorage("weatherEnabled") private var weatherEnabled = true
+    @AppStorage("calendarEnabled") private var calendarEnabled = true
+    @AppStorage("pomodoroEnabled") private var pomodoroEnabled = true
+    @AppStorage("clipboardEnabled") private var clipboardEnabled = true
 
     private let deckHeight: CGFloat = 186
-    private let deckCardSpacing: CGFloat = 12
+    private let deckCardSpacing: CGFloat = 14
+
+    private var youtubePreviewVideoID: String? {
+        youtubeDraftRequest?.videoID
+    }
+
+    private var youtubeDraftRequest: YouTubeURLParser.PlaybackRequest? {
+        YouTubeURLParser.playbackRequest(from: youtubeURLInput)
+    }
 
     private var shouldShowDeck: Bool {
         state.isExpanded
             && state.hud == .none
             && !state.isShowingInlineYouTubePlayer
-            && !state.isShowingInlineBrowser
             && !state.showChargingAnimation
             && !state.showUnplugAnimation
             && !state.showUnlockAnimation
@@ -129,39 +170,77 @@ struct NotchView: View {
 
     private var isMinimalMode: Bool { hudDisplayMode == "minimal" }
 
+    private var activeDeckAccent: Color {
+        switch state.activeDeckCard {
+        case .weather: return Color(hex: "38BDF8")
+        case .calendar: return Color(hex: "FB7185")
+        case .pomodoro: return Color(hex: "F59E0B")
+        case .clipboard: return Color(hex: "60A5FA")
+        case .youtube: return Color(hex: "FF453A")
+        case .home: return Color(hex: "30D158")
+        case .fileShelf: return Color.orange
+        case .media: return Color(hex: "1DB954")
+        }
+    }
+
+    // Design-spec collapsed dimensions
+    private let collapsedNotchWidth: CGFloat = 480
+    private let collapsedNotchHeight: CGFloat = 36
+    private let collapsedCornerRadius: CGFloat = 20
+    private let expandedDashboardWidth: CGFloat = 960
+    private let expandedDashboardHeight: CGFloat = 320
+
+    private func focusedHeightForCard(_ card: NotchDeckCard) -> CGFloat {
+        switch card {
+        case .youtube: return 260
+        case .media: return 320
+        case .weather: return 300
+        case .calendar: return 320
+        case .pomodoro: return 320
+        case .clipboard: return 280
+        case .fileShelf: return 200
+        case .home: return 0
+        }
+    }
+
     private var notchSize: CGSize {
-        if state.isShowingInlineYouTubePlayer {
+        if state.isShowingInlineYouTubePlayer && !state.inlineYouTubeMinimized {
             return CGSize(
-                width: max(state.notchWidth + 24, state.youtubePlayerWidth + 32),
-                height: state.notchHeight + state.youtubePlayerHeight + 20
+                width: max(collapsedNotchWidth, state.youtubePlayerWidth + 32),
+                height: collapsedNotchHeight + state.youtubePlayerHeight + 80
             )
         }
 
-        if state.isShowingInlineBrowser {
-            return CGSize(
-                width: max(state.notchWidth + 24, state.youtubePlayerWidth + 32),
-                height: state.notchHeight + state.youtubePlayerHeight + 20
-            )
-        }
-
-        if shouldShowDeck {
+        if shouldShowDeck && isClickExpanded {
             let isFocused = state.activeDeckCard != .home
+            // Height: collapsed bar + deck header + fixed card height + bottom padding
+            let cardHeight = focusedHeightForCard(state.activeDeckCard)
+            let focusedHeight = collapsedNotchHeight + 42 + cardHeight + 24
             return CGSize(
-                width: isFocused ? max(state.notchWidth + 420, 640) : max(state.notchWidth + 720, 1000),
-                height: state.notchHeight + 280
+                width: isFocused ? 800 : expandedDashboardWidth,
+                height: isFocused ? focusedHeight : expandedDashboardHeight
             )
+        }
+
+        // System HUDs and Alerts dimensions
+        if case .volume = state.hud {
+            return CGSize(width: collapsedNotchWidth, height: collapsedNotchHeight + 44)
+        }
+        if case .brightness = state.hud {
+            return CGSize(width: collapsedNotchWidth, height: collapsedNotchHeight + 44)
+        }
+        if state.showYouTubePrompt {
+            // YouTube detected: spec says height 44pt total
+            return CGSize(width: collapsedNotchWidth, height: 44)
+        }
+        if state.showChargingAnimation || (state.battery.isCharging && state.isExpanded) {
+            return CGSize(width: collapsedNotchWidth, height: collapsedNotchHeight + 56)
+        }
+        if state.isScreenLocked || state.showUnlockAnimation {
+            return CGSize(width: 220, height: collapsedNotchHeight + 56)
         }
 
         let shouldExpand = !isMinimalMode || state.hud == .none
-        var baseExtra: CGFloat = 16
-        if state.isExpanded && shouldExpand { baseExtra = 140 }
-        else if state.hud != .none && isMinimalMode { baseExtra = 100 }
-
-        var stateExtraWidth: CGFloat = 0
-        if state.isScreenLocked { stateExtraWidth = 140 }
-        else if state.battery.isCharging || state.showChargingAnimation { stateExtraWidth = 80 }
-        else if case .music = state.activity, state.isExpanded { stateExtraWidth = 60 }
-
         var expandedHeight: CGFloat = 0
         if state.isExpanded && shouldExpand {
             // Larger height for media controls with scrubber
@@ -172,68 +251,126 @@ struct NotchView: View {
             }
         }
 
-        return CGSize(width: state.notchWidth + baseExtra + stateExtraWidth, height: state.notchHeight + expandedHeight)
+        return CGSize(width: collapsedNotchWidth, height: collapsedNotchHeight + expandedHeight)
+    }
+
+    private var currentCornerRadius: CGFloat {
+        state.isExpanded ? NotchDesign.islandRadius : collapsedCornerRadius
     }
 
     var body: some View {
         ZStack(alignment: .top) {
-            NotchShape(topRadius: 8, bottomRadius: state.isExpanded ? 24 : 12).fill(.black)
+            // Background fill: #0B0B0E always (spec)
+            RoundedRectangle(cornerRadius: currentCornerRadius, style: .continuous)
+                .fill(NotchDesign.bgMain)
                 .overlay(alignment: .top) {
-                    LinearGradient(colors: [.white.opacity(0.04), .clear], startPoint: .top, endPoint: .center)
-                        .frame(height: state.notchHeight)
-                        .allowsHitTesting(false)
+                    LinearGradient(
+                        colors: [
+                            .white.opacity(0.05),
+                            activeDeckAccent.opacity(state.isExpanded ? 0.18 : 0.06),
+                            .clear
+                        ],
+                        startPoint: .top,
+                        endPoint: .center
+                    )
+                    .frame(height: collapsedNotchHeight)
+                    .clipShape(RoundedRectangle(cornerRadius: currentCornerRadius, style: .continuous))
+                    .allowsHitTesting(false)
                 }
+                // Spec: stroke #2A2A2E 1pt inside
                 .overlay(
-                    NotchShape(topRadius: 8, bottomRadius: state.isExpanded ? 24 : 12)
-                        .stroke(Color.white.opacity(state.isHovered && !state.isExpanded ? 0.15 : 0), lineWidth: 1)
+                    RoundedRectangle(cornerRadius: currentCornerRadius, style: .continuous)
+                        .strokeBorder(
+                            NotchDesign.borderSubtle,
+                            lineWidth: 1
+                        )
                 )
 
-            VStack(spacing: 0) {
-                collapsedContent.frame(height: state.notchHeight)
+            ZStack(alignment: .top) {
+                VStack(spacing: 0) {
+                    collapsedContent.frame(height: collapsedNotchHeight)
 
-                if state.isExpanded {
-                    expandedContent
-                        .blur(radius: expandBlur)
-                        .transition(.asymmetric(
-                            insertion: .opacity.combined(with: .scale(scale: 0.8, anchor: .top)).combined(with: .move(edge: .top)),
-                            removal: .opacity.combined(with: .scale(scale: 0.9, anchor: .top))
-                        ))
-                        .onAppear { withAnimation(.easeOut(duration: 0.3)) { expandBlur = 0 } }
-                        .onDisappear { expandBlur = 2 }
+                    if state.isExpanded {
+                        expandedContent
+                            .clipped()
+                            .transition(.asymmetric(
+                                insertion: .opacity.combined(with: .scale(scale: 0.8, anchor: .top)).combined(with: .move(edge: .top)),
+                                removal: .opacity.combined(with: .scale(scale: 0.9, anchor: .top))
+                            ))
+                    }
+                }
+
+                // Keep the YouTube WKWebView alive while minimized so audio
+                // continues and the collapsed-bar play/pause button still works.
+                if state.inlineYouTubeMinimized && !state.isExpanded,
+                   state.isShowingInlineYouTubePlayer,
+                   let videoID = state.inlineYouTubeVideoID {
+                    YouTubePlayerWebView(
+                        videoID: videoID,
+                        startTime: Int(state.inlineYouTubePlayerState.currentTime),
+                        playerState: state.inlineYouTubePlayerState,
+                        playerController: state.inlineYouTubePlayerController
+                    )
+                    .frame(width: 1, height: 1)
+                    .opacity(0)
+                    .allowsHitTesting(false)
+                    .accessibilityHidden(true)
                 }
             }
         }
-        .frame(width: notchSize.width, height: notchSize.height)
-        .scaleEffect(state.isHovered && !state.isExpanded ? 1.08 : 1.0, anchor: .top)
-        .shadow(color: .black.opacity(0.3), radius: state.isExpanded ? 20 : (state.isHovered ? 8 : 0), y: state.isExpanded ? 10 : 0)
+        .frame(
+            width: state.inlineYouTubeMinimized && !state.isExpanded ? 520 : notchSize.width,
+            height: notchSize.height
+        )
+        .animation(.spring(duration: 0.35, bounce: 0.2), value: state.activeDeckCard)
+        .clipShape(RoundedRectangle(cornerRadius: currentCornerRadius, style: .continuous))
+        .scaleEffect(state.isHovered && !state.isExpanded && !state.inlineYouTubeMinimized ? 1.05 : 1.0, anchor: .top)
+        .shadow(color: activeDeckAccent.opacity(state.isExpanded ? 0.18 : 0.05), radius: state.isExpanded ? 28 : 12, y: state.isExpanded ? 10 : 4)
+        .shadow(color: .black.opacity(state.isExpanded ? 0.36 : 0.37), radius: state.isExpanded ? 24 : 16, y: state.isExpanded ? 12 : 4)
         .background(
             Group {
-                if state.isExpanded && shouldShowDeck {
-                    RoundedRectangle(cornerRadius: 30, style: .continuous)
-                        .fill(
-                            RadialGradient(
-                                colors: [
-                                    Color(red: 0.3, green: 0.2, blue: 0.8).opacity(0.12),
-                                    Color(red: 0.2, green: 0.3, blue: 0.9).opacity(0.06),
-                                    Color.clear
-                                ],
-                                center: .bottom,
-                                startRadius: 20,
-                                endRadius: 180
-                            )
+                if state.isExpanded && shouldShowDeck && isClickExpanded {
+                    ZStack {
+                        // Core background
+                        RoundedRectangle(cornerRadius: NotchDesign.islandRadius, style: .continuous)
+                            .fill(NotchDesign.bgMain)
+                        
+                        // Subtle inner glow
+                        RadialGradient(
+                            colors: [activeDeckAccent.opacity(0.15), .clear],
+                            center: .top,
+                            startRadius: 0,
+                            endRadius: 400
                         )
-                        .blur(radius: 40)
-                        .offset(y: 20)
-                        .transition(.opacity)
+                        .blendMode(.screen)
+                    }
+                    .clipShape(RoundedRectangle(cornerRadius: NotchDesign.islandRadius, style: .continuous))
+                    .transition(.opacity)
                 }
             }
         )
-        .animation(.spring(duration: 0.55, bounce: 0.3, blendDuration: 0.2), value: state.isExpanded)
+        .animation(.spring(duration: 0.45, bounce: 0.3), value: state.isExpanded)
+        .animation(.spring(duration: 0.45, bounce: 0.3), value: isClickExpanded)
         .animation(.spring(duration: 0.3, bounce: 0.35), value: state.isHovered)
         .animation(.spring(duration: 0.3, bounce: 0.2), value: state.hud)
         .contentShape(Rectangle())
         .onTapGesture(count: 1) {
-            if !state.isShowingInlineYouTubePlayer && !state.isShowingInlineBrowser && !state.isExpanded { handleTap() }
+            if state.inlineYouTubeMinimized && !state.isExpanded {
+                withAnimation(.spring(duration: 0.4, bounce: 0.2)) {
+                    state.inlineYouTubeMinimized = false
+                    state.isExpanded = true
+                }
+            } else if isClickExpanded && !shouldShowDeck {
+                // Tapping collapsed area when click-expanded - close
+                withAnimation(.spring(duration: 0.4, bounce: 0.2)) {
+                    state.isExpanded = false
+                    isClickExpanded = false
+                    state.hud = .none
+                }
+            } else if state.showYouTubePrompt && !state.isExpanded {
+                // YouTube prompt is showing — tapping the notch body plays the detected video
+                playDetectedVideo()
+            } else if !state.isShowingInlineYouTubePlayer && !state.isExpanded { handleTap() }
         }
         .onHover { handleHover($0) }
         .onChange(of: state.activity) { _, newActivity in
@@ -243,7 +380,13 @@ struct NotchView: View {
             refreshWeatherIfNeeded(force: true)
         }
         .onAppear { if case .music = state.activity { startAudioTimer() } }
-        .onDisappear { stopAudioTimer() }
+        .onDisappear {
+            stopAudioTimer()
+            hoverTimer?.invalidate()
+            hoverTimer = nil
+            collapseTimer?.invalidate()
+            collapseTimer = nil
+        }
         .onChange(of: state.hud) { _, newValue in if newValue != .none { showHUD() } }
         .onChange(of: state.showUnlockAnimation) { _, newValue in
             if newValue {
@@ -263,11 +406,19 @@ struct NotchView: View {
         }
         .animation(.spring(duration: 0.4, bounce: 0.3), value: state.isScreenLocked)
         .animation(.spring(duration: 0.4, bounce: 0.3), value: state.showUnlockAnimation)
+        .animation(.spring(duration: 0.35, bounce: 0.25), value: state.showYouTubePrompt)
+        .animation(.spring(duration: 0.35, bounce: 0.25), value: state.activity)
+        .animation(.spring(duration: 0.35, bounce: 0.2), value: state.battery.isCharging)
+        .animation(.spring(duration: 0.35, bounce: 0.2), value: state.showChargingAnimation)
     }
+
+    // Design spec: 180pt camera spacer in center
+    private let cameraSpacerWidth: CGFloat = 180
 
     @ViewBuilder
     private var collapsedContent: some View {
         HStack(spacing: 0) {
+            // Left wing
             HStack(spacing: 6) {
                 if isMinimalMode, case .volume(let level, let muted) = state.hud {
                     Image(systemName: muted ? "speaker.slash.fill" : volumeIcon(for: level))
@@ -284,9 +435,12 @@ struct NotchView: View {
             }
             .frame(maxWidth: .infinity)
             .padding(.leading, 16)
+            .clipped()
 
-            Color.clear.frame(width: state.notchWidth - 16)
+            // Camera notch spacer - 180pt per design spec
+            Color.clear.frame(width: cameraSpacerWidth)
 
+            // Right wing
             HStack(spacing: 6) {
                 Spacer(minLength: 0)
                 if isMinimalMode, case .volume(let level, let muted) = state.hud {
@@ -305,6 +459,7 @@ struct NotchView: View {
             }
             .frame(maxWidth: .infinity)
             .padding(.trailing, 16)
+            .clipped()
         }
     }
 
@@ -324,27 +479,87 @@ struct NotchView: View {
                 .foregroundStyle(.green)
                 .shadow(color: .green.opacity(0.8), radius: 6)
                 .transition(.scale.combined(with: .opacity))
+        } else if (state.battery.isCharging || state.showChargingAnimation) && showBatteryIndicator && !state.isExpanded {
+            // Spec: Battery icon + "Charging" text (#32D583) on left
+            HStack(spacing: 5) {
+                Image(systemName: "battery.100.bolt")
+                    .font(.system(size: 13, weight: .semibold))
+                    .foregroundStyle(NotchDesign.green)
+                Text("Charging")
+                    .font(.system(size: 11, weight: .semibold))
+                    .foregroundStyle(NotchDesign.green)
+                    .lineLimit(1)
+                    .fixedSize()
+            }
+            .transition(.scale.combined(with: .opacity))
         } else if case .music = state.activity {
-            // Use the new mini artwork view that shows album art
-            MiniArtworkView()
-                .transition(.scale.combined(with: .opacity))
+            // Album art thumbnail + song title
+            HStack(spacing: 6) {
+                MiniArtworkView()
+                Text(MediaRemoteController.shared.nowPlayingInfo.title.isEmpty ? "Music" : MediaRemoteController.shared.nowPlayingInfo.title)
+                    .font(.system(size: 11, weight: .medium))
+                    .foregroundStyle(NotchDesign.textPrimary)
+                    .lineLimit(1)
+                    .frame(maxWidth: 100, alignment: .leading)
+            }
+            .transition(.scale.combined(with: .opacity))
         } else if case .timer = state.activity {
-            Image(systemName: "timer")
-                .font(.system(size: 11, weight: .semibold))
-                .foregroundStyle(.orange)
-                .transition(.scale.combined(with: .opacity))
+            // Spec: Orange dot (6pt) + "FOCUS" text (#FF9F0A, 10pt, weight 600, letterSpacing 1)
+            HStack(spacing: 5) {
+                Circle()
+                    .fill(NotchDesign.orange)
+                    .frame(width: 6, height: 6)
+                Text("FOCUS")
+                    .font(.system(size: 10, weight: .semibold))
+                    .foregroundStyle(NotchDesign.orange)
+                    .tracking(1)
+            }
+            .transition(.scale.combined(with: .opacity))
+        } else if state.showYouTubePrompt {
+            // YouTube Detected collapsed indicator: play circle + text
+            HStack(spacing: 6) {
+                Image(systemName: "play.circle.fill")
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundStyle(NotchDesign.red)
+                Text("YouTube Link Detected")
+                    .font(.system(size: 11, weight: .semibold))
+                    .foregroundStyle(NotchDesign.textPrimary)
+                    .lineLimit(1)
+            }
+            .transition(.scale.combined(with: .opacity))
+        } else if state.inlineYouTubeMinimized {
+            HStack(spacing: 8) {
+                ZStack {
+                    RoundedRectangle(cornerRadius: 3, style: .continuous)
+                        .fill(Color.red)
+                        .frame(width: 18, height: 12)
+                    Image(systemName: "play.fill")
+                        .font(.system(size: 5, weight: .bold))
+                        .foregroundStyle(.white)
+                }
+                GeometryReader { geo in
+                    ZStack(alignment: .leading) {
+                        Capsule().fill(Color.white.opacity(0.18))
+                        Capsule().fill(Color.red.opacity(0.85))
+                            .frame(width: max(geo.size.width * state.inlineYouTubeProgress, 0))
+                    }
+                }
+                .frame(height: 3)
+                .frame(maxWidth: 120)
+            }
+            .transition(.opacity.combined(with: .scale(scale: 0.9)))
         } else if !shouldShowDeck {
-            // No activity, not expanded — show app name
-            Text("TopNotch")
+            // Idle state: brand text - spec: #6B6B70, 12pt, weight 600 (semibold)
+            Text("Top Notch")
                 .font(.system(size: 12, weight: .semibold))
-                .foregroundStyle(.white.opacity(idlePulse ? 0.6 : 0.45))
+                .foregroundStyle(NotchDesign.textSecondary)
                 .lineLimit(1)
                 .fixedSize()
                 .transition(.opacity)
-                .onAppear { withAnimation(.easeInOut(duration: 2.0).repeatForever(autoreverses: true)) { idlePulse = true } }
-                .onDisappear { idlePulse = false }
         }
     }
+
+    @State private var waveformBars: [CGFloat] = [0.3, 0.6, 0.4]
 
     @ViewBuilder
     private var rightIndicator: some View {
@@ -355,82 +570,147 @@ struct NotchView: View {
                 .font(.system(size: 10, weight: .bold))
                 .foregroundStyle(.green)
                 .transition(.scale.combined(with: .opacity))
-        } else if state.showChargingAnimation && showBatteryIndicator {
-            ChargingIndicator(level: state.battery.level)
+        } else if (state.showChargingAnimation || state.battery.isCharging) && showBatteryIndicator && !state.isExpanded {
+            // Spec: percentage + zap icon on right for charging state
+            HStack(spacing: 3) {
+                Text("\(state.battery.level)%")
+                    .font(.system(size: 12, weight: .bold, design: .rounded))
+                    .foregroundStyle(NotchDesign.green)
+                    .monospacedDigit()
+                Image(systemName: "bolt.fill")
+                    .font(.system(size: 10, weight: .bold))
+                    .foregroundStyle(NotchDesign.green)
+            }
+            .transition(.scale.combined(with: .opacity))
         } else if state.showUnplugAnimation && showBatteryIndicator {
             Image(systemName: "bolt.slash.fill")
                 .font(.system(size: 11, weight: .semibold))
                 .foregroundStyle(.gray)
                 .transition(.scale.combined(with: .opacity))
-        } else if state.battery.isCharging && showBatteryIndicator {
-            ZStack {
-                Circle()
-                    .fill(Color.green.opacity(0.25))
-                    .frame(width: 22, height: 22)
-                    .scaleEffect(chargingGlowPulse ? 1.4 : 1.0)
-                    .opacity(chargingGlowPulse ? 0.0 : 0.6)
-                    .onAppear { withAnimation(.easeInOut(duration: 1.2).repeatForever(autoreverses: false)) { chargingGlowPulse = true } }
-                    .onDisappear { chargingGlowPulse = false }
-                ChargingIndicator(level: state.battery.level)
-            }
         } else if case .music = state.activity {
-            // Use the new compact media indicator with animated waveform
-            CompactMediaIndicator()
-                .transition(.scale.combined(with: .opacity))
-        } else if case .timer(let remaining, let total) = state.activity {
-            HStack(spacing: 6) {
-                Text(formatTime(remaining))
-                    .font(.system(size: 11, weight: .bold, design: .rounded))
-                    .foregroundStyle(.orange)
-                    .monospacedDigit()
-                ZStack(alignment: .leading) {
-                    Capsule().fill(Color.orange.opacity(0.3)).frame(width: 28, height: 4)
-                    Capsule().fill(Color.orange).frame(width: 28 * CGFloat(remaining / max(total, 1)), height: 4)
+            // 3 animated green waveform bars
+            HStack(spacing: 2) {
+                ForEach(0..<3, id: \.self) { i in
+                    RoundedRectangle(cornerRadius: 1)
+                        .fill(NotchDesign.green)
+                        .frame(width: 3, height: waveformBars[i] * 14)
                 }
             }
-        } else if !shouldShowDeck {
-            // No activity, not charging, not expanded — show "Active" indicator
-            HStack(spacing: 4) {
-                Circle()
-                    .fill(.green.opacity(0.6))
-                    .frame(width: 4, height: 4)
-                Text("Active")
-                    .font(.system(size: 11, weight: .medium))
-                    .foregroundStyle(.white.opacity(0.4))
-                    .lineLimit(1)
-                    .fixedSize()
+            .onReceive(Timer.publish(every: 0.3, on: .main, in: .common).autoconnect()) { _ in
+                withAnimation(.easeInOut(duration: 0.25)) {
+                    waveformBars = (0..<3).map { _ in CGFloat.random(in: 0.3...1.0) }
+                }
             }
-            .padding(.horizontal, 8)
-            .padding(.vertical, 3)
-            .background(Capsule(style: .continuous).fill(Color.white.opacity(0.06)))
-            .transition(.opacity)
+            .transition(.scale.combined(with: .opacity))
+        } else if case .timer(let remaining, let total) = state.activity {
+            // Countdown time + small progress arc
+            HStack(spacing: 6) {
+                Text(formatTime(remaining))
+                    .font(.system(size: 13, weight: .bold, design: .rounded))
+                    .foregroundStyle(NotchDesign.textPrimary)
+                    .monospacedDigit()
+                ZStack {
+                    Circle()
+                        .stroke(NotchDesign.orange.opacity(0.2), lineWidth: 2)
+                        .frame(width: 14, height: 14)
+                    Circle()
+                        .trim(from: 0, to: CGFloat(remaining / max(total, 1)))
+                        .stroke(NotchDesign.orange, style: StrokeStyle(lineWidth: 2, lineCap: .round))
+                        .frame(width: 14, height: 14)
+                        .rotationEffect(.degrees(-90))
+                }
+            }
+        } else if state.showYouTubePrompt {
+            // YouTube Detected: red play button on right
+            Button(action: { playDetectedVideo() }) {
+                Image(systemName: "play.fill")
+                    .font(.system(size: 11, weight: .bold))
+                    .foregroundStyle(.white)
+                    .frame(width: 28, height: 28)
+                    .background(NotchDesign.red, in: RoundedRectangle(cornerRadius: 8, style: .continuous))
+            }
+            .buttonStyle(.plain)
+            .transition(.scale.combined(with: .opacity))
+        } else if state.inlineYouTubeMinimized {
+            Button(action: { state.inlineYouTubePlayerController.togglePlayPause() }) {
+                Image(systemName: state.inlineYouTubeIsPlaying ? "pause.fill" : "play.fill")
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundStyle(.white.opacity(0.9))
+                    .frame(width: 24, height: 24)
+                    .background(.white.opacity(0.10), in: Circle())
+            }
+            .buttonStyle(.plain)
+            .transition(.scale.combined(with: .opacity))
+        } else if !shouldShowDeck {
+            // Idle state: Battery indicator - spec: 32x14, cornerRadius 4, #32D583
+            if showBatteryIndicator {
+                CollapsedBatteryIndicator(level: state.battery.level)
+                    .transition(.opacity)
+            } else {
+                HStack(spacing: 4) {
+                    Circle()
+                        .fill(NotchDesign.green.opacity(0.6))
+                        .frame(width: 4, height: 4)
+                    Text("Active")
+                        .font(.system(size: 11, weight: .medium))
+                        .foregroundStyle(NotchDesign.textSecondary)
+                        .lineLimit(1)
+                        .fixedSize()
+                }
+                .transition(.opacity)
+            }
         }
     }
 
     @ViewBuilder
     private var expandedContent: some View {
-        VStack(spacing: 8) {
+        Group {
             switch state.hud {
-            case .volume(let level, let muted): volumeHUD(level: level, muted: muted)
-            case .brightness(let level): brightnessHUD(level: level)
+            case .volume(let level, let muted):
+                volumeHUD(level: level, muted: muted)
+                    .padding(.horizontal, 16).padding(.vertical, 8)
+            case .brightness(let level):
+                brightnessHUD(level: level)
+                    .padding(.horizontal, 16).padding(.vertical, 8)
             case .none:
-                if state.isShowingInlineYouTubePlayer, let videoID = state.inlineYouTubeVideoID { inlineYouTubePlayer(videoID: videoID) }
-                else if state.isShowingInlineBrowser { inlineBrowser }
-                else if state.showChargingAnimation && showBatteryIndicator { chargingExpanded }
-                else if state.showUnplugAnimation && showBatteryIndicator { unplugExpanded }
-                else if state.showUnlockAnimation && showLockIndicator { unlockExpanded }
-                else if state.isScreenLocked && showLockIndicator { lockedExpanded }
+                if state.isShowingInlineYouTubePlayer, let videoID = state.inlineYouTubeVideoID {
+                    inlineYouTubePlayer(videoID: videoID)
+                        .padding(.horizontal, 16).padding(.vertical, 8)
+                }
+                else if isClickExpanded {
+                    // Full dashboard on click — highest priority after inline player
+                    dynamicDeck
+                }
+                // YouTube prompt is now shown inline in collapsed content (spec: 44pt height)
+                else if state.showChargingAnimation && showBatteryIndicator {
+                    BatteryChargingAlert(level: state.battery.level, notchWidth: state.notchWidth)
+                        .padding(.horizontal, 16).padding(.vertical, 8)
+                }
+                else if state.showUnplugAnimation && showBatteryIndicator {
+                    unplugExpanded
+                        .padding(.horizontal, 16).padding(.vertical, 8)
+                }
+                else if state.showUnlockAnimation && showLockIndicator {
+                    LockScreenIndicatorView()
+                        .padding(.horizontal, 16).padding(.vertical, 8)
+                }
+                else if state.isScreenLocked && showLockIndicator {
+                    LockScreenIndicatorView()
+                        .padding(.horizontal, 16).padding(.vertical, 8)
+                }
                 else {
-                    switch state.activity {
-                    case .music(let app): musicExpanded(app: app)
-                    case .timer(let remaining, _): timerExpanded(remaining: remaining)
-                    case .none: defaultExpanded
+                    // Compact controls on hover
+                    Group {
+                        switch state.activity {
+                        case .music(let app): musicExpanded(app: app)
+                        case .timer(let remaining, _): timerExpanded(remaining: remaining)
+                        case .none: EmptyView()
+                        }
                     }
+                    .padding(.horizontal, 16).padding(.vertical, 8)
                 }
             }
         }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 8)
     }
 
     @ViewBuilder
@@ -552,52 +832,63 @@ struct NotchView: View {
     }
 
     private func handleTap() {
-        guard !state.isShowingInlineYouTubePlayer && !state.isShowingInlineBrowser else { return }
+        guard !state.isShowingInlineYouTubePlayer else { return }
         hoverTimer?.invalidate()
         collapseTimer?.invalidate()
         if hapticFeedbackEnabled { NSHapticFeedbackManager.defaultPerformer.perform(.levelChange, performanceTime: .now) }
         withAnimation(.spring(duration: 0.5, bounce: 0.35)) {
+            state.activeDeckCard = .home  // Always open to home dashboard
             state.isExpanded = true
-            scheduleCollapse(delay: 4)
+            isClickExpanded = true
         }
+        // Don't auto-collapse on click - user will manually close via chevron
     }
 
     private func handleHover(_ hovering: Bool) {
-        if state.isShowingInlineYouTubePlayer || state.isShowingInlineBrowser {
+        if state.isShowingInlineYouTubePlayer {
             withAnimation(.spring(duration: 0.25, bounce: 0.4)) { state.isHovered = hovering }
             return
         }
 
         hoverTimer?.invalidate()
-        collapseTimer?.invalidate()
         if hovering && hapticFeedbackEnabled { NSHapticFeedbackManager.defaultPerformer.perform(.generic, performanceTime: .now) }
         withAnimation(.spring(duration: 0.25, bounce: 0.4)) { state.isHovered = hovering }
 
         if hovering {
-            hoverTimer = Timer.scheduledTimer(withTimeInterval: 0.35, repeats: false) { _ in
-                guard UserDefaults.standard.object(forKey: "expandOnHover") as? Bool ?? true else { return }
-                withAnimation(.spring(duration: 0.5, bounce: 0.35)) { self.state.isExpanded = true }
-                if self.hapticFeedbackEnabled { NSHapticFeedbackManager.defaultPerformer.perform(.levelChange, performanceTime: .now) }
+            // Only hover-expand if not already click-expanded
+            if !isClickExpanded {
+                hoverTimer = Timer.scheduledTimer(withTimeInterval: 0.35, repeats: false) { _ in
+                    guard UserDefaults.standard.object(forKey: "expandOnHover") as? Bool ?? true else { return }
+                    withAnimation(.spring(duration: 0.5, bounce: 0.35)) { self.state.isExpanded = true }
+                    if self.hapticFeedbackEnabled { NSHapticFeedbackManager.defaultPerformer.perform(.levelChange, performanceTime: .now) }
+                }
             }
         } else {
-            if !state.isShowingInlineBrowser {
-                withAnimation(.spring(duration: 0.4, bounce: 0.2)) {
-                    state.isExpanded = false
-                    state.hud = .none
+            // Only collapse on hover-exit if NOT click-expanded
+            if !isClickExpanded {
+                collapseTimer?.invalidate()
+                collapseTimer = Timer.scheduledTimer(withTimeInterval: 0.3, repeats: false) { _ in
+                    withAnimation(.spring(duration: 0.4, bounce: 0.2)) {
+                        self.state.isExpanded = false
+                        self.state.hud = .none
+                    }
                 }
             }
         }
     }
 
     private func scheduleCollapse(delay: TimeInterval) {
-        guard !state.isShowingInlineYouTubePlayer && !state.isShowingInlineBrowser else { return }
+        guard !state.isShowingInlineYouTubePlayer else { return }
         collapseTimer?.invalidate()
-        let collapseDelay = UserDefaults.standard.object(forKey: "autoCollapseDelay") as? Double ?? 4.0
-        guard collapseDelay > 0 else { return }
-        collapseTimer = Timer.scheduledTimer(withTimeInterval: collapseDelay, repeats: false) { _ in
+        // Use explicit delay when > 0; otherwise fall back to user preference
+        let storedDelay = (UserDefaults.standard.object(forKey: "autoCollapseDelay") as? Int).map(Double.init) ?? (UserDefaults.standard.object(forKey: "autoCollapseDelay") as? Double) ?? 4.0
+        let effectiveDelay = delay > 0 ? delay : storedDelay
+        guard effectiveDelay > 0 else { return }
+        collapseTimer = Timer.scheduledTimer(withTimeInterval: effectiveDelay, repeats: false) { [self] _ in
             if !self.state.isHovered {
                 withAnimation(.spring(duration: 0.4, bounce: 0.2)) {
                     self.state.isExpanded = false
+                    self.isClickExpanded = false
                     self.state.hud = .none
                 }
             }
@@ -605,14 +896,14 @@ struct NotchView: View {
     }
 
     private func showHUD() {
-        guard !state.isShowingInlineYouTubePlayer && !state.isShowingInlineBrowser else { return }
+        guard !state.isShowingInlineYouTubePlayer else { return }
         collapseTimer?.invalidate()
         if !isMinimalMode {
             withAnimation(.spring(duration: 0.4, bounce: 0.3)) { state.isExpanded = true }
         }
         collapseTimer = Timer.scheduledTimer(withTimeInterval: 1.5, repeats: false) { _ in
             withAnimation(.spring(duration: 0.4, bounce: 0.2)) {
-                if !self.state.isHovered && !self.isMinimalMode { self.state.isExpanded = false }
+                if !self.state.isHovered && !self.isMinimalMode { self.state.isExpanded = false; self.isClickExpanded = false }
                 self.state.hud = .none
             }
         }
@@ -667,17 +958,15 @@ struct NotchView: View {
     }
 
     private func inlineYouTubePlayer(videoID: String) -> some View {
-        NotchInlineYouTubePlayerView(notchState: state, videoID: videoID)
-            .id(videoID)
-            .transition(.asymmetric(
-                insertion: .opacity.combined(with: .scale(scale: 0.92, anchor: .top)),
-                removal: .opacity.combined(with: .scale(scale: 0.98, anchor: .top))
-            ))
-    }
-
-    private var inlineBrowser: some View {
-        NotchInlineBrowserView(notchState: state)
-            .transition(.asymmetric(
+        NotchInlineYouTubePlayerView(
+            notchState: state,
+            videoID: videoID,
+            playerState: state.inlineYouTubePlayerState,
+            playerController: state.inlineYouTubePlayerController,
+            startTime: state.inlineYouTubeStartTime
+        )
+        .id(videoID)
+        .transition(.asymmetric(
                 insertion: .opacity.combined(with: .scale(scale: 0.92, anchor: .top)),
                 removal: .opacity.combined(with: .scale(scale: 0.98, anchor: .top))
             ))
@@ -705,18 +994,333 @@ struct NotchView: View {
     @State private var hoveringCard: Int? = nil
     @State private var hoveringIcon: String? = nil
 
-    private var dynamicDeck: some View {
+    private var notchHubView: some View {
         VStack(spacing: 10) {
+            // 3 large cards in horizontal layout
+            HStack(spacing: 10) {
+                // 1. YouTube Hero Card (width 340)
+                youtubeHeroCard
+                    .frame(width: 340)
+                    .staggeredEntrance(index: 0, appeared: deckCardsAppeared)
+
+                // 2. Now Playing Card (width 260)
+                nowPlayingHubCard
+                    .frame(width: 260)
+                    .staggeredEntrance(index: 1, appeared: deckCardsAppeared)
+
+                // 3. Weather + Calendar Combo Card (fill remaining)
+                weatherCalendarComboCard
+                    .staggeredEntrance(index: 2, appeared: deckCardsAppeared)
+            }
+            .frame(maxHeight: .infinity)
+
+            // Page indicator dots
+            HStack(spacing: 6) {
+                ForEach(Array(deckCardOrder.enumerated()), id: \.offset) { idx, card in
+                    let isActive = state.activeDeckCard == card
+                    Circle()
+                        .fill(isActive ? NotchDesign.textPrimary : NotchDesign.borderStrong)
+                        .frame(width: isActive ? 6 : 5, height: isActive ? 6 : 5)
+                        .animation(.spring(duration: 0.3), value: isActive)
+                }
+            }
+            .padding(.bottom, 8)
+        }
+        .padding(.top, 4)
+        .padding(.horizontal, 20)
+        .padding(.bottom, 8)
+    }
+
+    // MARK: - YouTube Hero Card
+    private var youtubeHeroCard: some View {
+        NotchCardShell(accent: .red, isFocused: false) {
+            VStack(alignment: .leading, spacing: 10) {
+                // Header — tapping navigates to focused YouTube view
+                HStack(spacing: 8) {
+                    Image(systemName: "play.rectangle.fill")
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundStyle(.red)
+                    Text("YouTube")
+                        .font(.system(size: 15, weight: .bold))
+                        .foregroundStyle(NotchDesign.textPrimary)
+                    Spacer()
+                }
+                .contentShape(Rectangle())
+                .onTapGesture { navigateToDeckCard(.youtube) }
+
+                // Video thumbnail area — tapping navigates to focused YouTube view
+                ZStack {
+                    RoundedRectangle(cornerRadius: 10, style: .continuous)
+                        .fill(Color(red: 0.06, green: 0.06, blue: 0.08))
+                        .frame(height: 100)
+                    if let previewID = youtubePreviewVideoID {
+                        AsyncImage(url: YouTubeURLParser.thumbnailURL(for: previewID, quality: .high)) { phase in
+                            if case .success(let img) = phase {
+                                img.resizable().aspectRatio(contentMode: .fill)
+                            } else {
+                                Image(systemName: "play.circle.fill")
+                                    .font(.system(size: 32))
+                                    .foregroundStyle(.white.opacity(0.2))
+                            }
+                        }
+                        .frame(height: 100)
+                        .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+                    } else {
+                        Image(systemName: "play.circle.fill")
+                            .font(.system(size: 32))
+                            .foregroundStyle(.white.opacity(0.15))
+                    }
+                }
+                .frame(height: 100)
+                .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+                .contentShape(Rectangle())
+                .onTapGesture { navigateToDeckCard(.youtube) }
+
+                // URL text field
+                HStack(spacing: 8) {
+                    Image(systemName: "link")
+                        .font(.system(size: 10, weight: .medium))
+                        .foregroundStyle(NotchDesign.textSecondary)
+                    TextField("Paste YouTube URL or video ID...", text: $youtubeURLInput)
+                        .textFieldStyle(.plain)
+                        .font(.system(size: 11, weight: .medium))
+                        .foregroundStyle(NotchDesign.textPrimary)
+                        .onSubmit { handleYouTubeInputSubmit() }
+                }
+                .padding(.horizontal, 10)
+                .padding(.vertical, 7)
+                .background(NotchDesign.elevated)
+                .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 8, style: .continuous)
+                        .stroke(NotchDesign.borderSubtle, lineWidth: 0.5)
+                )
+
+                // Buttons row
+                HStack(spacing: 8) {
+                    Button(action: handleBrowseOrPlay) {
+                        Text(youtubeDraftRequest != nil ? "Play" : "Browse")
+                            .font(.system(size: 12, weight: .bold))
+                            .foregroundStyle(.white)
+                            .frame(maxWidth: .infinity)
+                            .frame(height: 30)
+                            .background(Color.red, in: RoundedRectangle(cornerRadius: 8, style: .continuous))
+                    }
+                    .buttonStyle(.plain)
+
+                    Button(action: {
+                        if let url = URL(string: "https://www.youtube.com") {
+                            NSWorkspace.shared.open(url)
+                        }
+                    }) {
+                        Text("Safari")
+                            .font(.system(size: 12, weight: .semibold))
+                            .foregroundStyle(NotchDesign.textSecondary)
+                            .frame(maxWidth: .infinity)
+                            .frame(height: 30)
+                            .background(NotchDesign.elevated, in: RoundedRectangle(cornerRadius: 8, style: .continuous))
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 8, style: .continuous)
+                                    .stroke(NotchDesign.borderSubtle, lineWidth: 0.5)
+                            )
+                    }
+                    .buttonStyle(.plain)
+                }
+
+                if let err = youtubeInputError {
+                    Text(err)
+                        .font(.system(size: 9, weight: .medium))
+                        .foregroundStyle(.red.opacity(0.85))
+                        .lineLimit(1)
+                }
+            }
+        }
+    }
+
+    // MARK: - Now Playing Hub Card
+    private var nowPlayingHubCard: some View {
+        NotchCardShell(accent: NotchDesign.spotify, isFocused: false) {
+            VStack(spacing: 10) {
+                let info = MediaRemoteController.shared.nowPlayingInfo
+
+                // Album artwork
+                if let artworkImage = info.artwork {
+                    Image(nsImage: artworkImage)
+                        .resizable()
+                        .aspectRatio(contentMode: .fill)
+                        .frame(width: 100, height: 100)
+                        .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+                        .shadow(color: .black.opacity(0.4), radius: 10, y: 4)
+                } else {
+                    RoundedRectangle(cornerRadius: 14, style: .continuous)
+                        .fill(NotchDesign.elevated)
+                        .frame(width: 100, height: 100)
+                        .overlay(
+                            Image(systemName: "music.note")
+                                .font(.system(size: 28, weight: .medium))
+                                .foregroundStyle(NotchDesign.textTertiary)
+                        )
+                }
+
+                // Song title + artist
+                VStack(spacing: 3) {
+                    Text(info.title.isEmpty ? "Not Playing" : info.title)
+                        .font(.system(size: 13, weight: .bold))
+                        .foregroundStyle(NotchDesign.textPrimary)
+                        .lineLimit(1)
+                    HStack(spacing: 4) {
+                        Text(info.artist.isEmpty ? "No artist" : info.artist)
+                            .font(.system(size: 11, weight: .medium))
+                            .foregroundStyle(NotchDesign.textSecondary)
+                            .lineLimit(1)
+                        if !info.artist.isEmpty {
+                            Image(systemName: "beats.headphones")
+                                .font(.system(size: 9))
+                                .foregroundStyle(NotchDesign.spotify)
+                        }
+                    }
+                }
+
+                Spacer(minLength: 0)
+
+                // Play/Prev/Next controls
+                HStack(spacing: 20) {
+                    Button(action: { MediaRemoteController.shared.previousTrack() }) {
+                        Image(systemName: "backward.fill")
+                            .font(.system(size: 14, weight: .medium))
+                            .foregroundStyle(NotchDesign.textSecondary)
+                    }
+                    .buttonStyle(.plain)
+
+                    Button(action: { MediaRemoteController.shared.togglePlayPause() }) {
+                        Image(systemName: info.isPlaying ? "pause.fill" : "play.fill")
+                            .font(.system(size: 18, weight: .semibold))
+                            .foregroundStyle(NotchDesign.textPrimary)
+                            .frame(width: 36, height: 36)
+                            .background(NotchDesign.elevated, in: Circle())
+                    }
+                    .buttonStyle(.plain)
+
+                    Button(action: { MediaRemoteController.shared.nextTrack() }) {
+                        Image(systemName: "forward.fill")
+                            .font(.system(size: 14, weight: .medium))
+                            .foregroundStyle(NotchDesign.textSecondary)
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+            .frame(maxWidth: .infinity)
+        }
+        .onTapGesture { navigateToDeckCard(.media) }
+    }
+
+    // MARK: - Weather + Calendar Combo Card
+    private var weatherCalendarComboCard: some View {
+        NotchCardShell(accent: NotchDesign.blue, isFocused: false) {
+            VStack(spacing: 0) {
+                // Top half: Weather
+                HStack(spacing: 10) {
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(weatherStore.temperatureText)
+                            .font(.system(size: 36, weight: .bold, design: .rounded))
+                            .foregroundStyle(NotchDesign.textPrimary)
+                            .monospacedDigit()
+                            .lineLimit(1)
+                            .contentTransition(.numericText())
+                            .animation(.easeInOut(duration: 0.4), value: weatherStore.temperatureText)
+                        Text(weatherStore.conditionText)
+                            .font(.system(size: 12, weight: .medium))
+                            .foregroundStyle(NotchDesign.textSecondary)
+                            .lineLimit(1)
+                        if let hi = weatherStore.highTemp, let lo = weatherStore.lowTemp {
+                            HStack(spacing: 6) {
+                                Text("H:\(hi)")
+                                    .font(.system(size: 10, weight: .semibold))
+                                    .foregroundStyle(NotchDesign.orange)
+                                Text("L:\(lo)")
+                                    .font(.system(size: 10, weight: .semibold))
+                                    .foregroundStyle(.cyan)
+                            }
+                        }
+                    }
+                    Spacer()
+                    AnimatedWeatherIcon(
+                        symbolName: weatherStore.symbolName,
+                        weatherCode: weatherStore.weatherCode,
+                        size: 30
+                    )
+                }
+                .onTapGesture { navigateToDeckCard(.weather) }
+
+                // Divider
+                Rectangle()
+                    .fill(NotchDesign.borderSubtle)
+                    .frame(height: 1)
+                    .padding(.vertical, 8)
+
+                // Bottom half: Calendar
+                VStack(alignment: .leading, spacing: 6) {
+                    HStack(spacing: 6) {
+                        Text(currentDateMonthDay.uppercased())
+                            .font(.system(size: 11, weight: .bold))
+                            .foregroundStyle(NotchDesign.textSecondary)
+                        Text(currentDateDayName.prefix(3).uppercased())
+                            .font(.system(size: 11, weight: .bold))
+                            .foregroundStyle(NotchDesign.textTertiary)
+                    }
+
+                    if calendarStore.events.isEmpty {
+                        Text("No upcoming events")
+                            .font(.system(size: 11, weight: .medium))
+                            .foregroundStyle(NotchDesign.textTertiary)
+                    } else {
+                        ForEach(calendarStore.events.prefix(2), id: \.eventIdentifier) { event in
+                            calendarEventRow(
+                                title: event.title ?? "Event",
+                                time: event.startDate.formatted(date: .omitted, time: .shortened),
+                                color: Color(cgColor: event.calendar.cgColor)
+                            )
+                        }
+                    }
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .onTapGesture { navigateToDeckCard(.calendar) }
+
+                Spacer(minLength: 0)
+            }
+        }
+    }
+
+    /// Ordered list of deck cards for swipe navigation, filtered by enabled settings
+    private var deckCardOrder: [NotchDeckCard] {
+        var cards: [NotchDeckCard] = [.home]
+        if youtubeEnabled { cards.append(.youtube) }
+        cards.append(.media) // Media is always available
+        if weatherEnabled { cards.append(.weather) }
+        if calendarEnabled { cards.append(.calendar) }
+        if pomodoroEnabled { cards.append(.pomodoro) }
+        if clipboardEnabled { cards.append(.clipboard) }
+        return cards
+    }
+
+    private func deckCardIndex(for card: NotchDeckCard) -> Int {
+        deckCardOrder.firstIndex(of: card) ?? 0
+    }
+
+    private var dynamicDeck: some View {
+        VStack(spacing: 0) {
             deckHeader
 
             if state.activeDeckCard == .home {
-                cardOverviewScroll
+                notchHubView
                     .transition(.asymmetric(
                         insertion: .opacity.combined(with: .move(edge: .leading)),
                         removal: .opacity.combined(with: .scale(scale: 0.96, anchor: .center))
                     ))
             } else {
                 focusedCardContent
+                    .padding(.horizontal, 24)
+                    .padding(.bottom, 24)
                     .transition(.asymmetric(
                         insertion: .opacity.combined(with: .scale(scale: 0.95, anchor: .center)),
                         removal: .opacity
@@ -724,80 +1328,45 @@ struct NotchView: View {
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .opacity(deckContentAppeared ? 1.0 : 0.0)
-        .animation(.easeOut(duration: 0.1), value: deckContentAppeared)
+        .contentShape(Rectangle())
+        .offset(x: deckDragOffset)
+        .gesture(
+            DragGesture(minimumDistance: 20)
+                .onChanged { value in
+                    let currentIndex = deckCardIndex(for: state.activeDeckCard)
+                    deckDragOffset = DeckPagingLogic.resistedOffset(
+                        translationWidth: value.translation.width,
+                        currentIndex: currentIndex,
+                        cardCount: deckCardOrder.count
+                    )
+                }
+                .onEnded { value in
+                    let currentIndex = deckCardIndex(for: state.activeDeckCard)
+                    let targetIdx = DeckPagingLogic.targetIndex(
+                        currentIndex: currentIndex,
+                        cardCount: deckCardOrder.count,
+                        translationWidth: value.translation.width,
+                        predictedEndTranslationWidth: value.predictedEndTranslation.width,
+                        pageWidth: 400
+                    )
+                    withAnimation(.spring(duration: 0.4, bounce: 0.2)) {
+                        deckDragOffset = 0
+                        state.activeDeckCard = deckCardOrder[targetIdx]
+                    }
+                }
+        )
         .animation(.spring(duration: 0.4, bounce: 0.25), value: state.activeDeckCard)
+        .animation(.interactiveSpring(), value: deckDragOffset)
         .onAppear {
             prefillYouTubeInputIfPossible()
             refreshWeatherIfNeeded()
-            deckContentAppeared = false
-            deckCardsAppeared = false
-            withAnimation { deckContentAppeared = true }
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
-                withAnimation { deckCardsAppeared = true }
-            }
-        }
-        .onDisappear {
-            deckCardsAppeared = false
-            deckContentAppeared = false
+            deckContentAppeared = true
+            deckCardsAppeared = true
         }
         .onChange(of: state.activeDeckCard) { _, newCard in
             if newCard == .youtube { prefillYouTubeInputIfPossible() }
             if newCard == .weather { refreshWeatherIfNeeded(force: weatherStore.cityName != weatherCity) }
         }
-    }
-
-    // MARK: - Overview: scrollable card grid
-
-    private var cardOverviewScroll: some View {
-        ScrollView(.horizontal, showsIndicators: false) {
-            HStack(spacing: deckCardSpacing) {
-                nowPlayingDeckCard
-                    .frame(width: 175)
-                    .cardOverlayHint("Now Playing")
-                    .deckCardEntrance(appeared: deckCardsAppeared, hovering: hoveringCard == 0, delay: 0.10)
-                    .zIndex(hoveringCard == 0 ? 1 : 0)
-                    .onHover { hoveringCard = $0 ? 0 : nil }
-                    .onTapGesture { navigateToDeckCard(.media) }
-
-                weatherDeckCard
-                    .frame(width: 175)
-                    .cardOverlayHint("Weather")
-                    .deckCardEntrance(appeared: deckCardsAppeared, hovering: hoveringCard == 1, delay: 0.16)
-                    .zIndex(hoveringCard == 1 ? 1 : 0)
-                    .onHover { hoveringCard = $0 ? 1 : nil }
-                    .onTapGesture { navigateToDeckCard(.weather) }
-
-                calendarDeckCard
-                    .frame(width: 175)
-                    .cardOverlayHint("Calendar")
-                    .deckCardEntrance(appeared: deckCardsAppeared, hovering: hoveringCard == 3, delay: 0.22)
-                    .zIndex(hoveringCard == 3 ? 1 : 0)
-                    .onHover { hoveringCard = $0 ? 3 : nil }
-                    .onTapGesture { navigateToDeckCard(.calendar) }
-
-                pomodoroDeckCard
-                    .frame(width: 175)
-                    .cardOverlayHint("Focus")
-                    .deckCardEntrance(appeared: deckCardsAppeared, hovering: hoveringCard == 4, delay: 0.28)
-                    .zIndex(hoveringCard == 4 ? 1 : 0)
-                    .onHover { hoveringCard = $0 ? 4 : nil }
-                    .onTapGesture { navigateToDeckCard(.pomodoro) }
-
-                youtubeDeckCard
-                    .frame(width: 175)
-                    .cardOverlayHint("YouTube")
-                    .deckCardEntrance(appeared: deckCardsAppeared, hovering: hoveringCard == 2, delay: 0.34)
-                    .zIndex(hoveringCard == 2 ? 1 : 0)
-                    .onHover { hoveringCard = $0 ? 2 : nil }
-                    .onTapGesture { navigateToDeckCard(.youtube) }
-            }
-            .scrollTargetLayout()
-            .padding(.horizontal, 4)
-        }
-        .scrollTargetBehavior(.viewAligned)
-        .scrollClipDisabled()
-        .frame(height: 220)
     }
 
     // MARK: - Focused: single card full-width
@@ -807,130 +1376,299 @@ struct NotchView: View {
         Group {
             switch state.activeDeckCard {
             case .media:
-                focusedCardShell { MediaControlView() }
+                MediaFocusedView()
             case .weather:
-                focusedCardShell {
-                    ZStack {
-                        WeatherParticleLite(weatherCode: weatherStore.weatherCode)
-                            .allowsHitTesting(false)
-                        weatherFocusedLayout
-                    }
-                }
+                WeatherFocusedView(weatherStore: weatherStore)
             case .calendar:
-                focusedCardShell { CalendarDeckCard() }
+                focusedCardShell(accentTop: Color(red: 0.22, green: 0.08, blue: 0.15)) { CalendarFocusedView() }
             case .pomodoro:
-                focusedCardShell { PomodoroDeckCard() }
+                focusedCardShell(accentTop: Color(red: 0.22, green: 0.16, blue: 0.04)) { PomodoroFocusedView() }
             case .clipboard:
-                focusedCardShell { ClipboardDeckCard() }
+                focusedCardShell(accentTop: Color(red: 0.08, green: 0.15, blue: 0.25)) { ClipboardFocusedView() }
+            case .fileShelf:
+                focusedCardShell(accentTop: .orange) { FileShelfDeckCard() }
             case .youtube:
-                focusedCardShell { youtubeFocusedContent }
+                youtubeFocusedContent
             case .home:
                 EmptyView()
             }
         }
         .frame(maxWidth: .infinity)
-        .frame(height: 220)
+        .frame(height: focusedHeightForCard(state.activeDeckCard))
+        .clipped()
     }
 
-    private func focusedCardShell<Content: View>(@ViewBuilder content: () -> Content) -> some View {
+    private func focusedCardShell<Content: View>(accentTop: Color = Color(red: 0.15, green: 0.15, blue: 0.18), @ViewBuilder content: () -> Content) -> some View {
         content()
-            .padding(16)
-            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-            .background(RoundedRectangle(cornerRadius: 18, style: .continuous).fill(Color(white: 0.17)))
-            .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
-            .overlay(RoundedRectangle(cornerRadius: 18, style: .continuous)
-                .strokeBorder(Color.white.opacity(0.12), lineWidth: 1.0))
+            .frame(maxWidth: .infinity, alignment: .topLeading)
     }
 
-    private var weatherFocusedLayout: some View {
-        HStack(spacing: 24) {
-            VStack(alignment: .leading, spacing: 6) {
-                HStack(alignment: .center, spacing: 8) {
-                    Text(weatherStore.temperatureText)
-                        .font(.system(size: 48, weight: .bold, design: .rounded))
-                        .foregroundStyle(.white)
-                        .monospacedDigit()
-                    Image(systemName: weatherStore.symbolName)
-                        .font(.system(size: 36, weight: .medium))
-                        .foregroundStyle(weatherIconColor)
-                        .symbolRenderingMode(.hierarchical)
-                }
-                Text(weatherStore.conditionText)
-                    .font(.system(size: 14, weight: .medium))
-                    .foregroundStyle(.white.opacity(0.7))
-                HStack(spacing: 4) {
-                    Image(systemName: "location.fill")
-                        .font(.system(size: 9, weight: .medium))
-                        .foregroundStyle(.white.opacity(0.4))
-                    Text(weatherStore.cityName)
-                        .font(.system(size: 11, weight: .medium))
-                        .foregroundStyle(.white.opacity(0.5))
-                        .lineLimit(1)
-                }
-            }
-            Spacer(minLength: 0)
-            if let hi = weatherStore.highTemp, let lo = weatherStore.lowTemp {
-                VStack(spacing: 12) {
-                    VStack(spacing: 2) {
-                        Text("HIGH").font(.system(size: 8, weight: .bold)).foregroundStyle(.white.opacity(0.3)).tracking(1)
-                        Text(hi).font(.system(size: 20, weight: .bold, design: .rounded)).foregroundStyle(.orange)
+    // MARK: - YouTube Recently Played helpers
+
+    @ViewBuilder
+    private var recentlyPlayedRows: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text("RECENTLY PLAYED")
+                .font(.system(size: 7, weight: .bold))
+                .foregroundStyle(.white.opacity(0.25))
+                .tracking(1)
+            VStack(spacing: 3) {
+                ForEach(youtubeHistory.items.prefix(3)) { item in
+                    Button(action: { openInlineVideo(item.videoID) }) {
+                        HStack(spacing: 7) {
+                            AsyncImage(url: YouTubeURLParser.thumbnailURL(for: item.videoID, quality: .default)) { phase in
+                                if case .success(let img) = phase { img.resizable().aspectRatio(contentMode: .fill) }
+                                else { Rectangle().fill(Color.red.opacity(0.12)) }
+                            }
+                            .frame(width: 34, height: 20)
+                            .clipShape(RoundedRectangle(cornerRadius: 4))
+                            Text(item.videoID)
+                                .font(.system(size: 9, weight: .medium))
+                                .foregroundStyle(.white.opacity(0.5))
+                                .lineLimit(1)
+                            Spacer()
+                            Image(systemName: "play.fill")
+                                .font(.system(size: 7))
+                                .foregroundStyle(.white.opacity(0.25))
+                        }
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 4)
+                        .background(.white.opacity(0.04), in: RoundedRectangle(cornerRadius: 6))
                     }
-                    VStack(spacing: 2) {
-                        Text("LOW").font(.system(size: 8, weight: .bold)).foregroundStyle(.white.opacity(0.3)).tracking(1)
-                        Text(lo).font(.system(size: 20, weight: .bold, design: .rounded)).foregroundStyle(.cyan)
-                    }
+                    .buttonStyle(.plain)
                 }
             }
         }
     }
 
     @ViewBuilder
-    private var youtubeFocusedContent: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            HStack(spacing: 8) {
-                ZStack {
-                    RoundedRectangle(cornerRadius: 5, style: .continuous).fill(Color.red).frame(width: 26, height: 18)
-                    Image(systemName: "play.fill").font(.system(size: 8, weight: .heavy)).foregroundStyle(.white)
-                }
-                Text("YouTube").font(.system(size: 15, weight: .bold)).foregroundStyle(.white)
-                Spacer(minLength: 0)
-            }
-            HStack(spacing: 6) {
-                Image(systemName: "magnifyingglass").font(.system(size: 11, weight: .medium)).foregroundStyle(.white.opacity(0.4))
-                TextField("Search or paste URL…", text: $youtubeURLInput)
-                    .textFieldStyle(.plain).font(.system(size: 11, weight: .medium)).foregroundStyle(.white)
-                    .onSubmit { handleYouTubeInputSubmit() }
-            }
-            .padding(.horizontal, 12).padding(.vertical, 8)
-            .background(RoundedRectangle(cornerRadius: 10, style: .continuous).fill(Color(white: 0.12)))
-            HStack(spacing: 10) {
-                Button(action: handleBrowseOrPlay) {
-                    HStack(spacing: 5) {
-                        Image(systemName: "play.fill").font(.system(size: 10, weight: .bold))
-                        Text("Browse YouTube").font(.system(size: 12, weight: .semibold))
-                    }
-                    .foregroundStyle(.white).frame(maxWidth: .infinity).padding(.vertical, 10)
-                    .background(Capsule(style: .continuous).fill(Color.red))
-                }
-                .buttonStyle(.plain)
-                if clipboardYouTubeURL != nil {
-                    Button(action: pasteClipboardYouTubeURL) {
-                        HStack(spacing: 5) {
-                            Image(systemName: "doc.on.clipboard").font(.system(size: 10, weight: .bold))
-                            Text("Paste & Play").font(.system(size: 12, weight: .semibold))
+    private var recentlyPlayedPanel: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text("RECENTLY PLAYED")
+                .font(.system(size: 7, weight: .bold))
+                .foregroundStyle(.white.opacity(0.25))
+                .tracking(1)
+            VStack(spacing: 4) {
+                ForEach(youtubeHistory.items) { item in
+                    Button(action: { openInlineVideo(item.videoID) }) {
+                        HStack(spacing: 8) {
+                            AsyncImage(url: YouTubeURLParser.thumbnailURL(for: item.videoID, quality: .default)) { phase in
+                                if case .success(let img) = phase { img.resizable().aspectRatio(contentMode: .fill) }
+                                else { Rectangle().fill(Color.red.opacity(0.12)) }
+                            }
+                            .frame(width: 48, height: 27)
+                            .clipShape(RoundedRectangle(cornerRadius: 5))
+                            Text(item.videoID)
+                                .font(.system(size: 9, weight: .medium))
+                                .foregroundStyle(.white.opacity(0.55))
+                                .lineLimit(1)
+                                .truncationMode(.middle)
+                            Spacer()
                         }
-                        .foregroundStyle(.red).frame(maxWidth: .infinity).padding(.vertical, 9)
-                        .background(Capsule(style: .continuous).strokeBorder(Color.red.opacity(0.6), lineWidth: 1.2))
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 5)
+                        .background(.white.opacity(0.05), in: RoundedRectangle(cornerRadius: 7))
+                        .overlay(RoundedRectangle(cornerRadius: 7).strokeBorder(.white.opacity(0.07), lineWidth: 0.5))
                     }
                     .buttonStyle(.plain)
                 }
             }
-            if let err = youtubeInputError {
-                Text(err).font(.system(size: 10, weight: .medium)).foregroundStyle(.red.opacity(0.9))
-            }
         }
+        .frame(width: 170)
+        .transition(.opacity.combined(with: .scale(scale: 0.95, anchor: .trailing)))
     }
 
+    private var youtubeFocusedContent: some View {
+        HStack(alignment: .top, spacing: 20) {
+            // Left: input + actions
+            VStack(alignment: .leading, spacing: 12) {
+                // Header
+                HStack(spacing: 8) {
+                    Image(systemName: "play.rectangle.fill")
+                        .font(.system(size: 18, weight: .semibold))
+                        .foregroundStyle(NotchDesign.red)
+                    Text("YouTube")
+                        .font(.system(size: 18, weight: .bold))
+                        .foregroundStyle(NotchDesign.textPrimary)
+                    Spacer()
+                }
+
+                // Input field
+                HStack(spacing: 10) {
+                    Image(systemName: "magnifyingglass")
+                        .font(.system(size: 14, weight: .medium))
+                        .foregroundStyle(NotchDesign.textSecondary)
+                    TextField("Paste YouTube URL or video ID...", text: $youtubeURLInput)
+                        .textFieldStyle(.plain)
+                        .font(.system(size: 13, weight: .medium))
+                        .foregroundStyle(NotchDesign.textPrimary)
+                        .onSubmit { handleYouTubeInputSubmit() }
+                    if !youtubeURLInput.isEmpty {
+                        Button(action: { youtubeURLInput = ""; youtubeInputError = nil }) {
+                            Image(systemName: "xmark.circle.fill")
+                                .font(.system(size: 13))
+                                .foregroundStyle(NotchDesign.textSecondary)
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
+                .padding(.horizontal, 14)
+                .frame(height: 40)
+                .background(
+                    RoundedRectangle(cornerRadius: 12, style: .continuous)
+                        .fill(NotchDesign.elevated)
+                )
+                .overlay(
+                    RoundedRectangle(cornerRadius: 12, style: .continuous)
+                        .strokeBorder(NotchDesign.borderSubtle, lineWidth: 1)
+                )
+
+                if let err = youtubeInputError {
+                    Text(err)
+                        .font(.system(size: 11, weight: .medium))
+                        .foregroundStyle(NotchDesign.red.opacity(0.8))
+                }
+
+                // Thumbnail preview
+                if let previewID = youtubePreviewVideoID {
+                    AsyncImage(url: YouTubeURLParser.thumbnailURL(for: previewID, quality: .high)) { phase in
+                        switch phase {
+                        case .success(let img):
+                            img.resizable().aspectRatio(contentMode: .fill)
+                        default:
+                            ZStack {
+                                Rectangle().fill(NotchDesign.red.opacity(0.08))
+                                ProgressView().tint(.white.opacity(0.5))
+                            }
+                        }
+                    }
+                    .frame(maxWidth: .infinity)
+                    .frame(height: 90)
+                    .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+                    .overlay(RoundedRectangle(cornerRadius: 10).strokeBorder(NotchDesign.borderSubtle, lineWidth: 0.5))
+                }
+
+                // Action buttons
+                HStack(spacing: 10) {
+                    Button(action: handleBrowseOrPlay) {
+                        HStack(spacing: 6) {
+                            Image(systemName: youtubeDraftRequest != nil ? "play.fill" : "globe")
+                                .font(.system(size: 12, weight: .semibold))
+                            Text(youtubeDraftRequest != nil ? "Play Video" : "Browse")
+                                .font(.system(size: 13, weight: .semibold))
+                        }
+                        .foregroundStyle(.white)
+                        .frame(height: 36)
+                        .padding(.horizontal, 18)
+                        .background(
+                            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                                .fill(NotchDesign.red)
+                        )
+                    }
+                    .buttonStyle(.plain)
+
+                    if let _ = clipboardYouTubeURL, youtubeURLInput.isEmpty {
+                        Button(action: { pasteClipboardYouTubeURL(); handleBrowseOrPlay() }) {
+                            HStack(spacing: 5) {
+                                Image(systemName: "doc.on.clipboard")
+                                    .font(.system(size: 11, weight: .medium))
+                                Text("Paste & Play")
+                                    .font(.system(size: 12, weight: .semibold))
+                            }
+                            .foregroundStyle(NotchDesign.red)
+                            .frame(height: 36)
+                            .padding(.horizontal, 14)
+                            .background(
+                                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                                    .fill(NotchDesign.red.opacity(0.12))
+                            )
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                                    .strokeBorder(NotchDesign.red.opacity(0.25), lineWidth: 0.5)
+                            )
+                        }
+                        .buttonStyle(.plain)
+                        .transition(.opacity.combined(with: .scale(scale: 0.95)))
+                    }
+
+                    if !youtubeURLInput.isEmpty {
+                        Button(action: openYouTubeInputInSafari) {
+                            HStack(spacing: 4) {
+                                Image(systemName: "safari")
+                                    .font(.system(size: 11, weight: .medium))
+                                Text("Safari")
+                                    .font(.system(size: 12, weight: .medium))
+                            }
+                            .foregroundStyle(NotchDesign.blue)
+                            .frame(height: 36)
+                            .padding(.horizontal, 14)
+                            .background(
+                                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                                    .fill(NotchDesign.blue.opacity(0.1))
+                            )
+                        }
+                        .buttonStyle(.plain)
+                    }
+
+                    Spacer(minLength: 0)
+                }
+            }
+            .frame(maxWidth: .infinity)
+
+            // Right: recently played panel
+            if !youtubeHistory.items.isEmpty {
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("RECENTLY PLAYED")
+                        .font(.system(size: 10, weight: .bold))
+                        .foregroundStyle(NotchDesign.textTertiary)
+                        .tracking(0.8)
+
+                    VStack(spacing: 6) {
+                        ForEach(youtubeHistory.items.prefix(3)) { item in
+                            Button(action: { openInlineVideo(item.videoID) }) {
+                                HStack(spacing: 8) {
+                                    AsyncImage(url: YouTubeURLParser.thumbnailURL(for: item.videoID, quality: .default)) { phase in
+                                        if case .success(let img) = phase {
+                                            img.resizable().aspectRatio(contentMode: .fill)
+                                        } else {
+                                            RoundedRectangle(cornerRadius: 4, style: .continuous)
+                                                .fill(NotchDesign.red.opacity(0.12))
+                                        }
+                                    }
+                                    .frame(width: 52, height: 30)
+                                    .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
+
+                                    Text(item.videoID)
+                                        .font(.system(size: 11, weight: .medium))
+                                        .foregroundStyle(NotchDesign.textMuted)
+                                        .lineLimit(1)
+                                        .truncationMode(.middle)
+
+                                    Spacer(minLength: 0)
+
+                                    Image(systemName: "play.circle.fill")
+                                        .font(.system(size: 14))
+                                        .foregroundStyle(NotchDesign.textSecondary)
+                                }
+                                .padding(8)
+                                .background(
+                                    RoundedRectangle(cornerRadius: 10, style: .continuous)
+                                        .fill(NotchDesign.elevated)
+                                )
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 10, style: .continuous)
+                                        .strokeBorder(NotchDesign.borderSubtle, lineWidth: 0.5)
+                                )
+                            }
+                            .buttonStyle(.plain)
+                        }
+                    }
+                }
+                .frame(width: 200)
+            }
+        }
+        .padding(20)
+    }
     private func navigateToDeckCard(_ card: NotchDeckCard) {
         withAnimation(.spring(duration: 0.4, bounce: 0.2)) {
             state.activeDeckCard = card
@@ -938,177 +1676,114 @@ struct NotchView: View {
     }
 
     private var deckHeader: some View {
-        VStack(spacing: 6) {
-            HStack(spacing: 8) {
-                // Left: breadcrumb nav
-                if state.activeDeckCard == .home {
-                    HStack(spacing: 4) {
-                        Image(systemName: "house.fill")
-                            .font(.system(size: 10, weight: .semibold))
-                        Text("Home")
-                            .font(.system(size: 11, weight: .semibold))
-                    }
-                    .foregroundStyle(.white.opacity(0.4))
+        HStack(spacing: 0) {
+            // Left: Home icon + label + separator + nav icons
+            HStack(spacing: 2) {
+                navHeaderButton(systemName: "house.fill", card: .home)
 
-                    if state.showYouTubePrompt, state.detectedYouTubeURL != nil {
-                        Button(action: playDetectedVideo) {
-                            HStack(spacing: 3) {
-                                Image(systemName: "play.fill")
-                                    .font(.system(size: 7, weight: .bold))
-                                Text("Copied URL")
-                                    .font(.system(size: 9, weight: .semibold))
-                            }
-                            .foregroundStyle(.white.opacity(0.8))
-                            .padding(.horizontal, 8)
-                            .padding(.vertical, 4)
-                            .background(Capsule(style: .continuous).fill(Color.red.opacity(0.45)))
-                        }
-                        .buttonStyle(.plain)
-                        .transition(.opacity.combined(with: .scale(scale: 0.96)))
-                    }
-                } else {
-                    // Back button
-                    Button(action: { navigateToDeckCard(.home) }) {
-                        HStack(spacing: 4) {
-                            Image(systemName: "chevron.left")
-                                .font(.system(size: 10, weight: .bold))
-                            Text("Home")
-                                .font(.system(size: 11, weight: .medium))
-                        }
-                        .foregroundStyle(.white.opacity(0.65))
-                        .padding(.horizontal, 8)
-                        .padding(.vertical, 3)
-                        .background(Capsule(style: .continuous).fill(Color.white.opacity(0.08)))
-                    }
-                    .buttonStyle(.plain)
+                // Thin separator
+                Rectangle()
+                    .fill(NotchDesign.borderSubtle)
+                    .frame(width: 1, height: 18)
+                    .padding(.horizontal, 4)
 
-                    Text(state.activeDeckCard.title)
-                        .font(.system(size: 12, weight: .semibold))
-                        .foregroundStyle(.white.opacity(0.85))
-                        .transition(.opacity)
+                if youtubeEnabled { navHeaderButton(systemName: "play.rectangle.fill", card: .youtube) }
+                navHeaderButton(systemName: "music.note", card: .media)
+                if weatherEnabled { navHeaderButton(systemName: "cloud.sun.fill", card: .weather) }
+                if calendarEnabled { navHeaderButton(systemName: "calendar", card: .calendar) }
+                if pomodoroEnabled { pomodoroNavButton }
+                if clipboardEnabled { navHeaderButton(systemName: "doc.on.clipboard", card: .clipboard) }
+            }
+            .padding(4)
+            .background(NotchDesign.elevated.opacity(0.6), in: Capsule())
+            .overlay(Capsule().strokeBorder(NotchDesign.borderSubtle, lineWidth: 0.5))
+
+            Spacer()
+
+            // Right: Time + gear + collapse
+            HStack(spacing: 10) {
+                Text(Self.formatHeaderTime(Date()))
+                    .font(.system(size: 12, weight: .medium, design: .rounded))
+                    .foregroundStyle(NotchDesign.textSecondary)
+                    .monospacedDigit()
+
+                Button(action: { SettingsWindowController.shared.showSettings() }) {
+                    Image(systemName: "gearshape")
+                        .font(.system(size: 12, weight: .medium))
+                        .foregroundStyle(NotchDesign.textSecondary)
+                        .frame(width: 28, height: 28)
+                        .background(NotchDesign.elevated.opacity(0.6), in: Circle())
+                        .overlay(Circle().strokeBorder(NotchDesign.borderSubtle, lineWidth: 0.5))
                 }
+                .buttonStyle(.plain)
 
-                Spacer(minLength: 0)
-
-                // Right: time + gear + close
-                TimelineView(.periodic(from: .now, by: 60)) { context in
-                    Text(Self.formatHeaderTime(context.date))
-                        .font(.system(size: 11, weight: .medium, design: .rounded))
-                        .foregroundStyle(.white.opacity(0.4))
-                        .monospacedDigit()
+                Button(action: {
+                    withAnimation(.spring(duration: 0.45, bounce: 0.3)) {
+                        state.isExpanded = false
+                        isClickExpanded = false
+                        state.hud = .none
+                    }
+                }) {
+                    Image(systemName: "chevron.up")
+                        .font(.system(size: 10, weight: .bold))
+                        .foregroundStyle(NotchDesign.textSecondary)
+                        .frame(width: 28, height: 28)
+                        .background(NotchDesign.elevated.opacity(0.6), in: Circle())
+                        .overlay(Circle().strokeBorder(NotchDesign.borderSubtle, lineWidth: 0.5))
                 }
+                .buttonStyle(.plain)
+            }
+        }
+        .padding(.horizontal, 20)
+        .frame(height: 42)
+    }
 
-                HStack(spacing: 4) {
-                    Button(action: { SettingsWindowController.shared.showSettings() }) {
-                        Image(systemName: "gearshape.fill")
-                            .font(.system(size: 10, weight: .medium))
-                            .foregroundStyle(.white.opacity(gearHovered ? 0.8 : 0.5))
-                            .frame(width: 26, height: 26)
-                            .background(Color.white.opacity(gearHovered ? 0.12 : 0.06), in: Circle())
-                            .animation(.easeInOut(duration: 0.2), value: gearHovered)
-                    }
-                    .buttonStyle(.plain)
-                    .onHover { gearHovered = $0 }
+    private func navHeaderButton(systemName: String, card: NotchDeckCard) -> some View {
+        let isActive = state.activeDeckCard == card
+        return Button(action: { navigateToDeckCard(card) }) {
+            Image(systemName: systemName)
+                .font(.system(size: 13, weight: .medium))
+                .frame(width: 34, height: 28)
+                .background(isActive ? Color.white.opacity(0.12) : Color.clear, in: Capsule())
+                .foregroundStyle(isActive ? Color.white : Color.white.opacity(0.38))
+                .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .animation(.spring(duration: 0.25, bounce: 0.3), value: isActive)
+    }
 
-                    Button(action: collapseExpandedDeck) {
-                        Image(systemName: "chevron.up")
-                            .font(.system(size: 10, weight: .bold))
-                            .foregroundStyle(.white.opacity(chevronHovered ? 0.9 : 0.65))
-                            .frame(width: 26, height: 26)
-                            .background(Color.white.opacity(chevronHovered ? 0.14 : 0.07), in: Circle())
-                            .animation(.easeInOut(duration: 0.2), value: chevronHovered)
-                    }
-                    .buttonStyle(.plain)
-                    .onHover { chevronHovered = $0 }
+    @ObservedObject private var pomodoroTimerForNav = PomodoroTimer.shared
+
+    private var pomodoroNavButton: some View {
+        let isActive = state.activeDeckCard == .pomodoro
+        let isTimerRunning = pomodoroTimerForNav.isRunning
+        return Button(action: { navigateToDeckCard(.pomodoro) }) {
+            ZStack(alignment: .topTrailing) {
+                Image(systemName: "timer")
+                    .font(.system(size: 13, weight: .medium))
+                    .frame(width: 34, height: 28)
+                    .background(isActive ? Color.white.opacity(0.12) : Color.clear, in: Capsule())
+                    .foregroundStyle(isTimerRunning ? NotchDesign.orange : (isActive ? Color.white : Color.white.opacity(0.38)))
+
+                if isTimerRunning {
+                    Circle()
+                        .fill(NotchDesign.orange)
+                        .frame(width: 6, height: 6)
+                        .shadow(color: NotchDesign.orange.opacity(0.8), radius: 3)
+                        .offset(x: -2, y: 2)
                 }
             }
-            .animation(.easeInOut(duration: 0.2), value: state.activeDeckCard)
-
-            // Separator
-            Rectangle()
-                .fill(Color.white.opacity(0.06))
-                .frame(height: 0.5)
+            .contentShape(Rectangle())
         }
+        .buttonStyle(.plain)
+        .animation(.spring(duration: 0.25, bounce: 0.3), value: isActive)
+        .animation(.easeInOut(duration: 0.3), value: isTimerRunning)
     }
 
     private static func formatHeaderTime(_ date: Date) -> String {
         let formatter = DateFormatter()
-        formatter.timeStyle = .short
+        formatter.dateFormat = "h:mm a"
         return formatter.string(from: date)
-    }
-
-    // MARK: - Compact Now Playing Card (left)
-
-    @State private var npEmptyPulse = false
-    @State private var npEmptyGlowPulse = false
-
-    private var nowPlayingDeckCard: some View {
-        notchDeckCard(cardIndex: 0) {
-            if !MediaRemoteController.shared.nowPlayingInfo.title.isEmpty {
-                CompactNowPlayingCard()
-                    .transition(.opacity)
-                    .animation(.easeInOut(duration: 0.3), value: MediaRemoteController.shared.nowPlayingInfo.title)
-            } else {
-                // Enhanced empty state
-                VStack(spacing: 8) {
-                    // "Now Playing" header
-                    HStack {
-                        Text("Now Playing")
-                            .font(.system(size: 12, weight: .bold))
-                            .foregroundStyle(.white.opacity(0.7))
-                        Spacer()
-                    }
-
-                    Spacer(minLength: 0)
-
-                    // Large music note with purple glow
-                    ZStack {
-                        Image(systemName: "music.note")
-                            .font(.system(size: 28, weight: .medium))
-                            .foregroundStyle(.purple.opacity(0.35))
-                            .blur(radius: 10)
-                            .scaleEffect(npEmptyGlowPulse ? 1.4 : 1.0)
-                            .opacity(npEmptyGlowPulse ? 0.5 : 0.25)
-
-                        Image(systemName: "music.note")
-                            .font(.system(size: 28, weight: .medium))
-                            .foregroundStyle(.white.opacity(npEmptyPulse ? 0.4 : 0.2))
-                            .scaleEffect(npEmptyPulse ? 1.05 : 0.95)
-                    }
-
-                    Text("Play music to see controls here")
-                        .font(.system(size: 10, weight: .medium))
-                        .foregroundStyle(.white.opacity(0.35))
-                        .multilineTextAlignment(.center)
-
-                    Spacer(minLength: 0)
-
-                    // Small app icons row
-                    HStack(spacing: 12) {
-                        Spacer()
-                        Image(systemName: "beats.headphones")
-                            .font(.system(size: 12, weight: .medium))
-                            .foregroundStyle(.white.opacity(0.2))
-                        Image(systemName: "music.note")
-                            .font(.system(size: 12, weight: .medium))
-                            .foregroundStyle(.white.opacity(0.2))
-                        Image(systemName: "waveform")
-                            .font(.system(size: 12, weight: .medium))
-                            .foregroundStyle(.white.opacity(0.2))
-                        Spacer()
-                    }
-                }
-                .frame(maxWidth: .infinity)
-                .onAppear {
-                    withAnimation(.easeInOut(duration: 2.0).repeatForever(autoreverses: true)) {
-                        npEmptyPulse = true
-                    }
-                    withAnimation(.easeInOut(duration: 2.5).repeatForever(autoreverses: true)) {
-                        npEmptyGlowPulse = true
-                    }
-                }
-            }
-        }
     }
 
     // MARK: - Compact Weather Card (center)
@@ -1144,236 +1819,18 @@ struct NotchView: View {
         }
     }
 
-    @State private var weatherIconBob: Bool = false
-    @State private var weatherTempAppeared: Bool = false
-    @State private var weatherGlowPulse: Bool = false
-
-    private var weatherDeckCard: some View {
-        notchDeckCard(cardIndex: 1) {
-            VStack(alignment: .leading, spacing: 4) {
-                    // Temperature + animated weather icon
-                    HStack(alignment: .center, spacing: 6) {
-                        Text(weatherStore.temperatureText)
-                            .font(.system(size: 28, weight: .bold, design: .rounded))
-                            .foregroundStyle(.white)
-                            .monospacedDigit()
-                            .contentTransition(.numericText(value: Double(weatherStore.temperatureText.dropLast().description) ?? 0))
-                            .scaleEffect(weatherTempAppeared ? 1.0 : 0.7)
-                            .opacity(weatherTempAppeared ? 1.0 : 0.0)
-                            .animation(.spring(duration: 0.5, bounce: 0.3), value: weatherTempAppeared)
-
-                        // Weather icon
-                        Image(systemName: weatherStore.symbolName)
-                            .font(.system(size: 22, weight: .semibold))
-                            .foregroundStyle(weatherIconColor)
-                            .symbolRenderingMode(.hierarchical)
-                    }
-
-                    // Condition text with slide-in
-                    Text(weatherStore.conditionText)
-                        .font(.system(size: 11, weight: .medium))
-                        .foregroundStyle(.white.opacity(0.55))
-                        .lineLimit(1)
-                        .id(weatherStore.conditionText)
-                        .transition(.asymmetric(
-                            insertion: .opacity.combined(with: .move(edge: .bottom)),
-                            removal: .opacity
-                        ))
-
-                    // Hi/Lo with color coding
-                    if let hi = weatherStore.highTemp, let lo = weatherStore.lowTemp {
-                        HStack(spacing: 8) {
-                            HStack(spacing: 2) {
-                                Image(systemName: "arrow.up")
-                                    .font(.system(size: 8, weight: .bold))
-                                    .foregroundStyle(.orange.opacity(0.7))
-                                Text(hi)
-                                    .font(.system(size: 10, weight: .semibold, design: .rounded))
-                                    .foregroundStyle(.orange.opacity(0.6))
-                            }
-                            HStack(spacing: 2) {
-                                Image(systemName: "arrow.down")
-                                    .font(.system(size: 8, weight: .bold))
-                                    .foregroundStyle(.cyan.opacity(0.6))
-                                Text(lo)
-                                    .font(.system(size: 10, weight: .semibold, design: .rounded))
-                                    .foregroundStyle(.cyan.opacity(0.5))
-                            }
-                        }
-                    }
-
-                    Spacer(minLength: 0)
-
-                    // Location with animated pin
-                    HStack(spacing: 3) {
-                        Image(systemName: "location.fill")
-                            .font(.system(size: 7, weight: .medium))
-                            .foregroundStyle(.white.opacity(0.4))
-                        Text(weatherStore.cityName)
-                            .font(.system(size: 10, weight: .medium))
-                            .foregroundStyle(.white.opacity(0.45))
-                            .lineLimit(1)
-                            .truncationMode(.tail)
-                    }
-            }
-            .animation(.easeInOut(duration: 0.5), value: weatherStore.temperatureText)
-            .animation(.easeInOut(duration: 0.5), value: weatherStore.conditionText)
-            .onAppear {
-                weatherTempAppeared = true
-            }
-            .onDisappear {
-                weatherTempAppeared = false
-            }
-        }
-    }
-
-    // MARK: - Compact YouTube Card (right)
-
-    @State private var ytPlayPressed = false
-    @State private var ytPastePressed = false
-    @State private var ytGlowPulse = false
-
-    private var youtubeDeckCard: some View {
-        notchDeckCard(cardIndex: 2) {
-            VStack(alignment: .leading, spacing: 10) {
-                // YouTube header — large logo + title + subtitle with red glow
-                HStack(spacing: 8) {
-                    ZStack {
-                        // Subtle red glow behind logo
-                        RoundedRectangle(cornerRadius: 6, style: .continuous)
-                            .fill(Color.red.opacity(ytGlowPulse ? 0.35 : 0.2))
-                            .frame(width: 30, height: 22)
-                            .blur(radius: 8)
-
-                        // YouTube logo: red rounded rect with white play triangle
-                        ZStack {
-                            RoundedRectangle(cornerRadius: 5, style: .continuous)
-                                .fill(Color.red)
-                                .frame(width: 22, height: 15)
-                            Image(systemName: "play.fill")
-                                .font(.system(size: 7, weight: .heavy))
-                                .foregroundStyle(.white)
-                        }
-                    }
-
-                    VStack(alignment: .leading, spacing: 1) {
-                        Text("YouTube")
-                            .font(.system(size: 13, weight: .bold))
-                            .foregroundStyle(.white)
-                        Text("Watch videos in your notch")
-                            .font(.system(size: 9, weight: .medium))
-                            .foregroundStyle(.white.opacity(0.45))
-                    }
-                }
-                .onAppear {
-                    withAnimation(.easeInOut(duration: 2.0).repeatForever(autoreverses: true)) {
-                        ytGlowPulse = true
-                    }
-                }
-
-                // Search / URL text field with magnifying glass prefix
-                HStack(spacing: 6) {
-                    Image(systemName: "magnifyingglass")
-                        .font(.system(size: 10, weight: .medium))
-                        .foregroundStyle(.white.opacity(0.4))
-                    TextField("Search or paste URL\u{2026}", text: $youtubeURLInput)
-                        .textFieldStyle(.plain)
-                        .font(.system(size: 10, weight: .medium))
-                        .foregroundStyle(.white)
-                }
-                .padding(.horizontal, 10)
-                .padding(.vertical, 7)
-                .background(
-                    RoundedRectangle(cornerRadius: 10, style: .continuous)
-                        .fill(Color(white: 0.14))
-                )
-                .onSubmit { handleYouTubeInputSubmit() }
-
-                // Primary Browse button — YouTube red
-                Button(action: handleBrowseOrPlay) {
-                    HStack(spacing: 5) {
-                        Image(systemName: "play.fill")
-                            .font(.system(size: 9, weight: .bold))
-                        Text("Browse")
-                            .font(.system(size: 11, weight: .semibold))
-                    }
-                    .foregroundStyle(.white)
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 8)
-                    .background(Capsule(style: .continuous).fill(Color.red))
-                    .scaleEffect(ytPlayPressed ? 0.94 : 1.0)
-                }
-                .buttonStyle(.plain)
-                .onLongPressGesture(minimumDuration: .infinity, pressing: { pressing in
-                    withAnimation(.spring(duration: 0.2, bounce: 0.3)) { ytPlayPressed = pressing }
-                }, perform: {})
-
-                // Paste & Play — full width, red outline, appears when clipboard has YT URL
-                if clipboardYouTubeURL != nil {
-                    Button(action: pasteClipboardYouTubeURL) {
-                        HStack(spacing: 5) {
-                            Text("\u{25B6}")
-                                .font(.system(size: 9, weight: .bold))
-                            Text("Paste & Play")
-                                .font(.system(size: 11, weight: .semibold))
-                        }
-                        .foregroundStyle(Color.red)
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 7)
-                        .background(
-                            Capsule(style: .continuous)
-                                .strokeBorder(Color.red.opacity(0.6), lineWidth: 1.2)
-                        )
-                        .scaleEffect(ytPastePressed ? 0.94 : 1.0)
-                    }
-                    .buttonStyle(.plain)
-                    .onLongPressGesture(minimumDuration: .infinity, pressing: { pressing in
-                        withAnimation(.spring(duration: 0.2, bounce: 0.3)) { ytPastePressed = pressing }
-                    }, perform: {})
-                }
-
-                if let youtubeInputError {
-                    Text(youtubeInputError)
-                        .font(.system(size: 9, weight: .medium))
-                        .foregroundStyle(.red.opacity(0.9))
-                        .lineLimit(1)
-                }
-            }
-        }
-    }
-
-    // MARK: - Calendar Deck Card
-
-    private var calendarDeckCard: some View {
-        notchDeckCard(cardIndex: 3) {
-            CalendarDeckCard()
-        }
-    }
-
-    // MARK: - Pomodoro Deck Card
-
-    private var pomodoroDeckCard: some View {
-        notchDeckCard(cardIndex: 4) {
-            PomodoroDeckCard()
-        }
-    }
-
-    private func notchDeckCard<Content: View>(cardIndex: Int = -1, @ViewBuilder content: () -> Content) -> some View {
+    private func notchDeckCard<Content: View>(cardIndex: Int = -1, accentTop: Color = Color(red: 0.067, green: 0.067, blue: 0.067), @ViewBuilder content: () -> Content) -> some View {
         content()
-            .padding(14)
+            .padding(16)
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+            .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
             .background(
-                RoundedRectangle(cornerRadius: 18, style: .continuous)
-                    .fill(Color(white: 0.17))
-            )
-            .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
-            .overlay(
-                RoundedRectangle(cornerRadius: 18, style: .continuous)
-                    .strokeBorder(
-                        Color.white.opacity(hoveringCard == cardIndex ? 0.20 : 0.10),
-                        lineWidth: 1.0
-                    )
-                    .animation(.easeInOut(duration: 0.2), value: hoveringCard)
+                TopNotchSurfaceCard(
+                    accent: accentTop,
+                    isHighlighted: hoveringCard == cardIndex,
+                    isFocused: false,
+                    cornerRadius: 20
+                )
             )
     }
 
@@ -1392,29 +1849,36 @@ struct NotchView: View {
         withAnimation(.spring(duration: 0.35, bounce: 0.2)) {
             state.showYouTubePrompt = false
             state.isExpanded = false
+            isClickExpanded = false
             state.hud = .none
         }
     }
 
     private func playDetectedVideo() {
         guard let url = state.detectedYouTubeURL,
-              let videoID = YouTubeURLParser.extractVideoID(from: url) else {
+              let request = YouTubeURLParser.playbackRequest(from: url) else {
             return
         }
 
-        youtubeURLInput = url
+        youtubeURLInput = request.canonicalURL?.absoluteString ?? url
         youtubeInputError = nil
-        openInlineVideo(videoID)
+        openInlineVideo(request.videoID, startTime: request.startTime)
     }
 
     private func pasteClipboardYouTubeURL() {
-        guard let clipboardYouTubeURL else { return }
-        youtubeURLInput = clipboardYouTubeURL
+        guard let clipboardYouTubeURL,
+              let request = YouTubeURLParser.playbackRequest(from: clipboardYouTubeURL) else { return }
+        youtubeURLInput = request.canonicalURL?.absoluteString ?? clipboardYouTubeURL
         youtubeInputError = nil
     }
 
     private func prefillYouTubeInputIfPossible() {
-        if youtubeURLInput.isEmpty, let clipboardYouTubeURL {
+        guard youtubeURLInput.isEmpty else { return }
+        // Prefer the detected URL (survives clipboard changes) over current clipboard
+        if let detected = state.detectedYouTubeURL,
+           YouTubeURLParser.extractVideoID(from: detected) != nil {
+            youtubeURLInput = detected
+        } else if let clipboardYouTubeURL {
             youtubeURLInput = clipboardYouTubeURL
         }
     }
@@ -1426,17 +1890,22 @@ struct NotchView: View {
             return
         }
 
-        guard let videoID = YouTubeURLParser.extractVideoID(from: trimmed) else {
+        guard let request = YouTubeURLParser.playbackRequest(from: trimmed) else {
             youtubeInputError = "That does not look like a valid YouTube URL."
             return
         }
 
+        youtubeURLInput = request.canonicalURL?.absoluteString ?? trimmed
         youtubeInputError = nil
-        openInlineVideo(videoID)
+        openInlineVideo(request.videoID, startTime: request.startTime)
     }
 
-    private func openInlineVideo(_ videoID: String) {
+    private func openInlineVideo(_ videoID: String, startTime: Int = 0) {
         guard YouTubeURLParser.isValidVideoID(videoID) else { return }
+
+        youtubeHistory.add(videoID: videoID)
+        state.inlineYouTubeStartTime = startTime
+        state.inlineYouTubeMinimized = false
 
         withAnimation(.spring(duration: 0.45, bounce: 0.3)) {
             state.activeDeckCard = .youtube
@@ -1449,34 +1918,59 @@ struct NotchView: View {
 
     private func handleYouTubeInputSubmit() {
         let trimmed = youtubeURLInput.trimmingCharacters(in: .whitespacesAndNewlines)
-        if trimmed.isEmpty {
-            openBrowseYouTube()
-            return
-        }
-        if let videoID = YouTubeURLParser.extractVideoID(from: trimmed) {
+        guard !trimmed.isEmpty else { return }
+        if let request = YouTubeURLParser.playbackRequest(from: trimmed) {
+            youtubeURLInput = request.canonicalURL?.absoluteString ?? trimmed
             youtubeInputError = nil
-            openInlineVideo(videoID)
+            openInlineVideo(request.videoID, startTime: request.startTime)
         } else {
-            openBrowseYouTube()
+            youtubeInputError = "Paste a YouTube video URL to play."
         }
     }
 
     private func handleBrowseOrPlay() {
         let trimmed = youtubeURLInput.trimmingCharacters(in: .whitespacesAndNewlines)
-        if !trimmed.isEmpty, let videoID = YouTubeURLParser.extractVideoID(from: trimmed) {
+        if !trimmed.isEmpty, let request = YouTubeURLParser.playbackRequest(from: trimmed) {
+            youtubeURLInput = request.canonicalURL?.absoluteString ?? trimmed
             youtubeInputError = nil
-            openInlineVideo(videoID)
+            openInlineVideo(request.videoID, startTime: request.startTime)
+        } else if !trimmed.isEmpty {
+            youtubeInputError = "Paste a YouTube video URL to play."
         } else {
-            openBrowseYouTube()
+            // Input is empty — try to use detected URL or clipboard before navigating
+            if let detected = state.detectedYouTubeURL,
+               let request = YouTubeURLParser.playbackRequest(from: detected) {
+                youtubeURLInput = request.canonicalURL?.absoluteString ?? detected
+                youtubeInputError = nil
+                openInlineVideo(request.videoID, startTime: request.startTime)
+            } else if let clip = clipboardYouTubeURL,
+                      let request = YouTubeURLParser.playbackRequest(from: clip) {
+                youtubeURLInput = request.canonicalURL?.absoluteString ?? clip
+                youtubeInputError = nil
+                openInlineVideo(request.videoID, startTime: request.startTime)
+            } else {
+                // No URL available — navigate to focused YouTube view for URL input
+                navigateToDeckCard(.youtube)
+            }
         }
     }
 
-    private func openBrowseYouTube() {
-        withAnimation(.spring(duration: 0.45, bounce: 0.3)) {
-            state.activeDeckCard = .youtube
-            state.isShowingInlineBrowser = true
-            state.showYouTubePrompt = false
-            state.isExpanded = true
+    private func openYouTubeInputInSafari() {
+        let trimmed = youtubeURLInput.trimmingCharacters(in: .whitespacesAndNewlines)
+
+        if let request = YouTubeURLParser.playbackRequest(from: trimmed),
+           let url = request.canonicalURL {
+            NSWorkspace.shared.open(url)
+            return
+        }
+
+        if let url = URL(string: trimmed), !trimmed.isEmpty {
+            NSWorkspace.shared.open(url)
+            return
+        }
+
+        if let url = URL(string: "https://www.youtube.com") {
+            NSWorkspace.shared.open(url)
         }
     }
 
@@ -1492,7 +1986,7 @@ struct NotchView: View {
 
     // Paging helpers removed — deck is now a fixed 3-column layout
 
-    // mediaDeckSubtitle removed — media card is now compact nowPlayingDeckCard
+
 
     private func animateAudioLevels() {
         withAnimation(.easeInOut(duration: 0.1)) {
@@ -1521,2427 +2015,47 @@ struct NotchShape: Shape {
     }
 
     func path(in rect: CGRect) -> Path {
+        // Use the larger radius so the shape is a proper pill / rounded rectangle
+        // topRadius controls top corners, bottomRadius controls bottom corners
+        let tR = min(topRadius, rect.width / 2, rect.height / 2)
+        let bR = min(bottomRadius, rect.width / 2, rect.height / 2)
+
         var path = Path()
-        path.move(to: CGPoint(x: 0, y: 0))
-        path.addLine(to: CGPoint(x: 0, y: rect.height - bottomRadius))
-        path.addQuadCurve(to: CGPoint(x: bottomRadius, y: rect.height), control: CGPoint(x: 0, y: rect.height))
-        path.addLine(to: CGPoint(x: rect.width - bottomRadius, y: rect.height))
-        path.addQuadCurve(to: CGPoint(x: rect.width, y: rect.height - bottomRadius), control: CGPoint(x: rect.width, y: rect.height))
-        path.addLine(to: CGPoint(x: rect.width, y: 0))
+        // Top-left corner
+        path.move(to: CGPoint(x: tR, y: 0))
+        // Top edge
+        path.addLine(to: CGPoint(x: rect.width - tR, y: 0))
+        // Top-right corner
+        path.addQuadCurve(
+            to: CGPoint(x: rect.width, y: tR),
+            control: CGPoint(x: rect.width, y: 0)
+        )
+        // Right edge
+        path.addLine(to: CGPoint(x: rect.width, y: rect.height - bR))
+        // Bottom-right corner
+        path.addQuadCurve(
+            to: CGPoint(x: rect.width - bR, y: rect.height),
+            control: CGPoint(x: rect.width, y: rect.height)
+        )
+        // Bottom edge
+        path.addLine(to: CGPoint(x: bR, y: rect.height))
+        // Bottom-left corner
+        path.addQuadCurve(
+            to: CGPoint(x: 0, y: rect.height - bR),
+            control: CGPoint(x: 0, y: rect.height)
+        )
+        // Left edge
+        path.addLine(to: CGPoint(x: 0, y: tR))
+        // Top-left corner
+        path.addQuadCurve(
+            to: CGPoint(x: tR, y: 0),
+            control: CGPoint(x: 0, y: 0)
+        )
         path.closeSubpath()
         return path
     }
 }
 
-struct NotchInlineYouTubePlayerView: View {
-    @ObservedObject var notchState: NotchState
-    let videoID: String
-
-    @StateObject private var playerState = YouTubePlayerState()
-    @StateObject private var playerController = YouTubePlayerController()
-    @State private var resizeStartWidth: CGFloat?
-    @State private var isHoveringResizeHandle = false
-    @State private var isHoveringChrome = false
-
-    private let minWidth: CGFloat = 360
-    private let maxWidth: CGFloat = 960
-    private let aspectRatio: CGFloat = 16.0 / 9.0
-
-    var body: some View {
-        VStack(spacing: 8) {
-            HStack(spacing: 10) {
-                HStack(spacing: 8) {
-                    Circle()
-                        .fill(Color.red.opacity(0.95))
-                        .frame(width: 8, height: 8)
-                    Text("YouTube")
-                        .font(.system(size: 12, weight: .semibold))
-                        .foregroundStyle(.white)
-                    Text("Pinned")
-                        .font(.system(size: 11, weight: .medium))
-                        .foregroundStyle(.white.opacity(0.55))
-                }
-
-                Spacer(minLength: 8)
-
-                Button(action: closePlayer) {
-                    Image(systemName: "xmark")
-                        .font(.system(size: 10, weight: .bold))
-                        .foregroundStyle(.white.opacity(0.9))
-                        .frame(width: 22, height: 22)
-                        .background(.white.opacity(isHoveringChrome ? 0.12 : 0.08), in: Circle())
-                }
-                .buttonStyle(.plain)
-                .help("Close video")
-            }
-            .padding(.horizontal, 12)
-            .padding(.top, 12)
-
-            VideoPlayerContentView(
-                videoID: videoID,
-                playerState: playerState,
-                playerController: playerController,
-                onClose: closePlayer
-            )
-            .frame(width: notchState.youtubePlayerWidth, height: notchState.youtubePlayerHeight)
-            .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
-            .overlay(alignment: .bottomTrailing) {
-                ZStack(alignment: .bottomTrailing) {
-                    RoundedRectangle(cornerRadius: 12, style: .continuous)
-                        .fill(.black.opacity(isHoveringResizeHandle ? 0.88 : 0.72))
-                        .frame(width: 34, height: 34)
-                        .overlay {
-                            Image(systemName: "arrow.up.left.and.arrow.down.right")
-                                .font(.system(size: 12, weight: .bold))
-                                .foregroundStyle(.white)
-                        }
-                        .overlay(alignment: .topLeading) {
-                            Path { path in
-                                path.move(to: CGPoint(x: 0, y: 12))
-                                path.addLine(to: CGPoint(x: 12, y: 0))
-                            }
-                            .stroke(.white.opacity(0.28), lineWidth: 1)
-                        }
-                        .shadow(color: .black.opacity(0.35), radius: 10, y: 4)
-                        .padding(.trailing, 8)
-                        .padding(.bottom, 8)
-                }
-                .frame(width: 56, height: 56, alignment: .bottomTrailing)
-                .contentShape(Rectangle())
-                .gesture(resizeGesture)
-                .onHover { hovering in
-                    isHoveringResizeHandle = hovering
-                }
-            }
-            .padding(.horizontal, 12)
-            .padding(.bottom, 12)
-        }
-        .background(
-            RoundedRectangle(cornerRadius: 22, style: .continuous)
-                .fill(
-                    LinearGradient(
-                        colors: [Color.black.opacity(0.96), Color(red: 0.08, green: 0.08, blue: 0.1)],
-                        startPoint: .top,
-                        endPoint: .bottom
-                    )
-                )
-        )
-        .overlay {
-            RoundedRectangle(cornerRadius: 22, style: .continuous)
-                .strokeBorder(.white.opacity(0.08), lineWidth: 1)
-        }
-        .shadow(color: .black.opacity(0.32), radius: 20, y: 10)
-        .onHover { hovering in
-            isHoveringChrome = hovering
-        }
-        .frame(maxWidth: .infinity)
-        .onAppear {
-            notchState.isExpanded = true
-            playerState.loadVideo(id: videoID)
-        }
-        .onChange(of: videoID) { _, newValue in
-            playerState.loadVideo(id: newValue)
-        }
-    }
-
-    private var resizeGesture: some Gesture {
-        DragGesture(minimumDistance: 0)
-            .onChanged { value in
-                if resizeStartWidth == nil {
-                    resizeStartWidth = notchState.youtubePlayerWidth
-                }
-
-                let baseWidth = resizeStartWidth ?? notchState.youtubePlayerWidth
-                let widthDelta = max(value.translation.width, value.translation.height * aspectRatio)
-                let newWidth = min(max(baseWidth + widthDelta, minWidth), maxWidth)
-
-                notchState.youtubePlayerWidth = newWidth
-                notchState.youtubePlayerHeight = newWidth / aspectRatio
-            }
-            .onEnded { _ in
-                resizeStartWidth = nil
-            }
-    }
-
-    private func closePlayer() {
-        playerController.pause()
-        playerState.reset()
-        withAnimation(.spring(duration: 0.4, bounce: 0.2)) {
-            notchState.isShowingInlineYouTubePlayer = false
-            notchState.inlineYouTubeVideoID = nil
-            notchState.activeDeckCard = .youtube
-            if !notchState.isHovered {
-                notchState.isExpanded = false
-            }
-        }
-    }
-}
-
-private extension NotchDeckCard {
-    var title: String {
-        switch self {
-        case .home: return "Home"
-        case .weather: return "Weather"
-        case .youtube: return "YouTube"
-        case .media: return "Media"
-        case .pomodoro: return "Focus"
-        case .clipboard: return "Clipboard"
-        case .calendar: return "Calendar"
-        }
-    }
-
-    var iconName: String {
-        switch self {
-        case .home: return "sparkles"
-        case .weather: return "cloud.sun.fill"
-        case .youtube: return "play.rectangle.fill"
-        case .media: return "music.note"
-        case .pomodoro: return "timer"
-        case .clipboard: return "doc.on.clipboard"
-        case .calendar: return "calendar"
-        }
-    }
-}
-
-@MainActor
-final class NotchWeatherStore: ObservableObject {
-    @Published var cityName = "San Francisco"
-    @Published var temperatureText = "--°"
-    @Published var conditionText = "Enter a city to load weather"
-    @Published var symbolName = "cloud.sun.fill"
-    @Published var isLoading = false
-    @Published var highTemp: String?
-    @Published var lowTemp: String?
-    @Published var weatherCode: Int = -1
-    @AppStorage("weatherUnit") private var weatherUnit = "celsius"
-
-    private var lastLoadedCity = ""
-
-    var hasWeather: Bool {
-        temperatureText != "--°"
-    }
-
-    func load(city: String, force: Bool = false) async {
-        let trimmedCity = city.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !trimmedCity.isEmpty else {
-            temperatureText = "--°"
-            conditionText = "Enter a city to load weather"
-            symbolName = "cloud.sun.fill"
-            return
-        }
-
-        if !force && trimmedCity.caseInsensitiveCompare(lastLoadedCity) == .orderedSame {
-            return
-        }
-
-        isLoading = true
-        defer { isLoading = false }
-
-        do {
-            let encodedCity = trimmedCity.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? trimmedCity
-            let geocodeURL = URL(string: "https://geocoding-api.open-meteo.com/v1/search?name=\(encodedCity)&count=1&language=en&format=json")!
-            let (geocodeData, _) = try await URLSession.shared.data(from: geocodeURL)
-            let geocodeResponse = try JSONDecoder().decode(OpenMeteoGeocodeResponse.self, from: geocodeData)
-
-            guard let result = geocodeResponse.results?.first else {
-                conditionText = "City not found"
-                temperatureText = "--°"
-                symbolName = "mappin.slash"
-                return
-            }
-
-            cityName = [result.name, result.admin1, result.country]
-                .compactMap { $0 }
-                .joined(separator: ", ")
-
-            let unitParam = weatherUnit == "fahrenheit" ? "&temperature_unit=fahrenheit" : ""
-            let weatherURL = URL(string: "https://api.open-meteo.com/v1/forecast?latitude=\(result.latitude)&longitude=\(result.longitude)&current=temperature_2m,weather_code&daily=temperature_2m_max,temperature_2m_min\(unitParam)&timezone=auto&forecast_days=1")!
-            let (weatherData, _) = try await URLSession.shared.data(from: weatherURL)
-            let weatherResponse = try JSONDecoder().decode(OpenMeteoWeatherResponse.self, from: weatherData)
-
-            temperatureText = "\(Int(weatherResponse.current.temperature_2m.rounded()))°"
-            conditionText = Self.conditionDescription(for: weatherResponse.current.weather_code)
-            symbolName = Self.symbolName(for: weatherResponse.current.weather_code)
-            weatherCode = weatherResponse.current.weather_code
-            if let daily = weatherResponse.daily,
-               let maxTemps = daily.temperature_2m_max, let maxT = maxTemps.first,
-               let minTemps = daily.temperature_2m_min, let minT = minTemps.first {
-                highTemp = "\(Int(maxT.rounded()))°"
-                lowTemp = "\(Int(minT.rounded()))°"
-            }
-            lastLoadedCity = trimmedCity
-        } catch {
-            conditionText = "Weather unavailable"
-            temperatureText = "--°"
-            symbolName = "wifi.exclamationmark"
-        }
-    }
-
-    private static func conditionDescription(for code: Int) -> String {
-        switch code {
-        case 0: return "Clear sky"
-        case 1, 2, 3: return "Partly cloudy"
-        case 45, 48: return "Fog"
-        case 51, 53, 55, 56, 57: return "Drizzle"
-        case 61, 63, 65, 66, 67: return "Rain"
-        case 71, 73, 75, 77: return "Snow"
-        case 80, 81, 82: return "Rain showers"
-        case 85, 86: return "Snow showers"
-        case 95, 96, 99: return "Thunderstorm"
-        default: return "Conditions updating"
-        }
-    }
-
-    private static func symbolName(for code: Int) -> String {
-        switch code {
-        case 0: return "sun.max.fill"
-        case 1, 2, 3: return "cloud.sun.fill"
-        case 45, 48: return "cloud.fog.fill"
-        case 51, 53, 55, 56, 57: return "cloud.drizzle.fill"
-        case 61, 63, 65, 66, 67, 80, 81, 82: return "cloud.rain.fill"
-        case 71, 73, 75, 77, 85, 86: return "cloud.snow.fill"
-        case 95, 96, 99: return "cloud.bolt.rain.fill"
-        default: return "cloud.fill"
-        }
-    }
-}
-
-private struct OpenMeteoGeocodeResponse: Decodable {
-    let results: [OpenMeteoGeocodeResult]?
-}
-
-private struct OpenMeteoGeocodeResult: Decodable {
-    let name: String
-    let latitude: Double
-    let longitude: Double
-    let admin1: String?
-    let country: String?
-}
-
-private struct OpenMeteoWeatherResponse: Decodable {
-    let current: OpenMeteoCurrentWeather
-    let daily: OpenMeteoDailyWeather?
-}
-
-private struct OpenMeteoCurrentWeather: Decodable {
-    let temperature_2m: Double
-    let weather_code: Int
-}
-
-private struct OpenMeteoDailyWeather: Decodable {
-    let temperature_2m_max: [Double]?
-    let temperature_2m_min: [Double]?
-}
-
-struct LockIconView: View {
-    @State private var isPulsing = false
-
-    var body: some View {
-        ZStack {
-            Circle().fill(Color.orange.opacity(0.25)).frame(width: 24, height: 24)
-                .scaleEffect(isPulsing ? 1.6 : 1.0).opacity(isPulsing ? 0.0 : 0.7)
-            Image(systemName: "lock.fill").font(.system(size: 14, weight: .bold))
-                .foregroundStyle(.orange).shadow(color: .orange.opacity(0.9), radius: isPulsing ? 8 : 4)
-        }
-        .onAppear { withAnimation(.easeInOut(duration: 1.0).repeatForever(autoreverses: true)) { isPulsing = true } }
-    }
-}
-
-struct LockPulsingDot: View {
-    @State private var isPulsing = false
-
-    var body: some View {
-        ZStack {
-            Circle().stroke(Color.orange.opacity(0.6), lineWidth: 2).frame(width: 18, height: 18)
-                .scaleEffect(isPulsing ? 1.6 : 1.0).opacity(isPulsing ? 0.0 : 0.9)
-            Circle().fill(Color.orange).frame(width: 8, height: 8).shadow(color: .orange, radius: 4)
-        }
-        .onAppear { withAnimation(.easeOut(duration: 1.0).repeatForever(autoreverses: false)) { isPulsing = true } }
-    }
-}
-
-struct ChargingIndicator: View {
-    let level: Int
-    @State private var isAnimating = false
-
-    private var batteryColor: Color {
-        if level <= 20 { return .red }
-        if level <= 50 { return .orange }
-        return .green
-    }
-
-    var body: some View {
-        HStack(spacing: 4) {
-            ZStack(alignment: .leading) {
-                RoundedRectangle(cornerRadius: 2).stroke(batteryColor, lineWidth: 1).frame(width: 20, height: 10)
-                RoundedRectangle(cornerRadius: 1).fill(batteryColor).frame(width: max(2, 16 * CGFloat(level) / 100), height: 6).padding(.leading, 2)
-            }
-            Image(systemName: "bolt.fill").font(.system(size: 8, weight: .bold)).foregroundStyle(batteryColor)
-                .opacity(isAnimating ? 1 : 0.5).scaleEffect(isAnimating ? 1.1 : 0.9)
-        }
-        .onAppear { withAnimation(.easeInOut(duration: 0.6).repeatForever(autoreverses: true)) { isAnimating = true } }
-    }
-}
-
-struct BatteryBarView: View {
-    let level: Int
-    let isCharging: Bool
-    @State private var animatedLevel: CGFloat = 0
-    @State private var pulseAnimation = false
-
-    private var color: Color {
-        if level <= 20 { return .red }
-        if level <= 50 { return .orange }
-        return .green
-    }
-
-    var body: some View {
-        HStack(spacing: 2) {
-            ForEach(0..<10, id: \.self) { i in
-                RoundedRectangle(cornerRadius: 2)
-                    .fill(CGFloat(i) < animatedLevel / 10 ? color : Color.white.opacity(0.15))
-                    .frame(width: 4, height: 18)
-                    .scaleEffect(y: isCharging && pulseAnimation && CGFloat(i) < animatedLevel / 10 ? 1.1 : 1.0)
-            }
-        }
-        .onAppear {
-            withAnimation(.spring(duration: 0.6)) { animatedLevel = CGFloat(level) }
-            if isCharging { withAnimation(.easeInOut(duration: 0.8).repeatForever(autoreverses: true)) { pulseAnimation = true } }
-        }
-    }
-}
-
-struct CalendarWidgetView: View {
-    private let calendar = Calendar.current
-    private var currentDay: Int { calendar.component(.day, from: Date()) }
-    private var currentWeekday: String {
-        let f = DateFormatter(); f.dateFormat = "EEE"
-        return f.string(from: Date()).uppercased()
-    }
-    private var currentMonth: String {
-        let f = DateFormatter(); f.dateFormat = "MMM"
-        return f.string(from: Date()).uppercased()
-    }
-    private var currentYear: String {
-        let f = DateFormatter(); f.dateFormat = "yyyy"
-        return f.string(from: Date())
-    }
-    private var timeString: String {
-        let f = DateFormatter(); f.dateFormat = "HH:mm"
-        return f.string(from: Date())
-    }
-
-    var body: some View {
-        HStack(spacing: 0) {
-            HStack(spacing: 12) {
-                ZStack {
-                    RoundedRectangle(cornerRadius: 12)
-                        .fill(LinearGradient(colors: [Color(red: 1.0, green: 0.4, blue: 0.2), Color(red: 1.0, green: 0.2, blue: 0.4)], startPoint: .topLeading, endPoint: .bottomTrailing))
-                        .frame(width: 44, height: 44)
-                    Text("\(currentDay)").font(.system(size: 22, weight: .bold, design: .rounded)).foregroundStyle(.white)
-                }
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(currentWeekday).font(.system(size: 11, weight: .bold, design: .rounded)).foregroundStyle(.white.opacity(0.9))
-                    Text("\(currentMonth) \(currentYear)").font(.system(size: 10, weight: .medium)).foregroundStyle(.white.opacity(0.5))
-                }
-            }
-            .fixedSize()
-            Spacer()
-            HStack(spacing: 6) {
-                ForEach(0..<7, id: \.self) { index in
-                    let dayOfWeek = calendar.component(.weekday, from: Date())
-                    let adjustedIndex = (index + 2) % 7
-                    let isToday = (dayOfWeek - 1) == adjustedIndex || (dayOfWeek == 1 && index == 6)
-                    Circle()
-                        .fill(isToday ?
-                            AnyShapeStyle(LinearGradient(colors: [Color(red: 1.0, green: 0.4, blue: 0.2), Color(red: 1.0, green: 0.2, blue: 0.4)], startPoint: .top, endPoint: .bottom)) :
-                            AnyShapeStyle(Color.white.opacity(index < dayOfWeek - 1 || (dayOfWeek == 1 && index < 6) ? 0.4 : 0.15)))
-                        .frame(width: isToday ? 8 : 5, height: isToday ? 8 : 5)
-                }
-            }
-            Spacer()
-            Text(timeString).font(.system(size: 28, weight: .bold, design: .rounded)).foregroundStyle(.white).monospacedDigit().fixedSize()
-        }
-        .padding(.horizontal, 8)
-    }
-}
-
-struct ProgressBarVolumeHUD: View {
-    let level: CGFloat
-    let muted: Bool
-    @AppStorage("volumeShowPercent") private var showPercent = true
-
-    private var volumeIcon: String {
-        if muted { return "speaker.slash.fill" }
-        if level < 0.33 { return "speaker.wave.1.fill" }
-        if level < 0.66 { return "speaker.wave.2.fill" }
-        return "speaker.wave.3.fill"
-    }
-
-    var body: some View {
-        HStack(spacing: 12) {
-            Image(systemName: volumeIcon).font(.system(size: 18, weight: .medium)).foregroundStyle(muted ? .gray : .white).frame(width: 24)
-            GeometryReader { geo in
-                ZStack(alignment: .leading) {
-                    Capsule().fill(Color.white.opacity(0.2)).frame(height: 6)
-                    Capsule().fill(muted ? Color.gray : Color.white).frame(width: max(6, geo.size.width * level), height: 6)
-                }
-            }
-            .frame(height: 6)
-            if showPercent {
-                Text("\(Int(level * 100))%").font(.system(size: 14, weight: .bold, design: .rounded))
-                    .foregroundStyle(muted ? .gray : .white).monospacedDigit().frame(width: 44, alignment: .trailing)
-            }
-        }
-    }
-}
-
-struct ProgressBarBrightnessHUD: View {
-    let level: CGFloat
-    @AppStorage("brightnessShowPercent") private var showPercent = true
-
-    var body: some View {
-        HStack(spacing: 12) {
-            Image(systemName: "sun.max.fill").font(.system(size: 18, weight: .medium)).foregroundStyle(.yellow).frame(width: 24)
-            GeometryReader { geo in
-                ZStack(alignment: .leading) {
-                    Capsule().fill(Color.yellow.opacity(0.2)).frame(height: 6)
-                    Capsule().fill(Color.yellow).frame(width: max(6, geo.size.width * level), height: 6)
-                }
-            }
-            .frame(height: 6)
-            if showPercent {
-                Text("\(Int(level * 100))%").font(.system(size: 14, weight: .bold, design: .rounded))
-                    .foregroundStyle(.yellow).monospacedDigit().frame(width: 44, alignment: .trailing)
-            }
-        }
-    }
-}
-
-struct NotchedVolumeHUD: View {
-    let level: CGFloat
-    let muted: Bool
-
-    private var volumeIcon: String {
-        if muted { return "speaker.slash.fill" }
-        if level < 0.33 { return "speaker.wave.1.fill" }
-        if level < 0.66 { return "speaker.wave.2.fill" }
-        return "speaker.wave.3.fill"
-    }
-
-    var body: some View {
-        HStack(spacing: 12) {
-            Image(systemName: volumeIcon).font(.system(size: 18, weight: .medium)).foregroundStyle(muted ? .gray : .white).frame(width: 24)
-            HStack(spacing: 3) {
-                ForEach(0..<16, id: \.self) { i in
-                    RoundedRectangle(cornerRadius: 2)
-                        .fill(CGFloat(i) < level * 16 ? (muted ? Color.gray : Color.white) : Color.white.opacity(0.15))
-                        .frame(width: 6, height: 16)
-                }
-            }
-            Text("\(Int(level * 100))%").font(.system(size: 14, weight: .bold, design: .rounded))
-                .foregroundStyle(muted ? .gray : .white).monospacedDigit().frame(width: 44, alignment: .trailing)
-        }
-    }
-}
-
-struct NotchedBrightnessHUD: View {
-    let level: CGFloat
-
-    var body: some View {
-        HStack(spacing: 12) {
-            Image(systemName: "sun.max.fill").font(.system(size: 18, weight: .medium)).foregroundStyle(.yellow).frame(width: 24)
-            HStack(spacing: 3) {
-                ForEach(0..<16, id: \.self) { i in
-                    RoundedRectangle(cornerRadius: 2)
-                        .fill(CGFloat(i) < level * 16 ? Color.yellow : Color.yellow.opacity(0.15))
-                        .frame(width: 6, height: 16)
-                }
-            }
-            Text("\(Int(level * 100))%").font(.system(size: 14, weight: .bold, design: .rounded))
-                .foregroundStyle(.yellow).monospacedDigit().frame(width: 44, alignment: .trailing)
-        }
-    }
-}
-
-// MARK: - Animated Weather Particles
-
-struct WeatherParticleView: View {
-    let weatherCode: Int
-
-    @State private var particles: [WeatherParticle] = []
-    @State private var animationTimer: Timer?
-
-    private var particleConfig: (emoji: String, count: Int, speed: ClosedRange<Double>)? {
-        switch weatherCode {
-        case 51, 53, 55, 56, 57: return ("💧", 6, 1.5...2.5) // drizzle
-        case 61, 63, 65, 66, 67, 80, 81, 82: return ("🌧", 8, 1.0...2.0) // rain
-        case 71, 73, 75, 77, 85, 86: return ("❄️", 7, 2.0...3.5) // snow
-        case 95, 96, 99: return ("⚡", 4, 0.8...1.5) // thunderstorm
-        case 0: return ("✨", 3, 3.0...5.0) // clear - subtle sparkles
-        default: return nil
-        }
-    }
-
-    var body: some View {
-        GeometryReader { geo in
-            ZStack {
-                ForEach(particles) { particle in
-                    Text(particle.symbol)
-                        .font(.system(size: particle.size))
-                        .opacity(particle.opacity)
-                        .position(x: particle.x * geo.size.width, y: particle.y * geo.size.height)
-                        .blur(radius: particle.blur)
-                }
-            }
-        }
-        .clipped()
-        .onAppear { startParticles() }
-        .onDisappear { stopParticles() }
-        .onChange(of: weatherCode) { _, _ in
-            particles.removeAll()
-            startParticles()
-        }
-    }
-
-    private func startParticles() {
-        guard let config = particleConfig else { return }
-        // Seed initial particles
-        for _ in 0..<config.count {
-            particles.append(WeatherParticle(
-                symbol: config.emoji,
-                x: CGFloat.random(in: 0...1),
-                y: CGFloat.random(in: 0...1),
-                size: CGFloat.random(in: 6...10),
-                opacity: Double.random(in: 0.15...0.4),
-                speed: Double.random(in: config.speed),
-                blur: CGFloat.random(in: 0...1)
-            ))
-        }
-
-        animationTimer = Timer.scheduledTimer(withTimeInterval: 0.05, repeats: true) { _ in
-            withAnimation(.linear(duration: 0.05)) {
-                for i in particles.indices {
-                    particles[i].y += CGFloat(0.05 / particles[i].speed)
-                    // Gentle horizontal drift
-                    particles[i].x += CGFloat.random(in: -0.003...0.003)
-                    // Reset when off-screen
-                    if particles[i].y > 1.1 {
-                        particles[i].y = -0.1
-                        particles[i].x = CGFloat.random(in: 0...1)
-                        particles[i].opacity = Double.random(in: 0.15...0.4)
-                    }
-                }
-            }
-        }
-    }
-
-    private func stopParticles() {
-        animationTimer?.invalidate()
-        animationTimer = nil
-    }
-}
-
-struct WeatherParticle: Identifiable {
-    let id = UUID()
-    var symbol: String
-    var x: CGFloat
-    var y: CGFloat
-    var size: CGFloat
-    var opacity: Double
-    var speed: Double
-    var blur: CGFloat
-}
-
-final class SettingsWindowController: NSObject, NSWindowDelegate {
-    static let shared = SettingsWindowController()
-    private var window: NSWindow?
-    private var hostingController: NSHostingController<SettingsView>?
-
-    func showSettings() {
-        if let window = window, window.isVisible {
-            window.makeKeyAndOrderFront(nil)
-            NSApp.activate(ignoringOtherApps: true)
-            return
-        }
-
-        let hostingController = NSHostingController(rootView: SettingsView())
-        self.hostingController = hostingController  // strong reference prevents dealloc
-        let window = NSWindow(contentViewController: hostingController)
-        window.title = "Top Notch Settings"
-        window.styleMask = [.titled, .closable, .miniaturizable, .resizable]
-        window.setContentSize(NSSize(width: 700, height: 500))
-        window.minSize = NSSize(width: 600, height: 450)
-        window.center()
-        window.delegate = self
-        window.makeKeyAndOrderFront(nil)
-        NSApp.activate(ignoringOtherApps: true)
-        self.window = window
-    }
-
-    func windowWillClose(_ notification: Notification) {
-        window = nil
-        hostingController = nil
-    }
-}
-
-struct SettingsView: View {
-    @State private var selectedTab: SettingsTab = .general
-
-    enum SettingsTab: String, CaseIterable {
-        case general = "General"
-        case appearance = "Appearance"
-        case volume = "Volume"
-        case brightness = "Brightness"
-        case battery = "Battery"
-        case weather = "Weather"
-        case music = "Music"
-        case youtube = "YouTube"
-        case browser = "Browser"
-        case pomodoro = "Focus Timer"
-        case calendar = "Calendar"
-        case about = "About"
-
-        var icon: String {
-            switch self {
-            case .general: return "gearshape.fill"
-            case .appearance: return "paintpalette.fill"
-            case .volume: return "speaker.wave.3.fill"
-            case .brightness: return "sun.max.fill"
-            case .battery: return "battery.100"
-            case .weather: return "cloud.sun.fill"
-            case .music: return "music.note"
-            case .youtube: return "play.rectangle.fill"
-            case .browser: return "globe"
-            case .pomodoro: return "timer"
-            case .calendar: return "calendar"
-            case .about: return "info.circle.fill"
-            }
-        }
-
-        var color: Color {
-            switch self {
-            case .general: return .gray
-            case .appearance: return .indigo
-            case .volume: return .blue
-            case .brightness: return .orange
-            case .battery: return .green
-            case .weather: return .cyan
-            case .music: return .pink
-            case .youtube: return .red
-            case .browser: return .blue
-            case .pomodoro: return .orange
-            case .calendar: return .red
-            case .about: return .purple
-            }
-        }
-    }
-
-    var body: some View {
-        NavigationSplitView {
-            VStack(spacing: 0) {
-                HStack {
-                    Image(systemName: "sparkles").font(.system(size: 20)).foregroundStyle(.purple)
-                    Text("Top Notch").font(.system(size: 16, weight: .bold))
-                }
-                .padding(.vertical, 16)
-                Divider()
-                List(SettingsTab.allCases, id: \.self, selection: $selectedTab) { tab in
-                    HStack(spacing: 12) {
-                        ZStack {
-                            RoundedRectangle(cornerRadius: 8).fill(tab.color.opacity(selectedTab == tab ? 0.25 : 0.15)).frame(width: 32, height: 32)
-                            Image(systemName: tab.icon).font(.system(size: 14, weight: .medium)).foregroundStyle(tab.color)
-                        }
-                        Text(tab.rawValue).font(.system(size: 14, weight: selectedTab == tab ? .semibold : .medium))
-                    }
-                    .padding(.vertical, 6)
-                    .scaleEffect(selectedTab == tab ? 1.02 : 1.0)
-                    .animation(.spring(duration: 0.25, bounce: 0.3), value: selectedTab)
-                }
-                .listStyle(.sidebar)
-            }
-            .navigationSplitViewColumnWidth(min: 180, ideal: 200)
-        } detail: {
-            Group {
-                switch selectedTab {
-                case .general: GeneralSettingsView()
-                case .appearance: AppearanceSettingsView()
-                case .volume: VolumeSettingsView()
-                case .brightness: BrightnessSettingsView()
-                case .battery: BatterySettingsView()
-                case .weather: WeatherSettingsView()
-                case .music: MusicSettingsView()
-                case .youtube: YouTubeSettingsView()
-                case .browser: BrowserSettingsView()
-                case .pomodoro: PomodoroSettingsView()
-                case .calendar: CalendarSettingsView()
-                case .about: AboutSettingsView()
-                }
-            }
-            .transition(.asymmetric(insertion: .opacity.combined(with: .move(edge: .trailing)), removal: .opacity))
-            .animation(.spring(duration: 0.3, bounce: 0.2), value: selectedTab)
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
-        }
-        .frame(width: 600, height: 450)
-    }
-}
-
-struct SettingsHeader: View {
-    let title: String
-    let subtitle: String
-    let icon: String
-    let color: Color
-    @State private var iconScale: CGFloat = 0.8
-
-    var body: some View {
-        HStack(spacing: 16) {
-            ZStack {
-                // Subtle glow behind the icon
-                RoundedRectangle(cornerRadius: 18).fill(color.opacity(0.12)).frame(width: 68, height: 68).blur(radius: 8)
-                RoundedRectangle(cornerRadius: 14).fill(color.opacity(0.15)).frame(width: 56, height: 56)
-                Image(systemName: icon).font(.system(size: 24, weight: .medium)).foregroundStyle(color)
-            }
-            .scaleEffect(iconScale)
-            .onAppear {
-                withAnimation(.spring(duration: 0.5, bounce: 0.35)) {
-                    iconScale = 1.0
-                }
-            }
-            VStack(alignment: .leading, spacing: 4) {
-                Text(title).font(.system(size: 22, weight: .bold))
-                Text(subtitle).font(.system(size: 13)).foregroundStyle(.secondary)
-            }
-            Spacer()
-        }
-        .padding(.bottom, 8)
-        .transition(.opacity.combined(with: .move(edge: .top)))
-    }
-}
-
-struct SettingsSection<Content: View>: View {
-    let title: String
-    @ViewBuilder let content: Content
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text(title).font(.system(size: 13, weight: .semibold)).foregroundStyle(.secondary).padding(.leading, 4)
-            VStack(spacing: 0) { content }
-                .background(Color(NSColor.controlBackgroundColor))
-                .cornerRadius(12)
-                .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(Color.white.opacity(0.05), lineWidth: 0.5))
-                .shadow(color: .black.opacity(0.1), radius: 4, y: 2)
-        }
-    }
-}
-
-struct SettingsToggleRow: View {
-    let title: String
-    let subtitle: String
-    let icon: String
-    let color: Color
-    @Binding var isOn: Bool
-    @State private var isHovering = false
-    @State private var iconBounce = false
-
-    var body: some View {
-        HStack(spacing: 14) {
-            ZStack {
-                RoundedRectangle(cornerRadius: 10).fill(color.opacity(0.15)).frame(width: 40, height: 40)
-                Image(systemName: icon).font(.system(size: 16, weight: .medium)).foregroundStyle(color)
-            }
-            .scaleEffect(iconBounce ? 1.1 : 1.0)
-            VStack(alignment: .leading, spacing: 2) {
-                Text(title).font(.system(size: 14, weight: .medium))
-                Text(subtitle).font(.system(size: 11)).foregroundStyle(.secondary)
-            }
-            Spacer()
-            Toggle("", isOn: $isOn).toggleStyle(.switch).labelsHidden()
-        }
-        .padding(.horizontal, 14)
-        .padding(.vertical, 10)
-        .background(Color.white.opacity(isHovering ? 0.03 : 0))
-        .cornerRadius(8)
-        .onHover { isHovering = $0 }
-        .onChange(of: isOn) { _ in
-            withAnimation(.spring(duration: 0.25, bounce: 0.4)) { iconBounce = true }
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) {
-                withAnimation(.spring(duration: 0.2)) { iconBounce = false }
-            }
-        }
-    }
-}
-
-struct SettingsPickerRow<T: Hashable>: View {
-    let title: String
-    let subtitle: String
-    let icon: String
-    let color: Color
-    @Binding var selection: T
-    let options: [(T, String)]
-
-    var body: some View {
-        HStack(spacing: 14) {
-            ZStack {
-                RoundedRectangle(cornerRadius: 10).fill(color.opacity(0.15)).frame(width: 40, height: 40)
-                Image(systemName: icon).font(.system(size: 16, weight: .medium)).foregroundStyle(color)
-            }
-            VStack(alignment: .leading, spacing: 2) {
-                Text(title).font(.system(size: 14, weight: .medium))
-                Text(subtitle).font(.system(size: 11)).foregroundStyle(.secondary)
-            }
-            Spacer()
-            Picker("", selection: $selection) {
-                ForEach(options, id: \.0) { option in Text(option.1).tag(option.0) }
-            }
-            .pickerStyle(.menu)
-            .frame(width: 100)
-        }
-        .padding(.horizontal, 14)
-        .padding(.vertical, 10)
-    }
-}
-
-struct GeneralSettingsView: View {
-    @AppStorage("expandOnHover") private var expandOnHover = true
-    @AppStorage("showHapticFeedback") private var showHapticFeedback = true
-    @AppStorage("autoCollapseDelay") private var autoCollapseDelay = 4.0
-    @AppStorage("launchAtLogin") private var launchAtLogin = false
-    @AppStorage("hideFromDock") private var hideFromDock = false
-    @AppStorage("unlockSoundEnabled") private var unlockSoundEnabled = true
-    @AppStorage("showLockIndicator") private var showLockIndicator = true
-    @State private var showResetConfirmation = false
-    @State private var resetHovering = false
-
-    private let generalAppVersion = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0"
-    private let generalBuildNumber = Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "1"
-
-    var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 20) {
-                SettingsHeader(title: "General", subtitle: "Basic app settings", icon: "gearshape.fill", color: .gray)
-
-                SettingsSection(title: "System") {
-                    SettingsToggleRow(title: "Launch at Login", subtitle: "Start Top Notch when you log in", icon: "power", color: .green, isOn: $launchAtLogin)
-                        .onChange(of: launchAtLogin) { _, newValue in LaunchAtLogin.setEnabled(newValue) }
-                    Divider().padding(.horizontal)
-                    SettingsToggleRow(title: "Hide from Dock", subtitle: hideFromDock ? "App is only accessible via the notch" : "Only show in menu bar area", icon: "dock.arrow.down.rectangle", color: .blue, isOn: $hideFromDock)
-                        .onChange(of: hideFromDock) { _, newValue in NSApp.setActivationPolicy(newValue ? .accessory : .regular) }
-                    if hideFromDock {
-                        HStack(spacing: 6) {
-                            Image(systemName: "exclamationmark.triangle.fill")
-                                .font(.system(size: 10))
-                                .foregroundStyle(.orange)
-                            Text("The app will only be accessible via the notch and right-click context menu. Use the context menu to open Settings or Quit.")
-                                .font(.system(size: 10))
-                                .foregroundStyle(.secondary)
-                        }
-                        .padding(.horizontal, 14)
-                        .padding(.bottom, 10)
-                    }
-                }
-
-                SettingsSection(title: "Lock Screen") {
-                    if AppBuildVariant.current.supportsLockScreenIndicators {
-                        SettingsToggleRow(title: "Lock Indicator", subtitle: "Show lock icon when screen is locked", icon: "lock.fill", color: .orange, isOn: $showLockIndicator)
-                        Divider().padding(.horizontal)
-                        SettingsToggleRow(title: "Unlock Sound", subtitle: "Play sound when screen unlocks", icon: "speaker.wave.2.fill", color: .green, isOn: $unlockSoundEnabled)
-                    } else {
-                        SettingsCompatibilityNote(
-                            title: "Not available in App Store build",
-                            message: "Lock screen indicators depend on private system integrations and are only enabled in the Direct build."
-                        )
-                    }
-                }
-
-                SettingsSection(title: "Behavior") {
-                    SettingsToggleRow(title: "Expand on Hover", subtitle: "Open menu when hovering over notch", icon: "cursorarrow.motionlines", color: .orange, isOn: $expandOnHover)
-                    Divider().padding(.horizontal)
-                    SettingsToggleRow(title: "Haptic Feedback", subtitle: "Vibration on interactions", icon: "hand.tap.fill", color: .purple, isOn: $showHapticFeedback)
-                    Divider().padding(.horizontal)
-                    SettingsPickerRow(title: "Auto Collapse", subtitle: "Time before menu closes", icon: "timer", color: .cyan, selection: $autoCollapseDelay, options: [(2.0, "2s"), (4.0, "4s"), (6.0, "6s"), (0.0, "Never")])
-                }
-
-                SettingsSection(title: "Keyboard Shortcuts") {
-                    VStack(alignment: .leading, spacing: 0) {
-                        ShortcutRow(keys: "⌘⇧Y", action: "Open YouTube in notch")
-                        Divider().padding(.horizontal)
-                        ShortcutRow(keys: "⌥Space", action: "Play / Pause media")
-                        Divider().padding(.horizontal)
-                        ShortcutRow(keys: "⌥←", action: "Previous track")
-                        Divider().padding(.horizontal)
-                        ShortcutRow(keys: "⌥→", action: "Next track")
-                    }
-                }
-
-                SettingsSection(title: "Danger Zone") {
-                    HStack {
-                        HStack(spacing: 12) {
-                            ZStack {
-                                RoundedRectangle(cornerRadius: 10)
-                                    .fill(Color.red.opacity(0.15))
-                                    .frame(width: 40, height: 40)
-                                Image(systemName: "arrow.counterclockwise")
-                                    .font(.system(size: 16, weight: .medium))
-                                    .foregroundStyle(.red)
-                            }
-                            VStack(alignment: .leading, spacing: 2) {
-                                Text("Reset All Settings")
-                                    .font(.system(size: 14, weight: .medium))
-                                Text("Restore every setting to factory defaults")
-                                    .font(.system(size: 11))
-                                    .foregroundStyle(.secondary)
-                            }
-                        }
-                        Spacer()
-                        Button(action: { showResetConfirmation = true }) {
-                            HStack(spacing: 6) {
-                                Image(systemName: "trash.fill")
-                                    .font(.system(size: 12))
-                                Text("Reset Everything")
-                                    .font(.system(size: 13, weight: .semibold))
-                            }
-                            .padding(.horizontal, 14)
-                            .padding(.vertical, 8)
-                            .background(
-                                RoundedRectangle(cornerRadius: 8)
-                                    .fill(resetHovering ? Color.red.opacity(0.9) : Color.red.opacity(0.75))
-                            )
-                            .foregroundStyle(.white)
-                        }
-                        .buttonStyle(.plain)
-                        .onHover { resetHovering = $0 }
-                        .alert("Reset All Settings?", isPresented: $showResetConfirmation) {
-                            Button("Cancel", role: .cancel) { }
-                            Button("Reset", role: .destructive) {
-                                resetAllSettings()
-                            }
-                        } message: {
-                            Text("This will restore all Top Notch settings to their default values. This cannot be undone.")
-                        }
-                    }
-                    .padding(.horizontal, 14)
-                    .padding(.vertical, 10)
-                }
-
-                // Version info footer
-                HStack {
-                    Spacer()
-                    VStack(spacing: 4) {
-                        Text("Top Notch v\(generalAppVersion) (\(generalBuildNumber))")
-                            .font(.system(size: 12, weight: .medium, design: .monospaced))
-                            .foregroundStyle(.secondary)
-                        Text("macOS \(ProcessInfo.processInfo.operatingSystemVersionString)")
-                            .font(.system(size: 11, design: .monospaced))
-                            .foregroundStyle(.tertiary)
-                    }
-                    Spacer()
-                }
-                .padding(.top, 4)
-
-                Spacer()
-            }
-            .padding(24)
-        }
-    }
-
-    private func resetAllSettings() {
-        let keys = [
-            "expandOnHover", "showHapticFeedback", "autoCollapseDelay",
-            "launchAtLogin", "hideFromDock", "unlockSoundEnabled",
-            "showLockIndicator", "hudDisplayMode", "showVolumeHUD",
-            "volumeShowPercent", "showBrightnessHUD", "brightnessShowPercent",
-            "showBatteryIndicator", "chargingSoundEnabled", "showMusicActivity",
-            "showMusicVisualizer", "youtubeAutoplay", "youtubeDefaultSize",
-            "youtubeRememberPosition", "youtubeDefaultQuality", "youtubePlaybackSpeed",
-            "youtubeClipboardDetection", "sponsorBlockEnabled", "returnDislikeEnabled",
-            "notchWeatherCity", "weatherUnit", "showWeatherCard",
-            "weatherRefreshInterval", "browserHomepage", "browserSearchEngine",
-            "browserMobileMode", "browserClearOnClose", "browserJavaScript",
-            "browserBlockPopups"
-        ]
-        for key in keys {
-            UserDefaults.standard.removeObject(forKey: key)
-        }
-        // Re-sync local @AppStorage bindings
-        expandOnHover = true
-        showHapticFeedback = true
-        autoCollapseDelay = 4.0
-        launchAtLogin = false
-        hideFromDock = false
-        unlockSoundEnabled = true
-        showLockIndicator = true
-        NSApp.setActivationPolicy(.regular)
-    }
-}
-
-struct ShortcutRow: View {
-    let keys: String
-    let action: String
-
-    var body: some View {
-        HStack {
-            Text(action)
-                .font(.system(size: 13, weight: .medium))
-            Spacer()
-            HStack(spacing: 4) {
-                ForEach(Array(keys.split(separator: " ").enumerated()), id: \.offset) { _, key in
-                    Text(key)
-                        .font(.system(size: 11, weight: .semibold, design: .rounded))
-                        .foregroundStyle(.primary)
-                        .padding(.horizontal, 7)
-                        .padding(.vertical, 4)
-                        .background(
-                            ZStack {
-                                RoundedRectangle(cornerRadius: 5, style: .continuous)
-                                    .fill(LinearGradient(colors: [Color.gray.opacity(0.2), Color.gray.opacity(0.1)], startPoint: .top, endPoint: .bottom))
-                                RoundedRectangle(cornerRadius: 5, style: .continuous)
-                                    .strokeBorder(Color.white.opacity(0.1), lineWidth: 0.5)
-                            }
-                        )
-                        .shadow(color: .black.opacity(0.2), radius: 1, y: 1)
-                }
-            }
-        }
-        .padding(.horizontal, 14)
-        .padding(.vertical, 8)
-    }
-}
-
-struct AppearanceSettingsView: View {
-    @AppStorage("hudDisplayMode") private var hudDisplayMode = "progressBar"
-    @State private var previewLevel: CGFloat = 0.65
-
-    var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 24) {
-                SettingsHeader(title: "Appearance", subtitle: "Customize how HUDs look", icon: "paintpalette.fill", color: .indigo)
-
-                SettingsSection(title: "HUD Display Mode") {
-                    VStack(spacing: 0) {
-                        ForEach(["minimal", "progressBar", "notched"], id: \.self) { mode in
-                            HUDModeRow(mode: mode, isSelected: hudDisplayMode == mode) {
-                                withAnimation(.spring(duration: 0.3, bounce: 0.2)) { hudDisplayMode = mode }
-                            }
-                            if mode != "notched" { Divider().padding(.horizontal) }
-                        }
-                    }
-                }
-
-                SettingsSection(title: "HUD Preview") {
-                    VStack(spacing: 16) {
-                        HStack { Text("Volume").font(.system(size: 12, weight: .medium)).foregroundStyle(.secondary); Spacer() }
-                        Group {
-                            if hudDisplayMode == "minimal" {
-                                HStack {
-                                    Image(systemName: "speaker.wave.2.fill").font(.system(size: 14, weight: .semibold)).foregroundStyle(.white)
-                                    Spacer()
-                                    Text("\(Int(previewLevel * 100))%").font(.system(size: 14, weight: .bold, design: .rounded)).foregroundStyle(.white).monospacedDigit()
-                                }
-                            } else if hudDisplayMode == "notched" { NotchedVolumeHUD(level: previewLevel, muted: false) }
-                            else { ProgressBarVolumeHUD(level: previewLevel, muted: false) }
-                        }
-                        .animation(.spring(duration: 0.3, bounce: 0.15), value: hudDisplayMode)
-                        .padding()
-                        .background(Color.black)
-                        .cornerRadius(12)
-
-                        Slider(value: $previewLevel, in: 0...1, step: 0.01)
-                            .tint(.indigo)
-                    }
-                    .padding()
-                }
-
-                SettingsSection(title: "Notch Expansion Preview") {
-                    VStack(spacing: 12) {
-                        HStack { Text("How the notch expands when activated").font(.system(size: 12, weight: .medium)).foregroundStyle(.secondary); Spacer() }
-                        ZStack(alignment: .top) {
-                            RoundedRectangle(cornerRadius: 12, style: .continuous)
-                                .fill(Color(white: 0.08))
-                                .frame(height: 80)
-
-                            NotchShape(topRadius: 6, bottomRadius: 14)
-                                .fill(.black)
-                                .frame(width: 160, height: 52)
-                                .shadow(color: .black.opacity(0.4), radius: 8, y: 4)
-                                .overlay(alignment: .bottom) {
-                                    HStack(spacing: 4) {
-                                        RoundedRectangle(cornerRadius: 4, style: .continuous).fill(Color.white.opacity(0.08)).frame(width: 44, height: 24)
-                                        RoundedRectangle(cornerRadius: 4, style: .continuous).fill(Color.white.opacity(0.08)).frame(width: 44, height: 24)
-                                        RoundedRectangle(cornerRadius: 4, style: .continuous).fill(Color.white.opacity(0.08)).frame(width: 44, height: 24)
-                                    }
-                                    .padding(.bottom, 6)
-                                }
-                        }
-                    }
-                    .padding()
-                }
-                Spacer()
-            }
-            .padding(24)
-        }
-    }
-}
-
-struct HUDModeRow: View {
-    let mode: String
-    let isSelected: Bool
-    let onSelect: () -> Void
-    @State private var flashHighlight = false
-
-    private var title: String {
-        switch mode {
-        case "minimal": return "Minimal"
-        case "progressBar": return "Progress Bar"
-        case "notched": return "Notched"
-        default: return mode
-        }
-    }
-
-    private var description: String {
-        switch mode {
-        case "minimal": return "Compact inline display, no expansion"
-        case "progressBar": return "Classic style with progress bar"
-        case "notched": return "Premium segmented design"
-        default: return ""
-        }
-    }
-
-    private var icon: String {
-        switch mode {
-        case "minimal": return "minus.rectangle"
-        case "progressBar": return "slider.horizontal.3"
-        case "notched": return "rectangle.split.3x1"
-        default: return "square"
-        }
-    }
-
-    var body: some View {
-        Button(action: {
-            flashHighlight = true
-            onSelect()
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                withAnimation(.easeOut(duration: 0.2)) { flashHighlight = false }
-            }
-        }) {
-            HStack(spacing: 14) {
-                ZStack {
-                    RoundedRectangle(cornerRadius: 10).fill(isSelected ? Color.blue.opacity(0.2) : Color.gray.opacity(0.1)).frame(width: 44, height: 44)
-                    Image(systemName: icon)
-                        .font(.system(size: 18, weight: .medium))
-                        .foregroundStyle(isSelected ? .blue : .secondary)
-                        .animation(.spring(duration: 0.3, bounce: 0.2), value: isSelected)
-                }
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(title).font(.system(size: 14, weight: .medium)).foregroundStyle(.primary)
-                    Text(description).font(.system(size: 11)).foregroundStyle(.secondary)
-                }
-                Spacer()
-                if isSelected {
-                    Image(systemName: "checkmark.circle.fill")
-                        .font(.system(size: 20))
-                        .foregroundStyle(.blue)
-                        .transition(.scale.combined(with: .opacity))
-                }
-            }
-            .padding(.horizontal, 14)
-            .padding(.vertical, 12)
-            .background(flashHighlight ? Color.blue.opacity(0.08) : Color.clear)
-            .cornerRadius(8)
-            .contentShape(Rectangle())
-            .animation(.easeOut(duration: 0.15), value: flashHighlight)
-        }
-        .buttonStyle(.plain)
-    }
-}
-
-struct VolumeSettingsView: View {
-    @AppStorage("showVolumeHUD") private var showVolumeHUD = true
-    @AppStorage("volumeShowPercent") private var volumeShowPercent = true
-
-    var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 20) {
-                SettingsHeader(title: "Volume HUD", subtitle: "Customize volume indicator", icon: "speaker.wave.3.fill", color: .blue)
-                SettingsSection(title: "General") {
-                    SettingsToggleRow(title: "Enable Volume HUD", subtitle: "Replace system volume overlay", icon: "speaker.wave.2.fill", color: .blue, isOn: $showVolumeHUD)
-                }
-                if showVolumeHUD {
-                    SettingsSection(title: "Display") {
-                        SettingsToggleRow(title: "Show Percentage", subtitle: "Display volume percentage", icon: "percent", color: .cyan, isOn: $volumeShowPercent)
-                    }
-                }
-                Spacer()
-            }
-            .padding(24)
-        }
-    }
-}
-
-struct BrightnessSettingsView: View {
-    @AppStorage("showBrightnessHUD") private var showBrightnessHUD = true
-    @AppStorage("brightnessShowPercent") private var brightnessShowPercent = true
-
-    var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 20) {
-                SettingsHeader(title: "Brightness HUD", subtitle: "Customize brightness indicator", icon: "sun.max.fill", color: .orange)
-                SettingsSection(title: "General") {
-                    if AppBuildVariant.current.supportsInterceptedBrightnessHUD {
-                        SettingsToggleRow(title: "Enable Brightness HUD", subtitle: "Replace system brightness overlay", icon: "sun.max.fill", color: .orange, isOn: $showBrightnessHUD)
-                    } else {
-                        SettingsCompatibilityNote(
-                            title: "Direct build only",
-                            message: "Brightness interception uses private display APIs, so the App Store build leaves the system brightness HUD unchanged."
-                        )
-                    }
-                }
-                if showBrightnessHUD && AppBuildVariant.current.supportsInterceptedBrightnessHUD {
-                    SettingsSection(title: "Display") {
-                        SettingsToggleRow(title: "Show Percentage", subtitle: "Display brightness percentage", icon: "percent", color: .yellow, isOn: $brightnessShowPercent)
-                    }
-                }
-                Spacer()
-            }
-            .padding(24)
-        }
-    }
-}
-
-struct BatterySettingsView: View {
-    @AppStorage("showBatteryIndicator") private var showBatteryIndicator = true
-    @AppStorage("chargingSoundEnabled") private var chargingSoundEnabled = true
-
-    var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 20) {
-                SettingsHeader(title: "Battery", subtitle: "Charging notifications", icon: "battery.100", color: .green)
-                SettingsSection(title: "Indicators") {
-                    SettingsToggleRow(title: "Charging Indicator", subtitle: "Show when plugged in or unplugged", icon: "bolt.fill", color: .green, isOn: $showBatteryIndicator)
-                    Divider().padding(.horizontal)
-                    SettingsToggleRow(title: "Charging Sound", subtitle: "Play sound on plug/unplug", icon: "speaker.wave.2.fill", color: .blue, isOn: $chargingSoundEnabled)
-                }
-                Spacer()
-            }
-            .padding(24)
-        }
-    }
-}
-
-struct MusicSettingsView: View {
-    @AppStorage("showMusicActivity") private var showMusicActivity = true
-    @AppStorage("showMusicVisualizer") private var showMusicVisualizer = true
-
-    var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 20) {
-                SettingsHeader(title: "Music", subtitle: "Now Playing indicator", icon: "music.note", color: .pink)
-                SettingsSection(title: "Display") {
-                    if AppBuildVariant.current.supportsAdvancedMediaControls {
-                        SettingsToggleRow(title: "Show Music Activity", subtitle: "Display when music is playing", icon: "music.note", color: .pink, isOn: $showMusicActivity)
-                        Divider().padding(.horizontal)
-                        SettingsToggleRow(title: "Audio Visualizer", subtitle: "Animated bars when playing", icon: "waveform", color: .green, isOn: $showMusicVisualizer)
-                    } else {
-                        SettingsCompatibilityNote(
-                            title: "Direct build only",
-                            message: "System-wide now playing control relies on MediaRemote and is excluded from the App Store build."
-                        )
-                    }
-                }
-                SettingsSection(title: "Supported Apps") {
-                    VStack(alignment: .leading, spacing: 8) {
-                        ForEach(AppBuildVariant.current.supportsAdvancedMediaControls ? ["Apple Music", "Spotify", "TIDAL", "Deezer", "Amazon Music", "Safari", "Chrome", "Firefox", "Arc"] : ["Direct build required for supported-app integration"], id: \.self) { app in
-                            HStack {
-                                Circle().fill(Color.green).frame(width: 6, height: 6)
-                                Text(app).font(.system(size: 13))
-                                Spacer()
-                            }
-                        }
-                    }
-                    .padding()
-                }
-                Spacer()
-            }
-            .padding(24)
-        }
-    }
-}
-
-struct AboutSettingsView: View {
-    @State private var isCheckingUpdates = false
-    @State private var notchBob = false
-    @State private var sparkleRotation: Double = 0
-
-    private let appVersion = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0"
-    private let buildNumber = Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "1"
-
-    var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 24) {
-                // Hero branding section
-                VStack(spacing: 16) {
-                    ZStack {
-                        // Gradient background
-                        RoundedRectangle(cornerRadius: 24)
-                            .fill(
-                                LinearGradient(
-                                    colors: [
-                                        Color.purple.opacity(0.3),
-                                        Color.blue.opacity(0.2),
-                                        Color.pink.opacity(0.2)
-                                    ],
-                                    startPoint: .topLeading,
-                                    endPoint: .bottomTrailing
-                                )
-                            )
-                            .frame(height: 160)
-
-                        HStack(spacing: 20) {
-                            // Logo representation
-                            ZStack {
-                                RoundedRectangle(cornerRadius: 20)
-                                    .fill(
-                                        LinearGradient(
-                                            colors: [Color.purple, Color.pink],
-                                            startPoint: .topLeading,
-                                            endPoint: .bottomTrailing
-                                        )
-                                    )
-                                    .frame(width: 80, height: 80)
-                                    .shadow(color: .purple.opacity(0.5), radius: 15, y: 5)
-
-                                // Notch shape inside logo - subtle bob animation
-                                VStack(spacing: 0) {
-                                    RoundedRectangle(cornerRadius: 6)
-                                        .fill(.black)
-                                        .frame(width: 40, height: 16)
-                                    Rectangle()
-                                        .fill(.black)
-                                        .frame(width: 40, height: 20)
-                                        .clipShape(
-                                            .rect(
-                                                topLeadingRadius: 0,
-                                                bottomLeadingRadius: 12,
-                                                bottomTrailingRadius: 12,
-                                                topTrailingRadius: 0
-                                            )
-                                        )
-                                }
-                                .offset(y: notchBob ? -6 : -10)
-                                .animation(.easeInOut(duration: 2.0).repeatForever(autoreverses: true), value: notchBob)
-
-                                Image(systemName: "sparkles")
-                                    .font(.system(size: 20, weight: .bold))
-                                    .foregroundStyle(.white)
-                                    .offset(y: 15)
-                                    .rotationEffect(.degrees(sparkleRotation))
-                                    .animation(.linear(duration: 12).repeatForever(autoreverses: false), value: sparkleRotation)
-                            }
-
-                            VStack(alignment: .leading, spacing: 4) {
-                                Text("Top Notch")
-                                    .font(.system(size: 28, weight: .bold, design: .rounded))
-                                    .foregroundStyle(
-                                        LinearGradient(
-                                            colors: [.white, .white.opacity(0.8)],
-                                            startPoint: .leading,
-                                            endPoint: .trailing
-                                        )
-                                    )
-                                Text("Your notch, elevated.")
-                                    .font(.system(size: 14, weight: .medium))
-                                    .foregroundStyle(.white.opacity(0.7))
-                                Text("Version \(appVersion) (\(buildNumber))")
-                                    .font(.system(size: 12, weight: .medium, design: .monospaced))
-                                    .foregroundStyle(.white.opacity(0.5))
-                                    .padding(.top, 4)
-                                Text("Built Mar 2026")
-                                    .font(.system(size: 11, design: .monospaced))
-                                    .foregroundStyle(.white.opacity(0.35))
-                            }
-
-                            Spacer()
-                        }
-                        .padding(.horizontal, 24)
-                    }
-                }
-                .onAppear {
-                    notchBob = true
-                    sparkleRotation = 360
-                }
-                
-                // Features section
-                SettingsSection(title: "Features") {
-                    VStack(alignment: .leading, spacing: 0) {
-                        FeatureRow(icon: "speaker.wave.3.fill", color: .blue, title: "Volume & Brightness HUD", description: "Beautiful notch-integrated controls")
-                        Divider().padding(.horizontal)
-                        FeatureRow(icon: "music.note", color: .pink, title: "Now Playing", description: AppBuildVariant.current.supportsAdvancedMediaControls ? "Media controls with album art" : "Direct build only")
-                        Divider().padding(.horizontal)
-                        FeatureRow(icon: "play.rectangle.fill", color: .red, title: "YouTube Player", description: "Watch videos in floating window")
-                        Divider().padding(.horizontal)
-                        FeatureRow(icon: "battery.100.bolt", color: .green, title: "Battery Monitor", description: "Charging animations & alerts")
-                        Divider().padding(.horizontal)
-                        FeatureRow(icon: "lock.fill", color: .orange, title: "Lock Screen", description: AppBuildVariant.current.supportsLockScreenIndicators ? "Works above the lock screen" : "Direct build only")
-                    }
-                }
-                
-                // Updates section
-                SettingsSection(title: "Updates") {
-                    HStack {
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text("Check for Updates")
-                                .font(.system(size: 14, weight: .medium))
-                            Text("You're running the latest version")
-                                .font(.system(size: 11))
-                                .foregroundStyle(.secondary)
-                        }
-                        Spacer()
-                        Button(action: {
-                            isCheckingUpdates = true
-                            // Simulate update check
-                            DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
-                                isCheckingUpdates = false
-                            }
-                        }) {
-                            HStack(spacing: 6) {
-                                if isCheckingUpdates {
-                                    ProgressView()
-                                        .scaleEffect(0.7)
-                                        .frame(width: 16, height: 16)
-                                } else {
-                                    Image(systemName: "arrow.triangle.2.circlepath")
-                                }
-                                Text(isCheckingUpdates ? "Checking..." : "Check Now")
-                            }
-                            .font(.system(size: 13, weight: .medium))
-                            .padding(.horizontal, 12)
-                            .padding(.vertical, 6)
-                            .background(Color.blue.opacity(0.15))
-                            .foregroundStyle(.blue)
-                            .cornerRadius(8)
-                        }
-                        .buttonStyle(.plain)
-                        .disabled(isCheckingUpdates)
-                    }
-                    .padding()
-                }
-                
-                // Links section
-                SettingsSection(title: "Links") {
-                    VStack(spacing: 0) {
-                        LinkRow(icon: "globe", color: .blue, title: "Website", url: "https://topnotch.app")
-                        Divider().padding(.horizontal)
-                        LinkRow(icon: "bubble.left.fill", color: .cyan, title: "Twitter / X", url: "https://twitter.com/topnotchapp")
-                        Divider().padding(.horizontal)
-                        LinkRow(icon: "chevron.left.forwardslash.chevron.right", color: .gray, title: "GitHub", url: "https://github.com/topnotch/app")
-                    }
-                }
-                
-                // Credits section
-                SettingsSection(title: "Credits") {
-                    VStack(alignment: .leading, spacing: 12) {
-                        HStack {
-                            Text("Developer")
-                                .foregroundStyle(.secondary)
-                            Spacer()
-                            Text("Mark Kozhydlo")
-                        }
-                        Divider()
-                        HStack {
-                            Text("Design")
-                                .foregroundStyle(.secondary)
-                            Spacer()
-                            Text("Inspired by Dynamic Island")
-                        }
-                        Divider()
-                        HStack {
-                            Text("License")
-                                .foregroundStyle(.secondary)
-                            Spacer()
-                            Text("MIT License")
-                        }
-                    }
-                    .font(.system(size: 13))
-                    .padding()
-                }
-                
-                // Footer
-                HStack {
-                    Spacer()
-                    Text("Made with ❤️ for the Mac community")
-                        .font(.system(size: 11))
-                        .foregroundStyle(.secondary)
-                    Spacer()
-                }
-                .padding(.top, 8)
-                
-                Spacer()
-            }
-            .padding(24)
-        }
-    }
-}
-
-struct FeatureRow: View {
-    let icon: String
-    let color: Color
-    let title: String
-    let description: String
-    
-    var body: some View {
-        HStack(spacing: 14) {
-            ZStack {
-                RoundedRectangle(cornerRadius: 10)
-                    .fill(color.opacity(0.15))
-                    .frame(width: 40, height: 40)
-                Image(systemName: icon)
-                    .font(.system(size: 16, weight: .medium))
-                    .foregroundStyle(color)
-            }
-            VStack(alignment: .leading, spacing: 2) {
-                Text(title)
-                    .font(.system(size: 14, weight: .medium))
-                Text(description)
-                    .font(.system(size: 11))
-                    .foregroundStyle(.secondary)
-            }
-            Spacer()
-            Image(systemName: "checkmark.circle.fill")
-                .foregroundStyle(.green)
-        }
-        .padding(.horizontal, 14)
-        .padding(.vertical, 10)
-    }
-}
-
-struct SettingsCompatibilityNote: View {
-    let title: String
-    let message: String
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 4) {
-            Text(title)
-                .font(.system(size: 13, weight: .semibold))
-                .foregroundStyle(.primary)
-            Text(message)
-                .font(.system(size: 11, weight: .medium))
-                .foregroundStyle(.secondary)
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(.horizontal, 14)
-        .padding(.vertical, 12)
-    }
-}
-
-struct LinkRow: View {
-    let icon: String
-    let color: Color
-    let title: String
-    let url: String
-    
-    var body: some View {
-        Button(action: {
-            if let url = URL(string: url) {
-                NSWorkspace.shared.open(url)
-            }
-        }) {
-            HStack(spacing: 14) {
-                ZStack {
-                    RoundedRectangle(cornerRadius: 10)
-                        .fill(color.opacity(0.15))
-                        .frame(width: 40, height: 40)
-                    Image(systemName: icon)
-                        .font(.system(size: 16, weight: .medium))
-                        .foregroundStyle(color)
-                }
-                Text(title)
-                    .font(.system(size: 14, weight: .medium))
-                    .foregroundStyle(.primary)
-                Spacer()
-                Image(systemName: "arrow.up.right")
-                    .font(.system(size: 12, weight: .medium))
-                    .foregroundStyle(.secondary)
-            }
-            .padding(.horizontal, 14)
-            .padding(.vertical, 10)
-            .contentShape(Rectangle())
-        }
-        .buttonStyle(.plain)
-    }
-}
-
-struct YouTubeSettingsView: View {
-    @AppStorage("youtubeAutoplay") private var autoplay = true
-    @AppStorage("youtubeDefaultSize") private var defaultSize = "medium"
-    @AppStorage("youtubeRememberPosition") private var rememberPosition = true
-    @AppStorage("youtubeDefaultQuality") private var defaultQuality = "auto"
-    @AppStorage("youtubePlaybackSpeed") private var playbackSpeed = 1.0
-    @AppStorage("youtubeClipboardDetection") private var clipboardDetection = true
-    @AppStorage("sponsorBlockEnabled") private var sponsorBlockEnabled = true
-    @AppStorage("returnDislikeEnabled") private var returnDislikeEnabled = true
-    @State private var heroPulse = false
-
-    var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 20) {
-                // Hero banner - YouTube is the main selling feature
-                ZStack {
-                    RoundedRectangle(cornerRadius: 20)
-                        .fill(
-                            LinearGradient(
-                                colors: [.red, .red.opacity(0.7)],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            )
-                        )
-                        .frame(height: 100)
-                        .shadow(color: .red.opacity(0.3), radius: 12, y: 4)
-
-                    HStack(spacing: 16) {
-                        ZStack {
-                            Circle()
-                                .fill(.white.opacity(0.2))
-                                .frame(width: 56, height: 56)
-                                .scaleEffect(heroPulse ? 1.12 : 1.0)
-                                .animation(.easeInOut(duration: 1.8).repeatForever(autoreverses: true), value: heroPulse)
-                            Image(systemName: "play.fill")
-                                .font(.system(size: 26, weight: .bold))
-                                .foregroundStyle(.white)
-                        }
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text("Watch YouTube in your notch")
-                                .font(.system(size: 18, weight: .bold, design: .rounded))
-                                .foregroundStyle(.white)
-                            Text("Floating picture-in-picture player right from the menu bar")
-                                .font(.system(size: 12, weight: .medium))
-                                .foregroundStyle(.white.opacity(0.8))
-                        }
-                        Spacer()
-                    }
-                    .padding(.horizontal, 20)
-                }
-                .onAppear { heroPulse = true }
-
-                SettingsHeader(
-                    title: "YouTube",
-                    subtitle: "Video player settings",
-                    icon: "play.rectangle.fill",
-                    color: .red
-                )
-
-                SettingsSection(title: "Playback") {
-                    SettingsToggleRow(
-                        title: "Autoplay Videos",
-                        subtitle: "Automatically start playing when a video is opened",
-                        icon: "play.fill",
-                        color: .green,
-                        isOn: $autoplay
-                    )
-                    Divider().padding(.horizontal)
-                    SettingsPickerRow(
-                        title: "Default Quality",
-                        subtitle: "Preferred resolution -- Auto adapts to your connection",
-                        icon: "4k.tv",
-                        color: .blue,
-                        selection: $defaultQuality,
-                        options: [
-                            ("auto", "Auto"),
-                            ("2160", "4K"),
-                            ("1080", "1080p"),
-                            ("720", "720p"),
-                            ("480", "480p")
-                        ]
-                    )
-                    Divider().padding(.horizontal)
-                    VStack(alignment: .leading, spacing: 12) {
-                        HStack(spacing: 14) {
-                            ZStack {
-                                RoundedRectangle(cornerRadius: 10)
-                                    .fill(Color.orange.opacity(0.15))
-                                    .frame(width: 40, height: 40)
-                                Image(systemName: "gauge.with.needle")
-                                    .font(.system(size: 16, weight: .medium))
-                                    .foregroundStyle(.orange)
-                            }
-                            VStack(alignment: .leading, spacing: 2) {
-                                Text("Playback Speed")
-                                    .font(.system(size: 14, weight: .medium))
-                                Text("Default speed for all videos")
-                                    .font(.system(size: 11))
-                                    .foregroundStyle(.secondary)
-                            }
-                            Spacer()
-                            Text("\(playbackSpeed, specifier: "%.1f")x")
-                                .font(.system(size: 14, weight: .bold, design: .rounded))
-                                .foregroundStyle(.orange)
-                                .monospacedDigit()
-                                .frame(width: 44)
-                        }
-                        Slider(value: $playbackSpeed, in: 0.5...2.0, step: 0.25)
-                            .tint(.orange)
-                            .padding(.leading, 54)
-                            .padding(.trailing, 14)
-                    }
-                    .padding(.horizontal, 14)
-                    .padding(.vertical, 10)
-                }
-
-                SettingsSection(title: "Window") {
-                    SettingsPickerRow(
-                        title: "Default Size",
-                        subtitle: "Initial player window size when opening a video",
-                        icon: "rectangle.expand.vertical",
-                        color: .purple,
-                        selection: $defaultSize,
-                        options: [
-                            ("small", "Small"),
-                            ("medium", "Medium"),
-                            ("large", "Large")
-                        ]
-                    )
-                    Divider().padding(.horizontal)
-                    SettingsToggleRow(
-                        title: "Remember Position",
-                        subtitle: "Restore the player window location between sessions",
-                        icon: "square.and.arrow.down",
-                        color: .cyan,
-                        isOn: $rememberPosition
-                    )
-                }
-
-                SettingsSection(title: "Detection") {
-                    SettingsToggleRow(
-                        title: "Auto-detect YouTube URLs",
-                        subtitle: "Show a prompt when a YouTube link is copied to your clipboard",
-                        icon: "doc.on.clipboard",
-                        color: .red,
-                        isOn: $clipboardDetection
-                    )
-                }
-
-                SettingsSection(title: "Enhanced Features (Direct Edition)") {
-                    if AppBuildVariant.current == .direct {
-                        SettingsToggleRow(title: "SponsorBlock", subtitle: "Automatically skip sponsor segments in videos", icon: "forward.fill", color: .green, isOn: $sponsorBlockEnabled)
-                        Divider().padding(.horizontal)
-                        SettingsToggleRow(title: "Return YouTube Dislike", subtitle: "Restore dislike counts that YouTube hid", icon: "hand.thumbsdown.fill", color: .blue, isOn: $returnDislikeEnabled)
-                    } else {
-                        SettingsCompatibilityNote(
-                            title: "Direct build only",
-                            message: "SponsorBlock and Return YouTube Dislike are available in the Direct edition."
-                        )
-                    }
-                }
-
-                SettingsSection(title: "Keyboard Shortcuts") {
-                    VStack(alignment: .leading, spacing: 0) {
-                        ShortcutRow(keys: "⌘⇧Y", action: "Open YouTube in notch")
-                        Divider().padding(.horizontal)
-                        ShortcutRow(keys: "Space", action: "Play / Pause video")
-                        Divider().padding(.horizontal)
-                        ShortcutRow(keys: "F", action: "Toggle fullscreen")
-                        Divider().padding(.horizontal)
-                        ShortcutRow(keys: "Esc", action: "Close video player")
-                    }
-                }
-
-                SettingsSection(title: "Quick Open") {
-                    HStack {
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text("Test Player")
-                                .font(.system(size: 14, weight: .medium))
-                            Text("Open a demo video to verify the player works")
-                                .font(.system(size: 11))
-                                .foregroundStyle(.secondary)
-                        }
-                        Spacer()
-                        Button(action: {
-                            let knownGoodVideoID = "M7lc1UVf-VE"
-                            NotificationCenter.default.post(name: .openInlineYouTubeVideo, object: knownGoodVideoID)
-                        }) {
-                            Label("Play Demo", systemImage: "play.fill")
-                                .font(.system(size: 13, weight: .medium))
-                                .padding(.horizontal, 12)
-                                .padding(.vertical, 6)
-                                .background(Color.red.opacity(0.15))
-                                .foregroundStyle(.red)
-                                .cornerRadius(8)
-                        }
-                        .buttonStyle(.plain)
-                    }
-                    .padding(.horizontal, 14)
-                    .padding(.vertical, 10)
-                }
-
-                Spacer()
-            }
-            .padding(24)
-        }
-    }
-}
-
-
-
-// MARK: - City Search Field with Autocomplete
-
-struct CitySearchField: View {
-    @Binding var city: String
-    @State private var searchText = ""
-    @State private var suggestions: [CityResult] = []
-    @State private var isSearching = false
-    @State private var showSuggestions = false
-    @State private var searchTask: Task<Void, Never>?
-
-    struct CityResult: Identifiable, Decodable {
-        let id: Int
-        let name: String
-        let latitude: Double
-        let longitude: Double
-        let admin1: String?
-        let country: String?
-
-        var displayName: String {
-            [name, admin1, country].compactMap { $0 }.joined(separator: ", ")
-        }
-    }
-
-    struct GeoResponse: Decodable {
-        let results: [CityResult]?
-    }
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 4) {
-            HStack(spacing: 8) {
-                TextField("Search city...", text: $searchText)
-                    .textFieldStyle(.roundedBorder)
-                    .font(.system(size: 13))
-                    .onChange(of: searchText) { _, newValue in
-                        searchTask?.cancel()
-                        guard newValue.count >= 2 else {
-                            suggestions = []
-                            showSuggestions = false
-                            return
-                        }
-                        searchTask = Task {
-                            try? await Task.sleep(nanoseconds: 300_000_000)
-                            guard !Task.isCancelled else { return }
-                            await searchCities(query: newValue)
-                        }
-                    }
-
-                if isSearching {
-                    ProgressView().scaleEffect(0.6)
-                }
-            }
-
-            if showSuggestions && !suggestions.isEmpty {
-                VStack(spacing: 0) {
-                    ForEach(suggestions) { result in
-                        Button(action: {
-                            city = result.name
-                            searchText = result.displayName
-                            showSuggestions = false
-                            suggestions = []
-                            NotificationCenter.default.post(name: NSNotification.Name("refreshWeather"), object: nil)
-                        }) {
-                            HStack {
-                                Image(systemName: "mappin.circle.fill")
-                                    .foregroundStyle(.cyan)
-                                    .font(.system(size: 12))
-                                VStack(alignment: .leading, spacing: 1) {
-                                    Text(result.name)
-                                        .font(.system(size: 13, weight: .medium))
-                                    if let admin = result.admin1, let country = result.country {
-                                        Text("\(admin), \(country)")
-                                            .font(.system(size: 11))
-                                            .foregroundStyle(.secondary)
-                                    }
-                                }
-                                Spacer()
-                            }
-                            .padding(.horizontal, 10)
-                            .padding(.vertical, 6)
-                            .contentShape(Rectangle())
-                        }
-                        .buttonStyle(.plain)
-
-                        if result.id != suggestions.last?.id {
-                            Divider().padding(.horizontal, 8)
-                        }
-                    }
-                }
-                .background(Color(NSColor.controlBackgroundColor))
-                .cornerRadius(8)
-                .shadow(color: .black.opacity(0.1), radius: 4, y: 2)
-            }
-        }
-        .onAppear { searchText = city }
-    }
-
-    private func searchCities(query: String) async {
-        await MainActor.run { isSearching = true }
-        defer { Task { @MainActor in isSearching = false } }
-
-        let encoded = query.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? query
-        guard let url = URL(string: "https://geocoding-api.open-meteo.com/v1/search?name=\(encoded)&count=5&language=en&format=json") else { return }
-
-        do {
-            let (data, _) = try await URLSession.shared.data(from: url)
-            let response = try JSONDecoder().decode(GeoResponse.self, from: data)
-            await MainActor.run {
-                suggestions = response.results ?? []
-                showSuggestions = !suggestions.isEmpty
-            }
-        } catch {
-            await MainActor.run { suggestions = [] }
-        }
-    }
-}
-
-struct WeatherSettingsView: View {
-    @AppStorage("notchWeatherCity") private var weatherCity = "San Francisco"
-    @AppStorage("weatherUnit") private var weatherUnit = "celsius"
-    @AppStorage("showWeatherCard") private var showWeatherCard = true
-    @AppStorage("weatherRefreshInterval") private var weatherRefreshInterval = 30.0  // minutes
-    @State private var isRefreshing = false
-
-    var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 20) {
-                SettingsHeader(title: "Weather", subtitle: "Configure weather display", icon: "cloud.sun.fill", color: .cyan)
-
-                SettingsSection(title: "Location") {
-                    VStack(alignment: .leading, spacing: 12) {
-                        HStack(spacing: 14) {
-                            ZStack {
-                                RoundedRectangle(cornerRadius: 10).fill(Color.cyan.opacity(0.15)).frame(width: 40, height: 40)
-                                Image(systemName: "location.fill").font(.system(size: 16, weight: .medium)).foregroundStyle(.cyan)
-                            }
-                            VStack(alignment: .leading, spacing: 2) {
-                                Text("City").font(.system(size: 14, weight: .medium))
-                                Text("Enter your city name for weather data").font(.system(size: 11)).foregroundStyle(.secondary)
-                            }
-                        }
-
-                        CitySearchField(city: $weatherCity)
-                    }
-                    .padding(.horizontal, 14)
-                    .padding(.vertical, 10)
-                }
-
-                SettingsSection(title: "Display") {
-                    SettingsToggleRow(title: "Show Weather Card", subtitle: "Display weather in notch expansion", icon: "cloud.fill", color: .cyan, isOn: $showWeatherCard)
-                    Divider().padding(.horizontal)
-                    SettingsPickerRow(
-                        title: "Temperature Unit",
-                        subtitle: "Celsius or Fahrenheit",
-                        icon: "thermometer.medium",
-                        color: .orange,
-                        selection: $weatherUnit,
-                        options: [("celsius", "\u{00B0}C"), ("fahrenheit", "\u{00B0}F")]
-                    )
-                    // Temperature unit preview
-                    HStack(spacing: 20) {
-                        Spacer()
-                        VStack(spacing: 2) {
-                            Text(weatherUnit == "celsius" ? "22\u{00B0}" : "72\u{00B0}")
-                                .font(.system(size: 32, weight: .bold, design: .rounded))
-                                .foregroundStyle(.primary)
-                            Text(weatherUnit == "celsius" ? "Celsius" : "Fahrenheit")
-                                .font(.system(size: 11))
-                                .foregroundStyle(.secondary)
-                        }
-                        .padding(.vertical, 8)
-                        .padding(.horizontal, 24)
-                        .background(
-                            RoundedRectangle(cornerRadius: 10)
-                                .fill(Color.orange.opacity(0.08))
-                        )
-                        Spacer()
-                    }
-                    .padding(.horizontal, 14)
-                    .padding(.bottom, 10)
-                    Divider().padding(.horizontal)
-                    SettingsPickerRow(
-                        title: "Refresh Interval",
-                        subtitle: "How often to update weather",
-                        icon: "arrow.clockwise",
-                        color: .blue,
-                        selection: $weatherRefreshInterval,
-                        options: [(15.0, "15 min"), (30.0, "30 min"), (60.0, "1 hour"), (120.0, "2 hours")]
-                    )
-                }
-
-                SettingsSection(title: "Actions") {
-                    HStack {
-                        HStack(spacing: 12) {
-                            ZStack {
-                                RoundedRectangle(cornerRadius: 10)
-                                    .fill(Color.green.opacity(0.15))
-                                    .frame(width: 40, height: 40)
-                                Image(systemName: "arrow.clockwise")
-                                    .font(.system(size: 16, weight: .medium))
-                                    .foregroundStyle(.green)
-                            }
-                            VStack(alignment: .leading, spacing: 2) {
-                                Text("Refresh Now")
-                                    .font(.system(size: 14, weight: .medium))
-                                Text("Fetch the latest weather data immediately")
-                                    .font(.system(size: 11))
-                                    .foregroundStyle(.secondary)
-                            }
-                        }
-                        Spacer()
-                        Button(action: {
-                            isRefreshing = true
-                            NotificationCenter.default.post(name: NSNotification.Name("refreshWeather"), object: nil)
-                            DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
-                                isRefreshing = false
-                            }
-                        }) {
-                            HStack(spacing: 6) {
-                                if isRefreshing {
-                                    ProgressView()
-                                        .scaleEffect(0.7)
-                                        .frame(width: 14, height: 14)
-                                } else {
-                                    Image(systemName: "arrow.clockwise")
-                                }
-                                Text(isRefreshing ? "Refreshing..." : "Refresh")
-                            }
-                            .font(.system(size: 13, weight: .medium))
-                            .padding(.horizontal, 12)
-                            .padding(.vertical, 6)
-                            .background(Color.green.opacity(0.15))
-                            .foregroundStyle(.green)
-                            .cornerRadius(8)
-                        }
-                        .buttonStyle(.plain)
-                        .disabled(isRefreshing)
-                    }
-                    .padding(.horizontal, 14)
-                    .padding(.vertical, 10)
-                }
-
-                SettingsSection(title: "Data Source") {
-                    VStack(alignment: .leading, spacing: 8) {
-                        HStack {
-                            Image(systemName: "checkmark.circle.fill").foregroundStyle(.green)
-                            Text("Open-Meteo API").font(.system(size: 13, weight: .medium))
-                            Spacer()
-                            Text("Free, no API key").font(.system(size: 11)).foregroundStyle(.secondary)
-                        }
-                        Text("Weather data is provided by Open-Meteo, a free and open-source weather API. No API key required.")
-                            .font(.system(size: 11))
-                            .foregroundStyle(.secondary)
-                    }
-                    .padding()
-                }
-
-                Spacer()
-            }
-            .padding(24)
-        }
-    }
-}
-
-struct BrowserSettingsView: View {
-    @AppStorage("browserHomepage") private var homepage = "https://m.youtube.com"
-    @AppStorage("browserSearchEngine") private var searchEngine = "google"
-    @AppStorage("browserMobileMode") private var mobileMode = true
-    @AppStorage("browserClearOnClose") private var clearOnClose = false
-    @AppStorage("browserJavaScript") private var javaScriptEnabled = true
-    @AppStorage("browserBlockPopups") private var blockPopups = true
-
-    private var searchEngineDescription: String {
-        switch searchEngine {
-        case "google": return "The world's most popular search engine"
-        case "duckduckgo": return "Privacy-focused, no tracking"
-        case "bing": return "Microsoft's search engine with AI features"
-        case "youtube": return "Search YouTube videos directly"
-        default: return ""
-        }
-    }
-
-    var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 20) {
-                SettingsHeader(title: "Browser", subtitle: "Mini browser settings", icon: "globe", color: .blue)
-
-                SettingsSection(title: "Homepage") {
-                    VStack(alignment: .leading, spacing: 12) {
-                        HStack(spacing: 14) {
-                            ZStack {
-                                RoundedRectangle(cornerRadius: 10).fill(Color.blue.opacity(0.15)).frame(width: 40, height: 40)
-                                Image(systemName: "globe").font(.system(size: 16, weight: .medium)).foregroundStyle(.blue)
-                            }
-                            VStack(alignment: .leading, spacing: 2) {
-                                Text("Homepage URL").font(.system(size: 14, weight: .medium))
-                                Text("Page loaded when browser opens").font(.system(size: 11)).foregroundStyle(.secondary)
-                            }
-                        }
-
-                        HStack(spacing: 8) {
-                            Image(systemName: "globe")
-                                .font(.system(size: 14))
-                                .foregroundStyle(.secondary)
-                            TextField("https://m.youtube.com", text: $homepage)
-                                .textFieldStyle(.plain)
-                                .font(.system(size: 13))
-                        }
-                        .padding(.horizontal, 10)
-                        .padding(.vertical, 7)
-                        .background(
-                            RoundedRectangle(cornerRadius: 8)
-                                .fill(Color(NSColor.textBackgroundColor))
-                        )
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 8)
-                                .strokeBorder(Color.white.opacity(0.1), lineWidth: 1)
-                        )
-
-                        HStack(spacing: 8) {
-                            Button("YouTube") { homepage = "https://m.youtube.com" }
-                                .buttonStyle(.bordered).controlSize(.small)
-                            Button("Google") { homepage = "https://www.google.com" }
-                                .buttonStyle(.bordered).controlSize(.small)
-                            Button("Twitter/X") { homepage = "https://mobile.twitter.com" }
-                                .buttonStyle(.bordered).controlSize(.small)
-                            Button("Reddit") { homepage = "https://www.reddit.com" }
-                                .buttonStyle(.bordered).controlSize(.small)
-                        }
-                    }
-                    .padding(.horizontal, 14)
-                    .padding(.vertical, 10)
-                }
-
-                SettingsSection(title: "Search") {
-                    SettingsPickerRow(
-                        title: "Search Engine",
-                        subtitle: "Used when typing text in URL bar",
-                        icon: "magnifyingglass",
-                        color: .orange,
-                        selection: $searchEngine,
-                        options: [
-                            ("google", "Google"),
-                            ("duckduckgo", "DuckDuckGo"),
-                            ("bing", "Bing"),
-                            ("youtube", "YouTube Search")
-                        ]
-                    )
-                    // Search engine description
-                    HStack(spacing: 8) {
-                        Image(systemName: "info.circle")
-                            .font(.system(size: 11))
-                            .foregroundStyle(.secondary)
-                        Text(searchEngineDescription)
-                            .font(.system(size: 11))
-                            .foregroundStyle(.secondary)
-                    }
-                    .padding(.horizontal, 14)
-                    .padding(.bottom, 10)
-                }
-
-                SettingsSection(title: "Behavior") {
-                    SettingsToggleRow(title: "Mobile Mode", subtitle: "Request mobile versions of websites for a compact layout", icon: "iphone", color: .green, isOn: $mobileMode)
-                    Divider().padding(.horizontal)
-                    SettingsToggleRow(title: "Block Pop-ups", subtitle: "Prevent annoying pop-up windows from opening", icon: "xmark.rectangle", color: .red, isOn: $blockPopups)
-                    Divider().padding(.horizontal)
-                    SettingsToggleRow(title: "JavaScript", subtitle: "Required for most websites to function correctly", icon: "curlybraces", color: .purple, isOn: $javaScriptEnabled)
-                    Divider().padding(.horizontal)
-                    SettingsToggleRow(title: "Clear on Close", subtitle: "Automatically clear cookies and cache when browser closes", icon: "trash", color: .gray, isOn: $clearOnClose)
-                }
-
-                Spacer()
-            }
-            .padding(24)
-        }
-    }
-}
-
-struct PomodoroSettingsView: View {
-    @AppStorage("pomodoroWorkDuration") private var workDuration = 25
-    @AppStorage("pomodoroShortBreak") private var shortBreak = 5
-    @AppStorage("pomodoroLongBreak") private var longBreak = 15
-    @AppStorage("pomodoroAutoStartBreaks") private var autoStartBreaks = true
-    @AppStorage("pomodoroNotificationSound") private var notificationSound = true
-
-    var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 20) {
-                SettingsHeader(title: "Focus Timer", subtitle: "Pomodoro-style productivity timer", icon: "timer", color: .orange)
-
-                SettingsSection(title: "Work Session") {
-                    SettingsPickerRow(
-                        title: "Work Duration",
-                        subtitle: "Length of each focused work session",
-                        icon: "flame.fill",
-                        color: .orange,
-                        selection: $workDuration,
-                        options: [(15, "15 min"), (25, "25 min"), (30, "30 min"), (45, "45 min")]
-                    )
-                }
-
-                SettingsSection(title: "Breaks") {
-                    SettingsPickerRow(
-                        title: "Short Break",
-                        subtitle: "Rest between work sessions",
-                        icon: "cup.and.saucer.fill",
-                        color: .green,
-                        selection: $shortBreak,
-                        options: [(3, "3 min"), (5, "5 min"), (10, "10 min")]
-                    )
-                    Divider().padding(.horizontal)
-                    SettingsPickerRow(
-                        title: "Long Break",
-                        subtitle: "Extended rest after 4 work sessions",
-                        icon: "moon.fill",
-                        color: .indigo,
-                        selection: $longBreak,
-                        options: [(10, "10 min"), (15, "15 min"), (20, "20 min")]
-                    )
-                }
-
-                SettingsSection(title: "Behavior") {
-                    SettingsToggleRow(
-                        title: "Auto-start Breaks",
-                        subtitle: "Automatically begin break timer when work session ends",
-                        icon: "arrow.clockwise",
-                        color: .blue,
-                        isOn: $autoStartBreaks
-                    )
-                    Divider().padding(.horizontal)
-                    SettingsToggleRow(
-                        title: "Notification Sound",
-                        subtitle: "Play a chime when sessions start and end",
-                        icon: "bell.fill",
-                        color: .pink,
-                        isOn: $notificationSound
-                    )
-                }
-
-                // Timer preview
-                SettingsSection(title: "Preview") {
-                    HStack {
-                        Spacer()
-                        VStack(spacing: 8) {
-                            Text("\(workDuration):00")
-                                .font(.system(size: 36, weight: .bold, design: .rounded))
-                                .monospacedDigit()
-                                .foregroundStyle(.orange)
-                            Text("Work Session")
-                                .font(.system(size: 12, weight: .medium))
-                                .foregroundStyle(.secondary)
-                            HStack(spacing: 16) {
-                                Label("\(shortBreak)m break", systemImage: "cup.and.saucer.fill")
-                                    .font(.system(size: 11))
-                                    .foregroundStyle(.green)
-                                Label("\(longBreak)m long break", systemImage: "moon.fill")
-                                    .font(.system(size: 11))
-                                    .foregroundStyle(.indigo)
-                            }
-                            .padding(.top, 2)
-                        }
-                        .padding(.vertical, 14)
-                        Spacer()
-                    }
-                }
-
-                Spacer()
-            }
-            .padding(24)
-        }
-    }
-}
-
-struct CalendarSettingsView: View {
-    @AppStorage("calendarShowAllDay") private var showAllDayEvents = true
-    @AppStorage("calendarEventsToShow") private var eventsToShow = 2
-    @State private var calendarAccessGranted = false
-
-    var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 20) {
-                SettingsHeader(title: "Calendar", subtitle: "Upcoming events in your notch", icon: "calendar", color: .red)
-
-                SettingsSection(title: "Access") {
-                    HStack {
-                        HStack(spacing: 12) {
-                            ZStack {
-                                RoundedRectangle(cornerRadius: 10)
-                                    .fill(calendarAccessGranted ? Color.green.opacity(0.15) : Color.red.opacity(0.15))
-                                    .frame(width: 40, height: 40)
-                                Image(systemName: calendarAccessGranted ? "checkmark.shield.fill" : "calendar.badge.exclamationmark")
-                                    .font(.system(size: 16, weight: .medium))
-                                    .foregroundStyle(calendarAccessGranted ? .green : .red)
-                            }
-                            VStack(alignment: .leading, spacing: 2) {
-                                Text("Calendar Access")
-                                    .font(.system(size: 14, weight: .medium))
-                                Text(calendarAccessGranted ? "Access granted" : "Required to show your events")
-                                    .font(.system(size: 11))
-                                    .foregroundStyle(.secondary)
-                            }
-                        }
-                        Spacer()
-                        if !calendarAccessGranted {
-                            Button(action: {
-                                // Open System Settings for calendar access
-                                if let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Calendars") {
-                                    NSWorkspace.shared.open(url)
-                                }
-                            }) {
-                                Text("Grant Access")
-                                    .font(.system(size: 13, weight: .medium))
-                                    .padding(.horizontal, 12)
-                                    .padding(.vertical, 6)
-                                    .background(Color.red.opacity(0.15))
-                                    .foregroundStyle(.red)
-                                    .cornerRadius(8)
-                            }
-                            .buttonStyle(.plain)
-                        } else {
-                            Image(systemName: "checkmark.circle.fill")
-                                .foregroundStyle(.green)
-                                .font(.system(size: 20))
-                        }
-                    }
-                    .padding(.horizontal, 14)
-                    .padding(.vertical, 10)
-                }
-
-                SettingsSection(title: "Display") {
-                    SettingsToggleRow(
-                        title: "Show All-Day Events",
-                        subtitle: "Include events that span the entire day",
-                        icon: "sun.max.fill",
-                        color: .orange,
-                        isOn: $showAllDayEvents
-                    )
-                    Divider().padding(.horizontal)
-                    SettingsPickerRow(
-                        title: "Events to Show",
-                        subtitle: "Number of upcoming events displayed",
-                        icon: "list.bullet",
-                        color: .blue,
-                        selection: $eventsToShow,
-                        options: [(1, "1 event"), (2, "2 events"), (3, "3 events")]
-                    )
-                }
-
-                Spacer()
-            }
-            .padding(24)
-        }
-    }
-}
-
-enum LaunchAtLogin {
-    static func setEnabled(_ enabled: Bool) {
-        do {
-            if enabled { try SMAppService.mainApp.register() }
-            else { try SMAppService.mainApp.unregister() }
-        } catch {}
-    }
-}
 
 // MARK: - Card entrance animation modifier
 
@@ -3952,12 +2066,12 @@ private struct DeckCardEntranceModifier: ViewModifier {
 
     func body(content: Content) -> some View {
         content
-            .scaleEffect(hovering ? 1.03 : (appeared ? 1.0 : 0.9))
-            .offset(y: hovering ? -2 : (appeared ? 0 : 10))
-            .shadow(color: .black.opacity(hovering ? 0.35 : 0.15), radius: hovering ? 8 : 4, y: hovering ? 4 : 2)
+            .scaleEffect(appeared ? 1.0 : 0.92)
+            .offset(y: appeared ? 0 : 10)
             .opacity(appeared ? 1.0 : 0.0)
+            .brightness(hovering ? 0.04 : 0.0)
             .animation(.spring(duration: 0.4, bounce: 0.25).delay(delay), value: appeared)
-            .animation(.spring(duration: 0.3, bounce: 0.2), value: hovering)
+            .animation(.easeInOut(duration: 0.2), value: hovering)
     }
 }
 
@@ -3971,6 +2085,14 @@ private struct CardOverlayHintModifier: ViewModifier {
 }
 
 extension View {
+    fileprivate func staggeredEntrance(index: Int, appeared: Bool) -> some View {
+        self
+            .opacity(appeared ? 1 : 0)
+            .scaleEffect(appeared ? 1 : 0.9)
+            .offset(y: appeared ? 0 : 20)
+            .animation(.spring(duration: 0.6, bounce: 0.35).delay(Double(index) * 0.08), value: appeared)
+    }
+    
     fileprivate func deckCardEntrance(appeared: Bool, hovering: Bool, delay: Double) -> some View {
         modifier(DeckCardEntranceModifier(appeared: appeared, hovering: hovering, delay: delay))
     }
@@ -3980,38 +2102,6 @@ extension View {
     fileprivate func cursor(_ cursor: NSCursor) -> some View {
         onHover { inside in
             if inside { cursor.push() } else { NSCursor.pop() }
-        }
-    }
-}
-
-// MARK: - Lightweight weather particle (used in focused weather card)
-
-struct WeatherParticleLite: View {
-    let weatherCode: Int
-
-    private var emoji: String? {
-        switch weatherCode {
-        case 61, 63, 65, 80, 81, 82: return "🌧"
-        case 71, 73, 75, 85, 86: return "❄️"
-        case 95, 96, 99: return "⚡"
-        case 0: return "✨"
-        default: return nil
-        }
-    }
-
-    @State private var opacity: Double = 0
-    var body: some View {
-        if let e = emoji {
-            HStack {
-                Spacer()
-                Text(e)
-                    .font(.system(size: 48))
-                    .opacity(opacity * 0.15)
-                    .padding(.trailing, 12)
-                    .padding(.top, 8)
-            }
-            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topTrailing)
-            .onAppear { withAnimation(.easeInOut(duration: 2.0).repeatForever(autoreverses: true)) { opacity = 1 } }
         }
     }
 }

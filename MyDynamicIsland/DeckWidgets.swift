@@ -1,145 +1,94 @@
+import AppKit
 import Combine
 import EventKit
 import SwiftUI
 
+// MARK: - Design Colors (shared)
+// Colors without a NotchDesign equivalent
+private let accentCyan = Color(red: 0.024, green: 0.714, blue: 0.831)
+
 // MARK: - Pomodoro Timer Card
 
 struct PomodoroDeckCard: View {
-    @StateObject private var timer = PomodoroTimer()
-    @State private var resetHovered = false
-    @State private var playHovered = false
-    @State private var skipHovered = false
-    @State private var glowPulse = false
-
-    private var accentColor: Color { timer.isBreak ? .green : .orange }
+    @ObservedObject private var timer = PomodoroTimer.shared
 
     var body: some View {
-        VStack(spacing: 8) {
-            // Header
-            HStack(spacing: 5) {
+        VStack(alignment: .center, spacing: 10) {
+            // Header: timer icon (orange) + "Focus" title
+            HStack(spacing: 6) {
                 Image(systemName: "timer")
                     .font(.system(size: 12, weight: .semibold))
-                    .foregroundStyle(accentColor)
+                    .foregroundStyle(NotchDesign.orange)
                 Text("Focus")
-                    .font(.system(size: 12, weight: .bold))
-                    .foregroundStyle(.white)
-                Spacer(minLength: 0)
-                // Session dots
-                HStack(spacing: 4) {
-                    ForEach(0..<timer.totalSessions, id: \.self) { i in
-                        Circle()
-                            .fill(i < timer.completedSessions ? accentColor : Color.white.opacity(0.15))
-                            .frame(width: 6, height: 6)
-                    }
-                }
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundStyle(NotchDesign.textPrimary)
             }
 
-            Spacer(minLength: 0)
-
-            // Circular progress ring with timer
+            // Progress ring: 72px diameter, stroke-only
             ZStack {
-                // Pulsing glow behind the ring when running
-                if timer.isRunning {
-                    Circle()
-                        .fill(accentColor.opacity(0.12))
-                        .frame(width: 78, height: 78)
-                        .blur(radius: 10)
-                        .scaleEffect(glowPulse ? 1.15 : 0.95)
-                        .animation(.easeInOut(duration: 1.5).repeatForever(autoreverses: true), value: glowPulse)
-                }
-
-                // Background track circle
                 Circle()
-                    .stroke(Color.white.opacity(0.08), style: StrokeStyle(lineWidth: 4, lineCap: .round))
-                    .frame(width: 70, height: 70)
+                    .stroke(NotchDesign.borderSubtle, lineWidth: 3)
+                    .frame(width: 72, height: 72)
 
-                // Progress arc
                 Circle()
                     .trim(from: 0, to: timer.progress)
-                    .stroke(
-                        AngularGradient(
-                            colors: [accentColor.opacity(0.6), accentColor],
-                            center: .center,
-                            startAngle: .degrees(0),
-                            endAngle: .degrees(360 * timer.progress)
-                        ),
-                        style: StrokeStyle(lineWidth: 4, lineCap: .round)
-                    )
-                    .frame(width: 70, height: 70)
+                    .stroke(NotchDesign.orange, style: StrokeStyle(lineWidth: 3, lineCap: .round))
+                    .frame(width: 72, height: 72)
                     .rotationEffect(.degrees(-90))
                     .animation(.easeInOut(duration: 0.5), value: timer.progress)
-                    .shadow(color: accentColor.opacity(0.5), radius: 4)
 
-                // Timer text centered inside ring
-                VStack(spacing: 1) {
-                    Text(timer.timeString)
-                        .font(.system(size: 20, weight: .bold, design: .rounded))
-                        .foregroundStyle(accentColor)
-                        .monospacedDigit()
-                        .contentTransition(.numericText(value: timer.remainingSeconds))
-                        .animation(.spring(duration: 0.3), value: timer.remainingSeconds)
+                // Time display centered in ring
+                Text(timer.timeString)
+                    .font(.system(size: 18, weight: .bold, design: .rounded))
+                    .foregroundStyle(NotchDesign.textPrimary)
+                    .monospacedDigit()
+            }
+
+            // Session dots
+            HStack(spacing: 6) {
+                ForEach(0..<timer.totalSessions, id: \.self) { i in
+                    Circle()
+                        .fill(i < timer.completedSessions ? NotchDesign.orange : NotchDesign.borderSubtle)
+                        .frame(width: 6, height: 6)
                 }
             }
-            .onAppear { glowPulse = true }
 
-            // Status text
-            Text(timer.statusText)
-                .font(.system(size: 10, weight: .medium))
-                .foregroundStyle(.white.opacity(0.45))
-
-            Spacer(minLength: 0)
-
-            // Controls
-            HStack(spacing: 10) {
-                // Reset button
+            // Controls: reset, play/pause, skip
+            HStack(spacing: 16) {
                 Button(action: timer.reset) {
                     Image(systemName: "arrow.counterclockwise")
-                        .font(.system(size: 10, weight: .semibold))
-                        .foregroundStyle(.white.opacity(resetHovered ? 0.9 : 0.6))
-                        .frame(width: 26, height: 26)
-                        .background(Circle().fill(Color.white.opacity(resetHovered ? 0.14 : 0.08)))
-                        .scaleEffect(resetHovered ? 1.1 : 1.0)
-                        .animation(.easeOut(duration: 0.15), value: resetHovered)
+                        .font(.system(size: 12, weight: .medium))
+                        .foregroundStyle(NotchDesign.textSecondary)
+                        .frame(width: 28, height: 28)
+                        .background(Circle().fill(NotchDesign.elevated))
                 }
                 .buttonStyle(.plain)
-                .onHover { hovering in resetHovered = hovering }
 
-                // Play/Pause button
                 Button(action: timer.togglePlayPause) {
-                    Image(systemName: timer.isRunning ? "pause.fill" : "play.fill")
-                        .font(.system(size: 14, weight: .semibold))
-                        .foregroundStyle(.white)
-                        .frame(width: 34, height: 34)
-                        .background(
-                            Circle().fill(
-                                LinearGradient(
-                                    colors: timer.isBreak ? [.green, .green.opacity(0.8)] : [.orange, .orange.opacity(0.8)],
-                                    startPoint: .top,
-                                    endPoint: .bottom
-                                )
-                            )
-                        )
-                        .shadow(color: accentColor.opacity(playHovered ? 0.6 : 0.4), radius: playHovered ? 8 : 6, y: 2)
-                        .scaleEffect(playHovered ? 1.08 : 1.0)
-                        .animation(.easeOut(duration: 0.15), value: playHovered)
+                    ZStack {
+                        Circle()
+                            .fill(NotchDesign.orange)
+                            .frame(width: 32, height: 32)
+                        Image(systemName: timer.isRunning ? "pause.fill" : "play.fill")
+                            .font(.system(size: 14))
+                            .foregroundStyle(.black)
+                            .offset(x: 1)
+                    }
                 }
                 .buttonStyle(.plain)
-                .onHover { hovering in playHovered = hovering }
 
-                // Skip button
                 Button(action: timer.skip) {
                     Image(systemName: "forward.fill")
-                        .font(.system(size: 10, weight: .semibold))
-                        .foregroundStyle(.white.opacity(skipHovered ? 0.9 : 0.6))
-                        .frame(width: 26, height: 26)
-                        .background(Circle().fill(Color.white.opacity(skipHovered ? 0.14 : 0.08)))
-                        .scaleEffect(skipHovered ? 1.1 : 1.0)
-                        .animation(.easeOut(duration: 0.15), value: skipHovered)
+                        .font(.system(size: 12, weight: .medium))
+                        .foregroundStyle(NotchDesign.textSecondary)
+                        .frame(width: 28, height: 28)
+                        .background(Circle().fill(NotchDesign.elevated))
                 }
                 .buttonStyle(.plain)
-                .onHover { hovering in skipHovered = hovering }
             }
         }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .padding(16)
     }
 }
 
@@ -147,32 +96,35 @@ struct PomodoroDeckCard: View {
 
 @MainActor
 final class PomodoroTimer: ObservableObject {
+    static let shared = PomodoroTimer()
+
     @Published var remainingSeconds: Double = 25 * 60
     @Published var isRunning = false
     @Published var isBreak = false
     @Published var completedSessions = 0
+    @Published var workDuration: Double = 25 * 60
     let totalSessions = 4
 
     private var timer: Timer?
-    private let workDuration: Double = 25 * 60
     private let shortBreakDuration: Double = 5 * 60
     private let longBreakDuration: Double = 15 * 60
 
     var timeString: String {
         let mins = Int(remainingSeconds) / 60
         let secs = Int(remainingSeconds) % 60
-        return String(format: "%d:%02d", mins, secs)
+        return String(format: "%02d:%02d", mins, secs)
     }
 
     var statusText: String {
-        if !isRunning && remainingSeconds == workDuration { return "Ready to focus" }
-        if isBreak { return "Take a break" }
-        return "Deep focus"
+        if !isRunning && remainingSeconds == workDuration { return "\u{1F3AF} Ready to focus" }
+        if isBreak { return "\u{2615} Take a break" }
+        return "\u{1F3AF} Deep focus"
     }
 
     var progress: CGFloat {
         let total = isBreak ? (completedSessions % 4 == 0 ? longBreakDuration : shortBreakDuration) : workDuration
-        return 1.0 - (remainingSeconds / total)
+        guard total > 0 else { return 0 }
+        return max(0, min(1, 1.0 - (remainingSeconds / total)))
     }
 
     func togglePlayPause() {
@@ -213,6 +165,23 @@ final class PomodoroTimer: ObservableObject {
         completePhase()
     }
 
+    func setDuration(minutes: Double) {
+        let newDuration = minutes * 60
+        workDuration = newDuration
+        if !isRunning && !isBreak {
+            remainingSeconds = newDuration
+        }
+    }
+
+    func adjustDuration(byMinutes delta: Double) {
+        let newMinutes = max(5, min(120, (workDuration / 60) + delta))
+        setDuration(minutes: newMinutes)
+    }
+
+    var workDurationMinutes: Int {
+        Int(workDuration / 60)
+    }
+
     private func completePhase() {
         pause()
         NSHapticFeedbackManager.defaultPerformer.perform(.levelChange, performanceTime: .now)
@@ -233,10 +202,11 @@ final class PomodoroTimer: ObservableObject {
 // MARK: - Calendar Card
 
 struct CalendarDeckCard: View {
-    @StateObject private var store = CalendarStore()
+    @ObservedObject private var store = CalendarStore.shared
     @State private var badgeAppeared = false
-    @State private var pulseShadow = false
     @State private var hoveredEventId: String?
+    @State private var openCalHovered = false
+    @State private var eventDotPulse = false
 
     private let calendar = Calendar.current
     private var today: Date { Date() }
@@ -244,103 +214,93 @@ struct CalendarDeckCard: View {
     private var weekdayShort: String {
         let f = DateFormatter(); f.dateFormat = "EEE"; return f.string(from: today).uppercased()
     }
-    private var monthName: String {
-        let f = DateFormatter(); f.dateFormat = "MMMM"; return f.string(from: today)
+    private var monthYearLabel: String {
+        let f = DateFormatter(); f.dateFormat = "MMMM yyyy"; return f.string(from: today).uppercased()
     }
+
+    // Always red per spec — #FF453A
+    private let calendarRed = Color(red: 1.0, green: 0.271, blue: 0.227)
 
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
-            // Header with month and live time
-            HStack(spacing: 5) {
-                Image(systemName: "calendar")
-                    .font(.system(size: 11, weight: .semibold))
-                    .foregroundStyle(.red)
-                Text(monthName)
-                    .font(.system(size: 12, weight: .bold))
-                    .foregroundStyle(.white)
+            // Header: "MARCH 2026" red left, date badge right
+            HStack(spacing: 0) {
+                Text(monthYearLabel)
+                    .font(.system(size: 9, weight: .semibold))
+                    .foregroundStyle(calendarRed)
+                    .tracking(1.2)
+                    .lineLimit(1)
                 Spacer(minLength: 0)
-                // Live time display
-                TimelineView(.periodic(from: .now, by: 60)) { context in
-                    Text(Self.formatTime(context.date))
-                        .font(.system(size: 10, weight: .medium, design: .rounded))
-                        .foregroundStyle(.white.opacity(0.4))
-                        .monospacedDigit()
-                }
-            }
 
-            // Date display
-            HStack(spacing: 8) {
-                // Big day number in a red rounded square (like Apple Calendar icon)
+                // Date badge — red gradient #FF453A -> #CC3333, cornerRadius 10
                 ZStack {
-                    RoundedRectangle(cornerRadius: 12, style: .continuous)
+                    RoundedRectangle(cornerRadius: 10, style: .continuous)
                         .fill(
                             LinearGradient(
-                                colors: [Color.red, Color.red.opacity(0.8)],
+                                colors: [calendarRed, Color(red: 0.8, green: 0.2, blue: 0.2)],
                                 startPoint: .top,
                                 endPoint: .bottom
                             )
                         )
-                        .frame(width: 44, height: 44)
-                        .shadow(color: .red.opacity(pulseShadow ? 0.45 : 0.25), radius: pulseShadow ? 8 : 5, y: 2)
-                        .animation(.easeInOut(duration: 2.0).repeatForever(autoreverses: true), value: pulseShadow)
+                        .frame(width: 38, height: 42)
 
-                    VStack(spacing: -2) {
+                    VStack(spacing: -1) {
                         Text(weekdayShort)
-                            .font(.system(size: 8, weight: .bold))
-                            .foregroundStyle(.white.opacity(0.8))
+                            .font(.system(size: 7, weight: .bold))
+                            .foregroundStyle(.white)
                         Text("\(dayNumber)")
-                            .font(.system(size: 20, weight: .bold, design: .rounded))
+                            .font(.system(size: 16, weight: .bold, design: .rounded))
                             .foregroundStyle(.white)
                     }
                 }
+                .shadow(color: calendarRed.opacity(0.35), radius: 8, y: 2)
                 .scaleEffect(badgeAppeared ? 1.0 : 0.8)
                 .opacity(badgeAppeared ? 1.0 : 0.0)
                 .animation(.spring(response: 0.5, dampingFraction: 0.7), value: badgeAppeared)
-                .onAppear {
-                    badgeAppeared = true
-                    pulseShadow = true
-                }
-
-                // Week days row
-                VStack(alignment: .leading, spacing: 4) {
-                    weekRow
-                }
+                .onAppear { badgeAppeared = true }
             }
 
-            Spacer(minLength: 0)
+            // Week row: S M T W T F S — current day highlighted with red circle
+            weekRow
 
-            // Upcoming events (max 2)
+            // Divider — 1px white 0.07
+            Rectangle()
+                .fill(Color.white.opacity(0.07))
+                .frame(height: 1)
+
+            // Events: colored dot (6px) + title (11px semibold white) + time (9px gray)
             if store.events.isEmpty {
-                HStack(spacing: 4) {
-                    Circle().fill(.green.opacity(0.5)).frame(width: 4, height: 4)
-                    Text("No upcoming events")
-                        .font(.system(size: 9, weight: .medium))
-                        .foregroundStyle(.white.opacity(0.4))
+                HStack(spacing: 5) {
+                    Image(systemName: "checkmark.circle.fill")
+                        .font(.system(size: 12, weight: .medium))
+                        .foregroundStyle(.green.opacity(0.7))
+                    Text("No events today")
+                        .font(.system(size: 10, weight: .medium))
+                        .foregroundStyle(.white.opacity(0.45))
+                        .lineLimit(1)
                 }
             } else {
                 VStack(alignment: .leading, spacing: 5) {
-                    // "Today" label
-                    Text("TODAY")
-                        .font(.system(size: 8, weight: .bold))
-                        .foregroundStyle(.white.opacity(0.25))
-                        .tracking(0.5)
-
                     ForEach(store.events.prefix(2), id: \.eventIdentifier) { event in
                         let isHovered = hoveredEventId == event.eventIdentifier
                         HStack(spacing: 6) {
-                            // Colored dot instead of rectangle bar
                             Circle()
                                 .fill(Color(cgColor: event.calendar.cgColor))
-                                .frame(width: 4, height: 4)
+                                .frame(width: 6, height: 6)
+                                .scaleEffect(eventDotPulse ? 1.15 : 1.0)
+                                .opacity(eventDotPulse ? 1.0 : 0.7)
+                                .animation(.easeInOut(duration: 1.5).repeatForever(autoreverses: true), value: eventDotPulse)
 
                             VStack(alignment: .leading, spacing: 1) {
                                 Text(event.title)
-                                    .font(.system(size: 9, weight: .semibold))
+                                    .font(.system(size: 11, weight: .semibold))
                                     .foregroundStyle(.white)
                                     .lineLimit(1)
                                 Text(Self.formatEventTime(event))
-                                    .font(.system(size: 8, weight: .medium))
+                                    .font(.system(size: 9, weight: .medium))
                                     .foregroundStyle(.white.opacity(0.4))
+                                    .lineLimit(1)
+                                    .truncationMode(.tail)
                             }
                             Spacer(minLength: 0)
                         }
@@ -356,23 +316,45 @@ struct CalendarDeckCard: View {
                         }
                     }
                 }
+                .onAppear { eventDotPulse = true }
             }
+
+            Spacer(minLength: 0)
+
+            // "Open Calendar" link — blue #0A84FF, 9px, with arrow-right icon
+            Button(action: {
+                NSWorkspace.shared.open(URL(fileURLWithPath: "/System/Applications/Calendar.app"))
+            }) {
+                HStack(spacing: 3) {
+                    Text("Open Calendar")
+                        .font(.system(size: 9, weight: .medium))
+                        .foregroundStyle(NotchDesign.blue)
+                    Image(systemName: "arrow.right")
+                        .font(.system(size: 8, weight: .medium))
+                        .foregroundStyle(NotchDesign.blue)
+                        .offset(x: openCalHovered ? 3 : 0)
+                        .animation(.easeOut(duration: 0.2), value: openCalHovered)
+                }
+                .opacity(openCalHovered ? 0.8 : 1.0)
+            }
+            .buttonStyle(.plain)
+            .onHover { openCalHovered = $0 }
         }
     }
 
     private var weekRow: some View {
-        let weekday = calendar.component(.weekday, from: today) // 1=Sun
-        let symbols = calendar.veryShortWeekdaySymbols // ["S","M","T","W","T","F","S"]
+        let weekday = calendar.component(.weekday, from: today)
+        let symbols = calendar.veryShortWeekdaySymbols
 
-        return HStack(spacing: 3) {
+        return HStack(spacing: 4) {
             ForEach(0..<7, id: \.self) { i in
                 let isToday = (i + 1) == weekday
                 Text(symbols[i])
-                    .font(.system(size: 8, weight: isToday ? .bold : .regular))
+                    .font(.system(size: 9, weight: isToday ? .bold : .regular))
                     .foregroundStyle(isToday ? .white : .white.opacity(0.3))
-                    .frame(width: 14, height: 14)
+                    .frame(width: 18, height: 18)
                     .background(
-                        Circle().fill(isToday ? Color.red.opacity(0.7) : Color.clear)
+                        Circle().fill(isToday ? calendarRed : Color.clear)
                     )
             }
         }
@@ -384,29 +366,50 @@ struct CalendarDeckCard: View {
         if event.isAllDay { return "All day" }
         return "\(f.string(from: event.startDate)) - \(f.string(from: event.endDate))"
     }
-
-    private static func formatTime(_ date: Date) -> String {
-        let f = DateFormatter()
-        f.dateFormat = "h:mm a"
-        return f.string(from: date)
-    }
 }
 
 // MARK: - Calendar Store
 
 @MainActor
 final class CalendarStore: ObservableObject {
+    static let shared = CalendarStore()
+
     @Published var events: [EKEvent] = []
     private let store = EKEventStore()
+    private var refreshTimer: Timer?
 
     init() {
         requestAccess()
     }
 
+    deinit {
+        refreshTimer?.invalidate()
+    }
+
     private func requestAccess() {
-        store.requestFullAccessToEvents { [weak self] granted, error in
-            guard granted, error == nil else { return }
-            Task { @MainActor in
+        if #available(macOS 14.0, *) {
+            store.requestFullAccessToEvents { [weak self] granted, error in
+                guard granted, error == nil else { return }
+                Task { @MainActor [weak self] in
+                    self?.fetchTodayEvents()
+                    self?.startPeriodicRefresh()
+                }
+            }
+        } else {
+            store.requestAccess(to: .event) { [weak self] granted, error in
+                guard granted, error == nil else { return }
+                Task { @MainActor [weak self] in
+                    self?.fetchTodayEvents()
+                    self?.startPeriodicRefresh()
+                }
+            }
+        }
+    }
+
+    private func startPeriodicRefresh() {
+        // Refresh events every 5 minutes so upcoming events stay current
+        refreshTimer = Timer.scheduledTimer(withTimeInterval: 300, repeats: true) { [weak self] _ in
+            Task { @MainActor [weak self] in
                 self?.fetchTodayEvents()
             }
         }
@@ -415,7 +418,7 @@ final class CalendarStore: ObservableObject {
     func fetchTodayEvents() {
         let calendar = Calendar.current
         let startOfDay = calendar.startOfDay(for: Date())
-        let endOfDay = calendar.date(byAdding: .day, value: 1, to: startOfDay)!
+        guard let endOfDay = calendar.date(byAdding: .day, value: 1, to: startOfDay) else { return }
 
         let predicate = store.predicateForEvents(withStart: startOfDay, end: endOfDay, calendars: nil)
         let fetched = store.events(matching: predicate)

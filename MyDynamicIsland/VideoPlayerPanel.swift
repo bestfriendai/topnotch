@@ -9,16 +9,9 @@ class VideoPlayerPanel: NSPanel {
     private static let minSize = NSSize(width: 320, height: 180)
     private static let maxSize = NSSize(width: 1920, height: 1080)
     private static let aspectRatio: CGFloat = 16.0 / 9.0
-    private static let resizeMargin: CGFloat = 8.0
-    private static let cornerResizeSize: CGFloat = 16.0
 
     // MARK: - State
 
-    private var isResizing = false
-    private var isDragging = false
-    private var resizeEdge: ResizeEdge = .none
-    private var initialMouseLocation: NSPoint = .zero
-    private var initialFrame: NSRect = .zero
     private var panelTrackingArea: NSTrackingArea?
     private var isMouseInside: Bool = false
 
@@ -26,19 +19,12 @@ class VideoPlayerPanel: NSPanel {
     private var preFullscreenFrame: NSRect?
     private var isInFullscreen: Bool = false
 
-    /// Edges/corners that can be resized
-    private enum ResizeEdge {
-        case none
-        case left, right, top, bottom
-        case topLeft, topRight, bottomLeft, bottomRight
-    }
-
     // MARK: - Initialization
 
     convenience init(contentRect: NSRect) {
         self.init(
             contentRect: contentRect,
-            styleMask: [.borderless, .nonactivatingPanel, .fullSizeContentView],
+            styleMask: [.titled, .closable, .miniaturizable, .resizable, .nonactivatingPanel, .fullSizeContentView],
             backing: .buffered,
             defer: false
         )
@@ -47,29 +33,33 @@ class VideoPlayerPanel: NSPanel {
     }
 
     private func configurePanel() {
+        // Title bar — transparent so video fills to top
+        titleVisibility = .hidden
+        titlebarAppearsTransparent = true
+
         // Panel behavior
         level = NSWindow.Level(rawValue: Int(CGWindowLevelForKey(.floatingWindow)))
         collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary]
         isFloatingPanel = true
-        becomesKeyOnlyIfNeeded = true
+        becomesKeyOnlyIfNeeded = false
         hidesOnDeactivate = false
 
         // Appearance
         isOpaque = false
-        backgroundColor = .clear
+        backgroundColor = .black
         hasShadow = true
 
         // Size constraints
         minSize = Self.minSize
         maxSize = Self.maxSize
 
-        // Make it movable
+        // Make it movable by dragging anywhere
         isMovableByWindowBackground = true
 
         // Set aspect ratio
         contentAspectRatio = NSSize(width: Self.aspectRatio, height: 1.0)
 
-        // Setup tracking area for resize cursor changes and hover opacity
+        // Setup tracking area for hover opacity
         setupTrackingArea()
     }
 
@@ -95,50 +85,6 @@ class VideoPlayerPanel: NSPanel {
     }
 
     // MARK: - Mouse Events
-
-    override func mouseMoved(with event: NSEvent) {
-        let location = event.locationInWindow
-        let edge = detectResizeEdge(at: location)
-        updateCursor(for: edge)
-    }
-
-    override func mouseDown(with event: NSEvent) {
-        let location = event.locationInWindow
-        resizeEdge = detectResizeEdge(at: location)
-
-        if resizeEdge != .none {
-            isResizing = true
-            isDragging = false
-            initialMouseLocation = NSEvent.mouseLocation
-            initialFrame = frame
-        } else {
-            isDragging = true
-            isResizing = false
-            super.mouseDown(with: event)
-        }
-    }
-
-    override func mouseDragged(with event: NSEvent) {
-        if isResizing {
-            performResize()
-        } else {
-            super.mouseDragged(with: event)
-        }
-    }
-
-    override func mouseUp(with event: NSEvent) {
-        let wasDragging = isDragging
-        let wasResizing = isResizing
-        isResizing = false
-        isDragging = false
-        resizeEdge = .none
-        super.mouseUp(with: event)
-
-        // Snap to nearest corner after a drag or resize
-        if wasDragging || wasResizing {
-            snapToNearestCorner()
-        }
-    }
 
     override func mouseEntered(with event: NSEvent) {
         isMouseInside = true
@@ -234,170 +180,6 @@ class VideoPlayerPanel: NSPanel {
                 self.animator().setFrame(fullFrame, display: true)
             }
         }
-    }
-
-    // MARK: - Resize Detection
-
-    private func detectResizeEdge(at point: NSPoint) -> ResizeEdge {
-        guard let contentView = contentView else { return .none }
-
-        let bounds = contentView.bounds
-        let margin = Self.resizeMargin
-        let corner = Self.cornerResizeSize
-
-        let isLeft = point.x < margin
-        let isRight = point.x > bounds.width - margin
-        let isTop = point.y > bounds.height - margin
-        let isBottom = point.y < margin
-
-        let isCornerLeft = point.x < corner
-        let isCornerRight = point.x > bounds.width - corner
-        let isCornerTop = point.y > bounds.height - corner
-        let isCornerBottom = point.y < corner
-
-        // Check corners first
-        if isCornerTop && isCornerLeft { return .topLeft }
-        if isCornerTop && isCornerRight { return .topRight }
-        if isCornerBottom && isCornerLeft { return .bottomLeft }
-        if isCornerBottom && isCornerRight { return .bottomRight }
-
-        // Then edges
-        if isLeft { return .left }
-        if isRight { return .right }
-        if isTop { return .top }
-        if isBottom { return .bottom }
-
-        return .none
-    }
-
-    private func updateCursor(for edge: ResizeEdge) {
-        switch edge {
-        case .none:
-            NSCursor.arrow.set()
-        case .left, .right:
-            NSCursor.resizeLeftRight.set()
-        case .top, .bottom:
-            NSCursor.resizeUpDown.set()
-        case .topLeft, .bottomRight:
-            // Diagonal resize (no built-in cursor, use crosshair or custom)
-            NSCursor.crosshair.set()
-        case .topRight, .bottomLeft:
-            NSCursor.crosshair.set()
-        }
-    }
-
-    // MARK: - Resize Logic
-
-    private func performResize() {
-        let currentMouse = NSEvent.mouseLocation
-        let deltaX = currentMouse.x - initialMouseLocation.x
-        let deltaY = currentMouse.y - initialMouseLocation.y
-
-        var newFrame = initialFrame
-
-        switch resizeEdge {
-        case .none:
-            return
-
-        case .right:
-            newFrame.size.width = initialFrame.width + deltaX
-
-        case .left:
-            newFrame.size.width = initialFrame.width - deltaX
-            newFrame.origin.x = initialFrame.origin.x + deltaX
-
-        case .top:
-            newFrame.size.height = initialFrame.height + deltaY
-
-        case .bottom:
-            newFrame.size.height = initialFrame.height - deltaY
-            newFrame.origin.y = initialFrame.origin.y + deltaY
-
-        case .topRight:
-            newFrame.size.width = initialFrame.width + deltaX
-            newFrame.size.height = initialFrame.height + deltaY
-
-        case .topLeft:
-            newFrame.size.width = initialFrame.width - deltaX
-            newFrame.size.height = initialFrame.height + deltaY
-            newFrame.origin.x = initialFrame.origin.x + deltaX
-
-        case .bottomRight:
-            newFrame.size.width = initialFrame.width + deltaX
-            newFrame.size.height = initialFrame.height - deltaY
-            newFrame.origin.y = initialFrame.origin.y + deltaY
-
-        case .bottomLeft:
-            newFrame.size.width = initialFrame.width - deltaX
-            newFrame.size.height = initialFrame.height - deltaY
-            newFrame.origin.x = initialFrame.origin.x + deltaX
-            newFrame.origin.y = initialFrame.origin.y + deltaY
-        }
-
-        // Enforce aspect ratio
-        newFrame = enforceAspectRatio(for: newFrame, basedOn: resizeEdge)
-
-        // Enforce size limits
-        newFrame = enforceSizeLimits(for: newFrame)
-
-        setFrame(newFrame, display: true, animate: false)
-    }
-
-    private func enforceAspectRatio(for rect: NSRect, basedOn edge: ResizeEdge) -> NSRect {
-        var newRect = rect
-        let ratio = Self.aspectRatio
-
-        switch edge {
-        case .left, .right:
-            // Width changed, adjust height
-            newRect.size.height = newRect.width / ratio
-
-        case .top, .bottom:
-            // Height changed, adjust width
-            newRect.size.width = newRect.height * ratio
-
-        case .topLeft, .topRight, .bottomLeft, .bottomRight:
-            // Corner resize - use the larger dimension change
-            let widthFromHeight = newRect.height * ratio
-            let heightFromWidth = newRect.width / ratio
-
-            if abs(newRect.width - initialFrame.width) > abs(newRect.height - initialFrame.height) {
-                newRect.size.height = heightFromWidth
-            } else {
-                newRect.size.width = widthFromHeight
-            }
-
-        case .none:
-            break
-        }
-
-        return newRect
-    }
-
-    private func enforceSizeLimits(for rect: NSRect) -> NSRect {
-        var newRect = rect
-
-        // Enforce minimum size
-        if newRect.width < Self.minSize.width {
-            newRect.size.width = Self.minSize.width
-            newRect.size.height = Self.minSize.width / Self.aspectRatio
-        }
-        if newRect.height < Self.minSize.height {
-            newRect.size.height = Self.minSize.height
-            newRect.size.width = Self.minSize.height * Self.aspectRatio
-        }
-
-        // Enforce maximum size
-        if newRect.width > Self.maxSize.width {
-            newRect.size.width = Self.maxSize.width
-            newRect.size.height = Self.maxSize.width / Self.aspectRatio
-        }
-        if newRect.height > Self.maxSize.height {
-            newRect.size.height = Self.maxSize.height
-            newRect.size.width = Self.maxSize.height * Self.aspectRatio
-        }
-
-        return newRect
     }
 
     // MARK: - First Responder

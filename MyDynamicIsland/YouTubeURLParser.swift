@@ -2,6 +2,12 @@ import Foundation
 
 /// Parses various YouTube URL formats and extracts video IDs
 struct YouTubeURLParser {
+
+    struct PlaybackRequest: Equatable {
+        let videoID: String
+        let startTime: Int
+        let canonicalURL: URL?
+    }
     
     /// Supported YouTube URL patterns
     private static let patterns: [(regex: String, captureGroup: Int)] = [
@@ -81,8 +87,65 @@ struct YouTubeURLParser {
         case maxres = "maxresdefault"   // 1280x720
     }
     
+    // MARK: - Start Time Extraction
+
+    /// Extracts the start time in seconds from a YouTube URL (supports t=, start= params and formats like 1h2m3s)
+    static func extractStartTime(from input: String) -> Int? {
+        let trimmed = input.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard let components = URLComponents(string: trimmed),
+              let queryItems = components.queryItems else { return nil }
+        for item in queryItems {
+            guard (item.name == "t" || item.name == "start"),
+                  let value = item.value else { continue }
+            if let secs = Int(value), secs > 0 { return secs }
+            let parsed = parseTimecode(value)
+            return parsed > 0 ? parsed : nil
+        }
+        return nil
+    }
+
+    static func playbackRequest(from input: String) -> PlaybackRequest? {
+        let trimmed = input.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard let videoID = extractVideoID(from: trimmed) else { return nil }
+
+        let startTime = extractStartTime(from: trimmed) ?? 0
+        var components = URLComponents(url: youtubeURL(for: videoID) ?? URL(string: "https://www.youtube.com/watch?v=\(videoID)")!, resolvingAgainstBaseURL: false)
+
+        if startTime > 0 {
+            components?.queryItems = [
+                URLQueryItem(name: "v", value: videoID),
+                URLQueryItem(name: "t", value: String(startTime))
+            ]
+        }
+
+        return PlaybackRequest(
+            videoID: videoID,
+            startTime: startTime,
+            canonicalURL: components?.url
+        )
+    }
+
+    private static func parseTimecode(_ value: String) -> Int {
+        var total = 0
+        let pattern = #"(\d+)([hms])"#
+        guard let regex = try? NSRegularExpression(pattern: pattern) else { return 0 }
+        let matches = regex.matches(in: value, range: NSRange(value.startIndex..., in: value))
+        for m in matches {
+            guard let numRange = Range(m.range(at: 1), in: value),
+                  let unitRange = Range(m.range(at: 2), in: value) else { continue }
+            let num = Int(value[numRange]) ?? 0
+            switch String(value[unitRange]) {
+            case "h": total += num * 3600
+            case "m": total += num * 60
+            case "s": total += num
+            default: break
+            }
+        }
+        return total
+    }
+
     // MARK: - Private Helpers
-    
+
     private static func matchPattern(_ pattern: String, in input: String, captureGroup: Int) -> String? {
         guard let regex = try? NSRegularExpression(pattern: pattern, options: .caseInsensitive) else {
             return nil

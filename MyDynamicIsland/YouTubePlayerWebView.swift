@@ -6,13 +6,350 @@ import OSLog
 /// NSViewRepresentable wrapper for YouTube iframe player
 struct YouTubePlayerWebView: NSViewRepresentable {
     let videoID: String
+    var startTime: Int = 0
     @ObservedObject var playerState: YouTubePlayerState
     @ObservedObject var playerController: YouTubePlayerController
 
     private static let logger = Logger(subsystem: "com.topnotch.app", category: "YouTubePlayer")
 
+    private static let playerBridgeScript = #"""
+    (function() {
+        if (window.__topNotchBridgeInstalled) {
+            return;
+        }
+        window.__topNotchBridgeInstalled = true;
+
+        function postMessage(name, payload) {
+            try {
+                window.webkit.messageHandlers[name].postMessage(payload);
+            } catch (_) {}
+        }
+
+        function activeVideoElement() {
+            return document.querySelector('video.html5-main-video') || document.querySelector('video');
+        }
+
+        function hasEmbedPlayer() {
+            return typeof window.player !== 'undefined' && window.player;
+        }
+
+        function currentDuration() {
+            try {
+                if (hasEmbedPlayer() && typeof window.player.getDuration === 'function') {
+                    return Number(window.player.getDuration()) || 0;
+                }
+                var video = activeVideoElement();
+                return Number(video && video.duration) || 0;
+            } catch (_) {
+                return 0;
+            }
+        }
+
+        function currentTime() {
+            try {
+                if (hasEmbedPlayer() && typeof window.player.getCurrentTime === 'function') {
+                    return Number(window.player.getCurrentTime()) || 0;
+                }
+                var video = activeVideoElement();
+                return Number(video && video.currentTime) || 0;
+            } catch (_) {
+                return 0;
+            }
+        }
+
+        function isMuted() {
+            try {
+                if (hasEmbedPlayer() && typeof window.player.isMuted === 'function') {
+                    return !!window.player.isMuted();
+                }
+                var video = activeVideoElement();
+                return !!(video && video.muted);
+            } catch (_) {
+                return false;
+            }
+        }
+
+        function currentVolumePercent() {
+            try {
+                if (hasEmbedPlayer() && typeof window.player.getVolume === 'function') {
+                    return Number(window.player.getVolume()) || 0;
+                }
+                var video = activeVideoElement();
+                return Math.round((Number(video && video.volume) || 0) * 100);
+            } catch (_) {
+                return 0;
+            }
+        }
+
+        function currentStateCode() {
+            try {
+                if (hasEmbedPlayer() && typeof window.player.getPlayerState === 'function') {
+                    return Number(window.player.getPlayerState());
+                }
+                var video = activeVideoElement();
+                if (!video) {
+                    return -1;
+                }
+                if (video.ended) {
+                    return 0;
+                }
+                if (video.readyState < 3) {
+                    return 3;
+                }
+                return video.paused ? 2 : 1;
+            } catch (_) {
+                return -1;
+            }
+        }
+
+        window.sendTimeUpdate = function() {
+            postMessage('timeUpdate', {
+                currentTime: currentTime(),
+                duration: currentDuration()
+            });
+        };
+
+        window.sendVolumeChange = function() {
+            postMessage('volumeChange', {
+                volume: currentVolumePercent(),
+                muted: isMuted()
+            });
+        };
+
+        window.sendVideoData = function() {
+            var title = '';
+            try {
+                if (hasEmbedPlayer() && typeof window.player.getVideoData === 'function') {
+                    var data = window.player.getVideoData();
+                    title = (data && data.title) || '';
+                }
+            } catch (_) {}
+
+            if (!title) {
+                var titleNode = document.querySelector('h1.ytd-watch-metadata yt-formatted-string')
+                    || document.querySelector('h1.title yt-formatted-string')
+                    || document.querySelector('meta[name="title"]');
+                if (titleNode) {
+                    title = (titleNode.textContent || titleNode.content || '').trim();
+                }
+            }
+
+            if (!title && document.title) {
+                title = document.title.replace(/\s*-\s*YouTube$/i, '').trim();
+            }
+
+            postMessage('videoData', { title: title });
+        };
+
+        window.playVideo = function() {
+            if (hasEmbedPlayer() && typeof window.player.playVideo === 'function') {
+                window.player.playVideo();
+                return;
+            }
+            var video = activeVideoElement();
+            if (video) {
+                var playResult = video.play();
+                if (playResult && typeof playResult.catch === 'function') {
+                    playResult.catch(function() {});
+                }
+            }
+        };
+
+        window.pauseVideo = function() {
+            if (hasEmbedPlayer() && typeof window.player.pauseVideo === 'function') {
+                window.player.pauseVideo();
+                return;
+            }
+            var video = activeVideoElement();
+            if (video) {
+                video.pause();
+            }
+        };
+
+        window.togglePlayPause = function() {
+            if (hasEmbedPlayer() && typeof window.player.getPlayerState === 'function') {
+                if (Number(window.player.getPlayerState()) === 1) {
+                    window.player.pauseVideo();
+                } else {
+                    window.player.playVideo();
+                }
+                return;
+            }
+            var video = activeVideoElement();
+            if (!video) {
+                return;
+            }
+            if (video.paused || video.ended) {
+                var playResult = video.play();
+                if (playResult && typeof playResult.catch === 'function') {
+                    playResult.catch(function() {});
+                }
+            } else {
+                video.pause();
+            }
+        };
+
+        window.seekTo = function(seconds) {
+            if (hasEmbedPlayer() && typeof window.player.seekTo === 'function') {
+                window.player.seekTo(seconds, true);
+                return;
+            }
+            var video = activeVideoElement();
+            if (video) {
+                video.currentTime = Number(seconds) || 0;
+            }
+        };
+
+        window.seekRelative = function(seconds) {
+            if (hasEmbedPlayer() && typeof window.player.getCurrentTime === 'function') {
+                window.player.seekTo(window.player.getCurrentTime() + Number(seconds || 0), true);
+                return;
+            }
+            var video = activeVideoElement();
+            if (video) {
+                video.currentTime = Math.max(0, (Number(video.currentTime) || 0) + Number(seconds || 0));
+            }
+        };
+
+        window.setVolume = function(volume) {
+            if (hasEmbedPlayer() && typeof window.player.setVolume === 'function') {
+                window.player.setVolume(volume);
+                window.sendVolumeChange();
+                return;
+            }
+            var video = activeVideoElement();
+            if (video) {
+                video.volume = Math.max(0, Math.min(1, (Number(volume) || 0) / 100));
+                if (video.volume > 0 && video.muted) {
+                    video.muted = false;
+                }
+                window.sendVolumeChange();
+            }
+        };
+
+        window.mute = function() {
+            if (hasEmbedPlayer() && typeof window.player.mute === 'function') {
+                window.player.mute();
+                window.sendVolumeChange();
+                return;
+            }
+            var video = activeVideoElement();
+            if (video) {
+                video.muted = true;
+                window.sendVolumeChange();
+            }
+        };
+
+        window.unmute = function() {
+            if (hasEmbedPlayer() && typeof window.player.unMute === 'function') {
+                window.player.unMute();
+                window.sendVolumeChange();
+                return;
+            }
+            var video = activeVideoElement();
+            if (video) {
+                video.muted = false;
+                window.sendVolumeChange();
+            }
+        };
+
+        window.toggleMute = function() {
+            if (hasEmbedPlayer() && typeof window.player.isMuted === 'function') {
+                if (window.player.isMuted()) {
+                    window.player.unMute();
+                } else {
+                    window.player.mute();
+                }
+                window.sendVolumeChange();
+                return;
+            }
+            var video = activeVideoElement();
+            if (video) {
+                video.muted = !video.muted;
+                window.sendVolumeChange();
+            }
+        };
+
+        window.setPlaybackRate = function(rate) {
+            if (hasEmbedPlayer() && typeof window.player.setPlaybackRate === 'function') {
+                window.player.setPlaybackRate(rate);
+                return;
+            }
+            var video = activeVideoElement();
+            if (video) {
+                video.playbackRate = Number(rate) || 1;
+                postMessage('playbackRateChange', { rate: video.playbackRate });
+            }
+        };
+
+        window.loadVideo = function(videoId) {
+            if (hasEmbedPlayer() && typeof window.player.loadVideoById === 'function') {
+                window.player.loadVideoById(videoId);
+                return;
+            }
+            window.location.href = 'https://www.youtube.com/watch?v=' + encodeURIComponent(videoId);
+        };
+
+        function postReadyState() {
+            postMessage('playerReady', { duration: currentDuration() });
+            postMessage('stateChange', { state: currentStateCode() });
+            postMessage('playbackRateChange', { rate: (activeVideoElement() && activeVideoElement().playbackRate) || 1 });
+            window.sendVideoData();
+            window.sendTimeUpdate();
+            window.sendVolumeChange();
+        }
+
+        function bindVideo(video) {
+            if (!video || video.__topNotchBound) {
+                return;
+            }
+            video.__topNotchBound = true;
+            ['play', 'pause', 'playing', 'waiting', 'ended'].forEach(function(eventName) {
+                video.addEventListener(eventName, function() {
+                    postMessage('stateChange', { state: currentStateCode() });
+                });
+            });
+            ['timeupdate', 'loadedmetadata', 'durationchange'].forEach(function(eventName) {
+                video.addEventListener(eventName, function() {
+                    window.sendTimeUpdate();
+                });
+            });
+            ['volumechange'].forEach(function(eventName) {
+                video.addEventListener(eventName, function() {
+                    window.sendVolumeChange();
+                });
+            });
+            ['ratechange'].forEach(function(eventName) {
+                video.addEventListener(eventName, function() {
+                    postMessage('playbackRateChange', { rate: video.playbackRate || 1 });
+                });
+            });
+            postReadyState();
+        }
+
+        function bindCurrentVideo() {
+            bindVideo(activeVideoElement());
+        }
+
+        bindCurrentVideo();
+
+        var observer = new MutationObserver(function() {
+            bindCurrentVideo();
+        });
+
+        if (document.documentElement) {
+            observer.observe(document.documentElement, { childList: true, subtree: true });
+        }
+
+        document.addEventListener('readystatechange', bindCurrentVideo);
+        window.addEventListener('load', bindCurrentVideo);
+    })();
+    """#
+
     private static func trace(_ message: String) {
-        print("[YouTubePlayer] \(message)")
+        #if DEBUG
+        logger.debug("\(message)")
+        #endif
     }
     
     /// Coordinator handles JavaScript message callbacks
@@ -157,6 +494,70 @@ struct YouTubePlayerWebView: NSViewRepresentable {
         // MARK: - WKNavigationDelegate
         
         func webView(_ webView: WKWebView, decidePolicyFor navigationAction: WKNavigationAction, decisionHandler: @escaping (WKNavigationActionPolicy) -> Void) {
+            guard let url = navigationAction.request.url else {
+                decisionHandler(.allow)
+                return
+            }
+
+            let host = url.host?.lowercased() ?? ""
+            let isMainFrameNavigation = navigationAction.targetFrame?.isMainFrame ?? false
+
+            // Always allow YouTube domains and initial about:blank / data loads
+            let allowedHosts = ["youtube.com", "www.youtube.com", "m.youtube.com",
+                                "music.youtube.com", "youtu.be",
+                                "accounts.google.com", "consent.youtube.com",
+                                "www.youtube-nocookie.com",
+                                "www.google.com"]
+            let isYouTubeDomain = allowedHosts.contains(where: { host.hasSuffix($0) })
+            let isInitialLoad = url.scheme == "about" || url.scheme == "data" || url.absoluteString.hasPrefix("blob:")
+
+            if isMainFrameNavigation && !isInitialLoad {
+                switch parent.playerState.playbackMode {
+                case .embed:
+                    // Only block user-initiated link clicks in embed mode.
+                    // Allow .other (loadHTMLString, iframe API) and .reload.
+                    if navigationAction.navigationType == .linkActivated {
+                        NSWorkspace.shared.open(url)
+                        decisionHandler(.cancel)
+                        return
+                    }
+                    // Allow the navigation (initial embed load, reloads, etc.)
+                    break
+                case .watchPageFallback:
+                    let isCurrentVideoPage: Bool
+                    if let currentVideoID = parent.playerState.currentVideoID,
+                       let requestedVideoID = YouTubeURLParser.extractVideoID(from: url.absoluteString) {
+                        isCurrentVideoPage = currentVideoID == requestedVideoID
+                    } else {
+                        isCurrentVideoPage = false
+                    }
+
+                    let isAllowedFallbackPage = isYouTubeDomain && isCurrentVideoPage
+                    let isAllowedAccountFlow = host.hasSuffix("accounts.google.com") || host.hasSuffix("consent.youtube.com")
+
+                    if !isAllowedFallbackPage && !isAllowedAccountFlow {
+                        if navigationAction.navigationType == .linkActivated {
+                            NSWorkspace.shared.open(url)
+                        }
+                        decisionHandler(.cancel)
+                        return
+                    }
+                }
+            }
+
+            if isYouTubeDomain || isInitialLoad {
+                decisionHandler(.allow)
+                return
+            }
+
+            // User-initiated clicks on external links — open in Safari instead
+            if navigationAction.navigationType == .linkActivated {
+                NSWorkspace.shared.open(url)
+                decisionHandler(.cancel)
+                return
+            }
+
+            // Allow sub-resource loads (scripts, images, iframes) from any domain
             decisionHandler(.allow)
         }
         
@@ -171,6 +572,9 @@ struct YouTubePlayerWebView: NSViewRepresentable {
         }
         
         func webView(_ webView: WKWebView, didFail navigation: WKNavigation!, withError error: Error) {
+            if shouldIgnore(error) {
+                return
+            }
             YouTubePlayerWebView.logger.error("WKWebView navigation failure: \(error.localizedDescription, privacy: .public)")
             YouTubePlayerWebView.trace("navigation failure: \(error.localizedDescription)")
             Task { @MainActor in
@@ -179,11 +583,25 @@ struct YouTubePlayerWebView: NSViewRepresentable {
         }
 
         func webView(_ webView: WKWebView, didFailProvisionalNavigation navigation: WKNavigation!, withError error: Error) {
+            if shouldIgnore(error) {
+                return
+            }
             YouTubePlayerWebView.logger.error("WKWebView provisional navigation failure: \(error.localizedDescription, privacy: .public)")
             YouTubePlayerWebView.trace("provisional navigation failure: \(error.localizedDescription)")
             Task { @MainActor in
                 parent.playerState.setError(.networkError)
             }
+        }
+
+        private func shouldIgnore(_ error: Error) -> Bool {
+            let nsError = error as NSError
+            if nsError.domain == NSURLErrorDomain && nsError.code == NSURLErrorCancelled {
+                return true
+            }
+            if nsError.domain == "WebKitErrorDomain" && nsError.code == 102 {
+                return true
+            }
+            return false
         }
     }
     
@@ -202,6 +620,13 @@ struct YouTubePlayerWebView: NSViewRepresentable {
         
         // Add message handlers
         let contentController = configuration.userContentController
+        contentController.addUserScript(
+            WKUserScript(
+                source: Self.playerBridgeScript,
+                injectionTime: .atDocumentEnd,
+                forMainFrameOnly: false
+            )
+        )
         let messageNames = ["playerReady", "stateChange", "timeUpdate", "error", "videoData", "volumeChange", "playbackRateChange"]
         for name in messageNames {
             contentController.add(context.coordinator, name: name)
@@ -242,8 +667,29 @@ struct YouTubePlayerWebView: NSViewRepresentable {
 
     static func dismantleNSView(_ webView: WKWebView, coordinator: Coordinator) {
         coordinator.stopTimeUpdateTimer()
+
+        // Clear webView references before removing handlers
         coordinator.webView = nil
-        coordinator.parent.playerController.webView = nil
+        // Only nil out the controller's webView if it still points to THIS webView.
+        // A new YouTubePlayerWebView may have already set a replacement reference
+        // (e.g., when the player is minimized and a hidden keep-alive WebView takes over).
+        // Execute synchronously — we're already on MainActor and an async Task
+        // could race against a replacement webView being set by a new view.
+        if coordinator.parent.playerController.webView === webView {
+            coordinator.parent.playerController.webView = nil
+        }
+
+        // Remove message handlers to break the retain cycle:
+        // WKUserContentController -> Coordinator -> parent
+        let contentController = webView.configuration.userContentController
+        let messageNames = ["playerReady", "stateChange", "timeUpdate", "error", "videoData", "volumeChange", "playbackRateChange"]
+        for name in messageNames {
+            contentController.removeScriptMessageHandler(forName: name)
+        }
+        webView.navigationDelegate = nil
+
+        // Stop any pending loads
+        webView.stopLoading()
     }
     
     // MARK: - YouTube Player HTML
@@ -320,7 +766,11 @@ struct YouTubePlayerWebView: NSViewRepresentable {
                             'enablejsapi': 1,
                             'fs': 1,
                             'playsinline': 1,
-                            'rel': 0
+                            'rel': 0,
+                            'modestbranding': 1,
+                            'iv_load_policy': 3,
+                            'autohide': 1,
+                            'start': \(startTime > 0 ? startTime : 0)
                         },
                         events: {
                             'onReady': onPlayerReady,

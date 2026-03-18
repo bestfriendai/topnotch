@@ -42,7 +42,7 @@ struct NowPlayingInfo: Equatable {
     
     /// Check if we have valid media info
     var hasMedia: Bool {
-        !title.isEmpty || !artist.isEmpty
+        !title.isEmpty || !artist.isEmpty || isPlaying
     }
     
     /// Get the appropriate SF Symbol for the source app

@@ -2,27 +2,380 @@
 import AppKit
 import Combine
 import Foundation
+import OSLog
 
 @MainActor
 final class MediaRemoteController: ObservableObject {
     static let shared = MediaRemoteController()
 
     @Published private(set) var nowPlayingInfo = NowPlayingInfo()
-    @Published private(set) var isAvailable = false
+    @Published private(set) var isAvailable = true
+    @Published private(set) var isPlaying = false
 
-    private init() {}
+    private var observers: [NSObjectProtocol] = []
+    private var updateTimer: Timer?
+    private let updateInterval: TimeInterval = 0.5
+    private var tickCount: Int = 0
 
-    func fetchNowPlayingInfo() async {}
-    func play() {}
-    func pause() {}
-    func togglePlayPause() {}
-    func nextTrack() {}
-    func previousTrack() {}
-    func skipForward() {}
-    func skipBackward() {}
-    func seekToTime(_ time: TimeInterval) {}
-    func seekToProgress(_ progress: Double) {}
-    func refresh() {}
+    private init() {
+        setupObservers()
+        startElapsedTimeTimer()
+    }
+
+    deinit {
+        updateTimer?.invalidate()
+        updateTimer = nil
+        let center = DistributedNotificationCenter.default()
+        for observer in observers {
+            center.removeObserver(observer)
+        }
+        observers.removeAll()
+    }
+
+    private func setupObservers() {
+        let center = DistributedNotificationCenter.default()
+
+        // Apple Music
+        observers.append(center.addObserver(forName: NSNotification.Name("com.apple.Music.playerInfo"), object: nil, queue: .main) { [weak self] note in
+            // Extract userInfo on the callback queue to avoid Sendable issues
+            let userInfo = note.userInfo as? [String: Any]
+            Task { @MainActor [weak self] in
+                guard let self, let info = userInfo else { return }
+                self.handleAppleMusicInfo(info)
+            }
+        })
+
+        // Spotify
+        observers.append(center.addObserver(forName: NSNotification.Name("com.spotify.client.PlaybackStateChanged"), object: nil, queue: .main) { [weak self] note in
+            let userInfo = note.userInfo as? [String: Any]
+            Task { @MainActor [weak self] in
+                guard let self, let info = userInfo else { return }
+                self.handleSpotifyInfo(info)
+            }
+        })
+    }
+
+    private func startElapsedTimeTimer() {
+        let interval = updateInterval
+        tickCount = 0
+        updateTimer = Timer.scheduledTimer(withTimeInterval: interval, repeats: true) { [weak self] _ in
+            Task { @MainActor [weak self] in
+                guard let self else { return }
+                self.tickCount += 1
+
+                // Every 6 ticks (3 seconds), do a full refresh to catch missed notifications
+                if self.tickCount % 6 == 0 {
+                    await self.fetchNowPlayingInfo()
+                    return
+                }
+
+                guard self.nowPlayingInfo.isPlaying, self.nowPlayingInfo.duration > 0 else { return }
+                var updatedInfo = self.nowPlayingInfo
+                updatedInfo.elapsedTime = min(
+                    updatedInfo.elapsedTime + interval * max(updatedInfo.playbackRate, 1.0),
+                    updatedInfo.duration
+                )
+                self.nowPlayingInfo = updatedInfo
+            }
+        }
+    }
+
+    private func handleAppleMusicInfo(_ info: [String: Any]) {
+        var newInfo = nowPlayingInfo
+        newInfo.title = info["Name"] as? String ?? ""
+        newInfo.artist = info["Artist"] as? String ?? ""
+        newInfo.album = info["Album"] as? String ?? ""
+        newInfo.appName = "Music"
+
+        let state = info["Player State"] as? String ?? ""
+        newInfo.isPlaying = state == "Playing"
+        newInfo.playbackRate = newInfo.isPlaying ? 1.0 : 0.0
+        self.isPlaying = newInfo.isPlaying
+
+        if let duration = info["Total Time"] as? Int {
+            newInfo.duration = TimeInterval(duration) / 1000.0
+        }
+        if let position = info["Player Position"] as? Double {
+            newInfo.elapsedTime = position
+        }
+
+        // Fetch artwork asynchronously (Apple Music)
+        if newInfo.title != self.nowPlayingInfo.title || self.nowPlayingInfo.artwork == nil {
+            newInfo.artwork = fetchAppleMusicArtwork()
+        } else {
+            newInfo.artwork = self.nowPlayingInfo.artwork
+        }
+
+        self.nowPlayingInfo = newInfo
+    }
+
+    private func handleSpotifyInfo(_ info: [String: Any]) {
+        var newInfo = nowPlayingInfo
+        newInfo.title = info["Name"] as? String ?? info["TrackName"] as? String ?? ""
+        newInfo.artist = info["Artist"] as? String ?? ""
+        newInfo.album = info["Album"] as? String ?? info["AlbumName"] as? String ?? ""
+        newInfo.appName = "Spotify"
+
+        let state = info["Player State"] as? String ?? ""
+        newInfo.isPlaying = state == "Playing"
+        newInfo.playbackRate = newInfo.isPlaying ? 1.0 : 0.0
+        self.isPlaying = newInfo.isPlaying
+
+        if let duration = info["Duration"] as? Int {
+            newInfo.duration = TimeInterval(duration) / 1000.0
+        }
+        if let position = info["Playback Position"] as? Double {
+            newInfo.elapsedTime = position
+        }
+
+        // Fetch artwork asynchronously (Spotify)
+        if newInfo.title != self.nowPlayingInfo.title || self.nowPlayingInfo.artwork == nil {
+            newInfo.artwork = fetchSpotifyArtwork()
+        } else {
+            newInfo.artwork = self.nowPlayingInfo.artwork
+        }
+
+        self.nowPlayingInfo = newInfo
+    }
+
+    func fetchNowPlayingInfo() async {
+        // Actively query the currently-playing app for full track details.
+        // This is used on initial load and periodic refresh to ensure we
+        // have data even if we missed a DistributedNotification.
+        let app = nowPlayingInfo.appName
+        if app == "Spotify" {
+            fetchSpotifyFullInfo()
+        } else {
+            // Default to Apple Music
+            fetchAppleMusicFullInfo()
+        }
+    }
+
+    private func fetchAppleMusicFullInfo() {
+        let script = """
+        tell application "System Events"
+            if not (exists process "Music") then return "|||NOT_RUNNING|||"
+        end tell
+        tell application "Music"
+            if player state is not playing and player state is not paused then return "|||NOT_PLAYING|||"
+            set trackName to name of current track
+            set trackArtist to artist of current track
+            set trackAlbum to album of current track
+            set trackDuration to duration of current track
+            set trackPosition to player position
+            set playerState to player state as string
+            return trackName & "|||" & trackArtist & "|||" & trackAlbum & "|||" & trackDuration & "|||" & trackPosition & "|||" & playerState
+        end tell
+        """
+        guard let scriptObject = NSAppleScript(source: script) else { return }
+        var errorInfo: NSDictionary?
+        let result = scriptObject.executeAndReturnError(&errorInfo)
+        guard errorInfo == nil else { return }
+        let output = result.stringValue ?? ""
+        guard !output.contains("NOT_RUNNING"), !output.contains("NOT_PLAYING") else { return }
+
+        let parts = output.components(separatedBy: "|||")
+        guard parts.count >= 6 else { return }
+
+        var newInfo = nowPlayingInfo
+        newInfo.title = parts[0]
+        newInfo.artist = parts[1]
+        newInfo.album = parts[2]
+        newInfo.duration = Double(parts[3]) ?? 0
+        newInfo.elapsedTime = Double(parts[4]) ?? 0
+        newInfo.appName = "Music"
+        let playing = parts[5].lowercased().contains("playing")
+        newInfo.isPlaying = playing
+        newInfo.playbackRate = playing ? 1.0 : 0.0
+
+        // Preserve existing artwork or fetch if needed
+        if newInfo.title != self.nowPlayingInfo.title || self.nowPlayingInfo.artwork == nil {
+            newInfo.artwork = fetchAppleMusicArtwork()
+        } else {
+            newInfo.artwork = self.nowPlayingInfo.artwork
+        }
+
+        self.nowPlayingInfo = newInfo
+        self.isPlaying = newInfo.isPlaying
+    }
+
+    private func fetchSpotifyFullInfo() {
+        let script = """
+        tell application "System Events"
+            if not (exists process "Spotify") then return "|||NOT_RUNNING|||"
+        end tell
+        tell application "Spotify"
+            if player state is not playing and player state is not paused then return "|||NOT_PLAYING|||"
+            set trackName to name of current track
+            set trackArtist to artist of current track
+            set trackAlbum to album of current track
+            set trackDuration to (duration of current track) / 1000
+            set trackPosition to player position
+            set playerState to player state as string
+            set artURL to artwork url of current track
+            return trackName & "|||" & trackArtist & "|||" & trackAlbum & "|||" & trackDuration & "|||" & trackPosition & "|||" & playerState & "|||" & artURL
+        end tell
+        """
+        guard let scriptObject = NSAppleScript(source: script) else { return }
+        var errorInfo: NSDictionary?
+        let result = scriptObject.executeAndReturnError(&errorInfo)
+        guard errorInfo == nil else { return }
+        let output = result.stringValue ?? ""
+        guard !output.contains("NOT_RUNNING"), !output.contains("NOT_PLAYING") else { return }
+
+        let parts = output.components(separatedBy: "|||")
+        guard parts.count >= 6 else { return }
+
+        var newInfo = nowPlayingInfo
+        newInfo.title = parts[0]
+        newInfo.artist = parts[1]
+        newInfo.album = parts[2]
+        newInfo.duration = Double(parts[3]) ?? 0
+        newInfo.elapsedTime = Double(parts[4]) ?? 0
+        newInfo.appName = "Spotify"
+        let playing = parts[5].lowercased().contains("playing")
+        newInfo.isPlaying = playing
+        newInfo.playbackRate = playing ? 1.0 : 0.0
+
+        // Fetch artwork from Spotify artwork URL
+        if parts.count >= 7, !parts[6].isEmpty,
+           newInfo.title != self.nowPlayingInfo.title || self.nowPlayingInfo.artwork == nil {
+            newInfo.artwork = fetchImageFromURL(parts[6])
+        } else {
+            newInfo.artwork = self.nowPlayingInfo.artwork
+        }
+
+        self.nowPlayingInfo = newInfo
+        self.isPlaying = newInfo.isPlaying
+    }
+
+    private func fetchAppleMusicArtwork() -> NSImage? {
+        // Apple Music provides artwork via raw data AppleScript
+        let script = """
+        tell application "System Events"
+            if not (exists process "Music") then return ""
+        end tell
+        tell application "Music"
+            try
+                set artworks to artwork 1 of current track
+                return raw data of artworks
+            on error
+                return ""
+            end try
+        end tell
+        """
+        guard let scriptObject = NSAppleScript(source: script) else { return nil }
+        var errorInfo: NSDictionary?
+        let result = scriptObject.executeAndReturnError(&errorInfo)
+        guard errorInfo == nil else { return nil }
+
+        // The raw data from AppleScript comes as an NSAppleEventDescriptor
+        // We need to get the data from it
+        let data = result.data
+        if !data.isEmpty {
+            return NSImage(data: data)
+        }
+        return nil
+    }
+
+    private func fetchSpotifyArtwork() -> NSImage? {
+        // Spotify provides an artwork URL via AppleScript
+        let script = """
+        tell application "System Events"
+            if not (exists process "Spotify") then return ""
+        end tell
+        tell application "Spotify"
+            try
+                return artwork url of current track
+            on error
+                return ""
+            end try
+        end tell
+        """
+        guard let scriptObject = NSAppleScript(source: script) else { return nil }
+        var errorInfo: NSDictionary?
+        let result = scriptObject.executeAndReturnError(&errorInfo)
+        guard errorInfo == nil else { return nil }
+        let urlString = result.stringValue ?? ""
+        guard !urlString.isEmpty else { return nil }
+        return fetchImageFromURL(urlString)
+    }
+
+    private func fetchImageFromURL(_ urlString: String) -> NSImage? {
+        guard let url = URL(string: urlString),
+              let data = try? Data(contentsOf: url) else { return nil }
+        return NSImage(data: data)
+    }
+
+    func play() {
+        appleScript("play")
+    }
+
+    func pause() {
+        appleScript("pause")
+    }
+
+    func togglePlayPause() {
+        appleScript("playpause")
+    }
+
+    func nextTrack() {
+        appleScript("next track")
+    }
+
+    func previousTrack() {
+        appleScript("previous track")
+        // Reset elapsed time on track change
+        var updatedInfo = nowPlayingInfo
+        updatedInfo.elapsedTime = 0
+        nowPlayingInfo = updatedInfo
+    }
+
+    private func appleScript(_ command: String) {
+        let app = nowPlayingInfo.appName == "Spotify" ? "Spotify" : "Music"
+        let script = "tell application \"\(app)\" to \(command)"
+        if let scriptObject = NSAppleScript(source: script) {
+            var errorInfo: NSDictionary?
+            scriptObject.executeAndReturnError(&errorInfo)
+            if let error = errorInfo {
+                AppLogger.media.error("AppleScript error: \(error, privacy: .public)")
+            }
+        }
+    }
+
+    func skipForward() {
+        seekToTime(min(nowPlayingInfo.elapsedTime + 15, nowPlayingInfo.duration))
+    }
+
+    func skipBackward() {
+        seekToTime(max(nowPlayingInfo.elapsedTime - 15, 0))
+    }
+
+    func seekToTime(_ time: TimeInterval) {
+        let app = nowPlayingInfo.appName == "Spotify" ? "Spotify" : "Music"
+        let script = "tell application \"\(app)\" to set player position to \(time)"
+        if let scriptObject = NSAppleScript(source: script) {
+            var errorInfo: NSDictionary?
+            scriptObject.executeAndReturnError(&errorInfo)
+        }
+        // Update local state immediately for responsiveness
+        var updatedInfo = nowPlayingInfo
+        updatedInfo.elapsedTime = max(0, min(time, nowPlayingInfo.duration))
+        nowPlayingInfo = updatedInfo
+    }
+
+    func seekToProgress(_ progress: Double) {
+        guard nowPlayingInfo.duration > 0 else { return }
+        let time = progress * nowPlayingInfo.duration
+        seekToTime(time)
+    }
+
+    func refresh() {
+        // Do a full info fetch so we pick up track details, not just position
+        Task { @MainActor in
+            await fetchNowPlayingInfo()
+        }
+    }
 }
 #else
 import AppKit
@@ -108,7 +461,8 @@ final class MediaRemoteController: ObservableObject {
     
     @Published private(set) var nowPlayingInfo = NowPlayingInfo()
     @Published private(set) var isAvailable = false
-    
+    @Published private(set) var isPlaying = false
+
     // MARK: - Private Properties
     
     private var updateTimer: Timer?
@@ -135,9 +489,16 @@ final class MediaRemoteController: ObservableObject {
     }
     
     deinit {
-        // Use nonisolated wrapper to call actor-isolated method from deinit
-        let notificationCenter = NotificationCenter.default
-        notificationCenter.removeObserver(self)
+        // Clean up notification observers
+        NotificationCenter.default.removeObserver(self)
+        DistributedNotificationCenter.default().removeObserver(self)
+
+        // Timer and unregister are main-actor-isolated;
+        // since this is a singleton that lives for the app lifetime,
+        // explicit cleanup via stopMonitoring() is preferred before dealloc.
+        // The timer's weak-self reference will prevent retain issues.
+        updateTimer?.invalidate()
+        updateTimer = nil
     }
     
     // MARK: - Framework Loading
@@ -145,7 +506,6 @@ final class MediaRemoteController: ObservableObject {
     private func loadMediaRemoteFramework() {
         let frameworkPath = "/System/Library/PrivateFrameworks/MediaRemote.framework"
         guard let bundle = CFBundleCreate(kCFAllocatorDefault, NSURL(fileURLWithPath: frameworkPath)) else {
-            print("MediaRemoteController: Failed to load MediaRemote.framework")
             return
         }
         
@@ -192,11 +552,7 @@ final class MediaRemoteController: ObservableObject {
         
         isAvailable = MRMediaRemoteGetNowPlayingInfo != nil && MRMediaRemoteSendCommand != nil
         
-        if isAvailable {
-            print("MediaRemoteController: Successfully loaded MediaRemote.framework")
-        } else {
-            print("MediaRemoteController: Failed to load required functions from MediaRemote.framework")
-        }
+        // isAvailable reflects whether the framework loaded successfully
     }
     
     // MARK: - Notification Registration
@@ -301,8 +657,9 @@ final class MediaRemoteController: ObservableObject {
         }
         
         self.nowPlayingInfo = newInfo
+        self.isPlaying = newInfo.isPlaying
     }
-    
+
     private func calculateElapsedTime(from info: [String: Any]) -> TimeInterval {
         let storedElapsed = info[kMRMediaRemoteNowPlayingInfoElapsedTime] as? TimeInterval ?? 0
         let timestamp = info[kMRMediaRemoteNowPlayingInfoTimestamp] as? Date

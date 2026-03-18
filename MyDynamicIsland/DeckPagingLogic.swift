@@ -2,8 +2,8 @@ import CoreGraphics
 import Foundation
 
 enum DeckPagingLogic {
-    private static let swipeThresholdRatio: CGFloat = 0.16
-    private static let interiorResistance: CGFloat = 0.9
+    private static let swipeThresholdRatio: CGFloat = 0.25
+    private static let interiorResistance: CGFloat = 0.85
     private static let edgeResistance: CGFloat = 0.32
 
     static func sanitizedIndex(storedIndex: Int, cardCount: Int) -> Int {

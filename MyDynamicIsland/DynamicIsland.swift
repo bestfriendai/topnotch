@@ -2,6 +2,7 @@ import AppKit
 import AudioToolbox
 import Combine
 import IOKit.ps
+import OSLog
 import SwiftUI
 
 #if APP_STORE_BUILD
@@ -116,6 +117,7 @@ enum NotchDeckCard: String, CaseIterable {
     case pomodoro
     case clipboard
     case calendar
+    case fileShelf
 }
 
 struct BatteryInfo: Equatable {
@@ -143,28 +145,15 @@ final class NotchState: ObservableObject {
     @Published var inlineYouTubeVideoID: String? = nil
     @Published var youtubePlayerWidth: CGFloat = 480
     @Published var youtubePlayerHeight: CGFloat = 270
-    @Published var browserInitialURL: String = "https://m.youtube.com"
+    @Published var focusedContentHeight: CGFloat = 200
+    @Published var inlineYouTubeMinimized: Bool = false
+    @Published var inlineYouTubeStartTime: Int = 0
+    @Published var inlineYouTubeIsPlaying: Bool = false
+    @Published var inlineYouTubeProgress: Double = 0
+    let inlineYouTubePlayerState = YouTubePlayerState()
+    let inlineYouTubePlayerController = YouTubePlayerController()
 
-    // Mutually exclusive inline panels — setting one closes the other
-    private var _isShowingInlineYouTubePlayer = false
-    var isShowingInlineYouTubePlayer: Bool {
-        get { _isShowingInlineYouTubePlayer }
-        set {
-            if newValue { _isShowingInlineBrowser = false }
-            _isShowingInlineYouTubePlayer = newValue
-            objectWillChange.send()
-        }
-    }
-
-    private var _isShowingInlineBrowser = false
-    var isShowingInlineBrowser: Bool {
-        get { _isShowingInlineBrowser }
-        set {
-            if newValue { _isShowingInlineYouTubePlayer = false }
-            _isShowingInlineBrowser = newValue
-            objectWillChange.send()
-        }
-    }
+    @Published var isShowingInlineYouTubePlayer = false
     @Published var activeDeckCard: NotchDeckCard = .home {
         didSet {
             UserDefaults.standard.set(activeDeckCard.rawValue, forKey: Self.activeDeckCardDefaultsKey)
@@ -184,15 +173,17 @@ final class DynamicIsland {
     private let state = NotchState()
     private var mediaKeyManager: MediaKeyManager?
     private var observers: [NSObjectProtocol] = []
+    private var eventMonitors: [Any?] = []
     private var batteryRunLoopSource: CFRunLoopSource?
     private var lastChargingState = false
     private var nowPlayingTimer: Timer?
-    private var clipboardTimer: Timer?
+    private var clipboardTask: Task<Void, Never>?
     private var lastClipboardChangeCount: Int = 0
     private var lastMusicNotificationTime: Date = .distantPast
 
     init() {
         setupWindow()
+        AppLogger.lifecycle.info("DynamicIsland initializing — variant: \(AppBuildVariant.current.releaseChannelName, privacy: .public)")
         if AppBuildVariant.current.supportsAdvancedMediaControls {
             setupMusicDetection()
         }
@@ -207,17 +198,35 @@ final class DynamicIsland {
         setupClipboardMonitoring()
         setupKeyboardShortcuts()
         setupYouTubeNotifications()
+        AppLogger.lifecycle.info("DynamicIsland fully initialized")
     }
 
     deinit {
-        observers.forEach { NotificationCenter.default.removeObserver($0) }
+        // Remove all block-based observers (covers both NotificationCenter and DistributedNotificationCenter)
+        for observer in observers {
+            NotificationCenter.default.removeObserver(observer)
+            DistributedNotificationCenter.default().removeObserver(observer)
+        }
+        // Remove global/local event monitors to prevent leaks
+        for monitor in eventMonitors {
+            if let monitor = monitor {
+                NSEvent.removeMonitor(monitor)
+            }
+        }
         nowPlayingTimer?.invalidate()
-        clipboardTimer?.invalidate()
+        clipboardTask?.cancel()
+        mediaKeyManager?.stop()
+        if let source = batteryRunLoopSource {
+            CFRunLoopRemoveSource(CFRunLoopGetMain(), source, .defaultMode)
+            // Balance the passRetained from setupBatteryMonitoring
+            Unmanaged.passUnretained(self).release()
+        }
     }
 
     private func setupWindow() {
         guard let screen = NSScreen.main else { return }
         detectNotchSize(screen: screen)
+        AppLogger.lifecycle.info("Setting up notch panel on screen \(screen.localizedName, privacy: .public)")
 
         let panel = NotchPanel(
             contentRect: screen.frame,
@@ -232,10 +241,10 @@ final class DynamicIsland {
         LockScreenWindowManager.shared?.moveWindowToLockScreen(panel)
         self.panel = panel
 
-        NotificationCenter.default.addObserver(
+        observers.append(NotificationCenter.default.addObserver(
             forName: NSApplication.didChangeScreenParametersNotification,
             object: nil, queue: .main
-        ) { [weak self] _ in self?.handleScreenChange() }
+        ) { [weak self] _ in self?.handleScreenChange() })
     }
 
     private func detectNotchSize(screen: NSScreen) {
@@ -288,7 +297,8 @@ final class DynamicIsland {
 
     private func handleMusicNotification(_ notif: Notification, app: String) {
         guard let info = notif.userInfo, let playerState = info["Player State"] as? String else { return }
-        DispatchQueue.main.async {
+        DispatchQueue.main.async { [weak self] in
+            guard let self else { return }
             self.lastMusicNotificationTime = Date()
             if playerState == "Playing" {
                 self.state.activity = .music(app: app)
@@ -386,7 +396,7 @@ final class DynamicIsland {
             self.playSound("Glass", volume: 0.4, fallback: 1057)
             NSHapticFeedbackManager.defaultPerformer.perform(.levelChange, performanceTime: .now)
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) { NSHapticFeedbackManager.defaultPerformer.perform(.generic, performanceTime: .now) }
-            DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { self.state.showUnlockAnimation = false }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { [weak self] in self?.state.showUnlockAnimation = false }
         })
     }
 
@@ -394,14 +404,19 @@ final class DynamicIsland {
         updateBatteryInfo()
         lastChargingState = state.battery.isCharging
 
-        let context = Unmanaged.passUnretained(self).toOpaque()
+        // Use passRetained so the DynamicIsland stays alive as long as the run loop
+        // source exists. We balance this in deinit by removing the source.
+        let context = Unmanaged.passRetained(self).toOpaque()
         if let source = IOPSNotificationCreateRunLoopSource({ ctx in
             guard let ctx else { return }
             let island = Unmanaged<DynamicIsland>.fromOpaque(ctx).takeUnretainedValue()
-            DispatchQueue.main.async { island.checkBatteryChanges() }
+            DispatchQueue.main.async { [weak island] in island?.checkBatteryChanges() }
         }, context)?.takeRetainedValue() {
             batteryRunLoopSource = source
             CFRunLoopAddSource(CFRunLoopGetMain(), source, .defaultMode)
+        } else {
+            // If source creation failed, release the retained reference
+            Unmanaged<DynamicIsland>.fromOpaque(context).release()
         }
     }
 
@@ -415,7 +430,8 @@ final class DynamicIsland {
         let wasCharging = lastChargingState
         lastChargingState = isCharging
 
-        DispatchQueue.main.async {
+        DispatchQueue.main.async { [weak self] in
+            guard let self else { return }
             if let capacity = info[kIOPSCurrentCapacityKey] as? Int { self.state.battery.level = capacity }
             self.state.battery.isCharging = isCharging
             if let time = info[kIOPSTimeToEmptyKey] as? Int, time > 0 { self.state.battery.timeRemaining = time }
@@ -435,7 +451,8 @@ final class DynamicIsland {
               let info = IOPSGetPowerSourceDescription(snapshot, source)?.takeUnretainedValue() as? [String: Any] else { return }
 
         let isCharging = (info[kIOPSPowerSourceStateKey] as? String) == kIOPSACPowerValue
-        DispatchQueue.main.async {
+        DispatchQueue.main.async { [weak self] in
+            guard let self else { return }
             if let capacity = info[kIOPSCurrentCapacityKey] as? Int { self.state.battery.level = capacity }
             self.state.battery.isCharging = isCharging
         }
@@ -444,22 +461,25 @@ final class DynamicIsland {
 
     private func triggerCharging(started: Bool) {
         if started {
+            AppLogger.battery.info("Charging started — battery \(self.state.battery.level, privacy: .public)%")
             state.showChargingAnimation = true
             state.isExpanded = true
             NSHapticFeedbackManager.defaultPerformer.perform(.levelChange, performanceTime: .now)
             playSound("Blow", volume: 0.4, fallback: 1004)
-            DispatchQueue.main.asyncAfter(deadline: .now() + 2.5) {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 2.5) { [weak self] in
+                guard let self else { return }
                 self.state.showChargingAnimation = false
-                if !self.state.isHovered && !self.state.isShowingInlineYouTubePlayer && !self.state.isShowingInlineBrowser { self.state.isExpanded = false }
+                if !self.state.isHovered && !self.state.isShowingInlineYouTubePlayer { self.state.isExpanded = false }
             }
         } else {
             state.showUnplugAnimation = true
             state.isExpanded = true
             NSHapticFeedbackManager.defaultPerformer.perform(.generic, performanceTime: .now)
             playSound("Pop", volume: 0.35, fallback: 1057)
-            DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) { [weak self] in
+                guard let self else { return }
                 self.state.showUnplugAnimation = false
-                if !self.state.isHovered && !self.state.isShowingInlineYouTubePlayer && !self.state.isShowingInlineBrowser { self.state.isExpanded = false }
+                if !self.state.isHovered && !self.state.isShowingInlineYouTubePlayer { self.state.isExpanded = false }
             }
         }
     }
@@ -479,9 +499,27 @@ final class DynamicIsland {
     private func setupClipboardMonitoring() {
         lastClipboardChangeCount = NSPasteboard.general.changeCount
 
-        clipboardTimer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] _ in
-            self?.checkClipboardForYouTubeURL()
+        // Ask for consent on first run (App Store build defaults off)
+        #if APP_STORE_BUILD
+        let defaultEnabled = false
+        #else
+        let defaultEnabled = true
+        #endif
+
+        let consentAsked = UserDefaults.standard.bool(forKey: "clipboardConsentAsked")
+        if !consentAsked && defaultEnabled {
+            UserDefaults.standard.set(true, forKey: "clipboardConsentAsked")
+            UserDefaults.standard.set(true, forKey: "youtubeClipboardDetection")
         }
+
+        clipboardTask = Task { [weak self] in
+            while !Task.isCancelled {
+                try? await Task.sleep(for: .seconds(2))
+                guard !Task.isCancelled else { break }
+                await MainActor.run { self?.checkClipboardForYouTubeURL() }
+            }
+        }
+        AppLogger.clipboard.info("Clipboard monitoring started (2s interval)")
     }
 
     private func checkClipboardForYouTubeURL() {
@@ -493,22 +531,22 @@ final class DynamicIsland {
         guard let clipboardString = NSPasteboard.general.string(forType: .string) else { return }
         
         if YouTubeURLParser.extractVideoID(from: clipboardString) != nil {
-            DispatchQueue.main.async {
+            AppLogger.clipboard.info("YouTube URL detected in clipboard")
+            DispatchQueue.main.async { [weak self] in
+                guard let self else { return }
                 self.state.detectedYouTubeURL = clipboardString
-                self.state.showYouTubePrompt = true
-                self.state.activeDeckCard = .youtube
-                
-                // Show notification or expand notch briefly
+
+                // Show the YouTube prompt inline in the collapsed notch (44pt height per spec)
                 withAnimation(.spring(duration: 0.4, bounce: 0.3)) {
-                    self.state.isExpanded = true
+                    self.state.showYouTubePrompt = true
                 }
-                
-                // Auto-collapse after showing the YouTube detection
-                DispatchQueue.main.asyncAfter(deadline: .now() + 3.0) {
-                    if !self.state.isHovered && !self.state.isShowingInlineYouTubePlayer && !self.state.isShowingInlineBrowser {
+
+                // Auto-dismiss after 4 seconds
+                DispatchQueue.main.asyncAfter(deadline: .now() + 4.0) { [weak self] in
+                    guard let self else { return }
+                    if !self.state.isHovered && !self.state.isShowingInlineYouTubePlayer {
                         withAnimation(.spring(duration: 0.3, bounce: 0.2)) {
                             self.state.showYouTubePrompt = false
-                            self.state.isExpanded = false
                         }
                     }
                 }
@@ -520,13 +558,14 @@ final class DynamicIsland {
 
     private func setupKeyboardShortcuts() {
         if AppBuildVariant.current.supportsGlobalKeyboardShortcuts {
-            NSEvent.addGlobalMonitorForEvents(matching: .keyDown) { [weak self] event in
+            let globalMonitor = NSEvent.addGlobalMonitorForEvents(matching: .keyDown) { [weak self] event in
                 self?.handleGlobalKey(event)
             }
+            eventMonitors.append(globalMonitor)
         }
 
-        // Local monitor — handles events when Top Notch itself is focused
-        NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak self] event in
+        // Local monitor -- handles events when Top Notch itself is focused
+        let localMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak self] event in
             self?.handleGlobalKey(event)
             // Swallow Option+arrow/space so they don't propagate
             let mods = event.modifierFlags.intersection(.deviceIndependentFlagsMask)
@@ -534,6 +573,7 @@ final class DynamicIsland {
             if mods == [.command, .shift], event.charactersIgnoringModifiers?.lowercased() == "y" { return nil }
             return event
         }
+        eventMonitors.append(localMonitor)
     }
 
     /// Handles all global keyboard shortcuts. Safe to call from any thread.
@@ -542,7 +582,7 @@ final class DynamicIsland {
 
         // ⌘⇧Y — open YouTube video dialog
         if mods == [.command, .shift], event.charactersIgnoringModifiers?.lowercased() == "y" {
-            DispatchQueue.main.async { self.showYouTubeInputDialog() }
+            DispatchQueue.main.async { [weak self] in self?.showYouTubeInputDialog() }
             return
         }
 
@@ -553,28 +593,28 @@ final class DynamicIsland {
 
         switch Int(event.keyCode) {
         case 49: // ⌥Space — play / pause
-            DispatchQueue.main.async {
+            DispatchQueue.main.async { [weak self] in
                 MediaRemoteController.shared.togglePlayPause()
-                self.flashNotch()
+                self?.flashNotch()
             }
         case 123: // ⌥← — previous track
-            DispatchQueue.main.async {
+            DispatchQueue.main.async { [weak self] in
                 MediaRemoteController.shared.previousTrack()
-                self.flashNotch()
+                self?.flashNotch()
             }
         case 124: // ⌥→ — next track
-            DispatchQueue.main.async {
+            DispatchQueue.main.async { [weak self] in
                 MediaRemoteController.shared.nextTrack()
-                self.flashNotch()
+                self?.flashNotch()
             }
         case 126: // ⌥↑ — volume up
-            DispatchQueue.main.async { self.mediaKeyManager?.volumeUp() }
+            DispatchQueue.main.async { [weak self] in self?.mediaKeyManager?.volumeUp() }
         case 125: // ⌥↓ — volume down
-            DispatchQueue.main.async { self.mediaKeyManager?.volumeDown() }
+            DispatchQueue.main.async { [weak self] in self?.mediaKeyManager?.volumeDown() }
         case 46: // ⌥M — mute toggle
-            DispatchQueue.main.async { self.mediaKeyManager?.mute() }
+            DispatchQueue.main.async { [weak self] in self?.mediaKeyManager?.mute() }
         case 16: // ⌥Y — also open YouTube dialog
-            DispatchQueue.main.async { self.showYouTubeInputDialog() }
+            DispatchQueue.main.async { [weak self] in self?.showYouTubeInputDialog() }
         default:
             break
         }
@@ -584,8 +624,8 @@ final class DynamicIsland {
     private func flashNotch() {
         guard !state.isExpanded else { return }
         withAnimation(.spring(duration: 0.4, bounce: 0.3)) { state.isExpanded = true }
-        DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
-            guard !self.state.isHovered, !self.state.isShowingInlineYouTubePlayer, !self.state.isShowingInlineBrowser else { return }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) { [weak self] in
+            guard let self, !self.state.isHovered, !self.state.isShowingInlineYouTubePlayer else { return }
             withAnimation(.spring(duration: 0.3, bounce: 0.2)) { self.state.isExpanded = false }
         }
     }
@@ -626,7 +666,11 @@ final class DynamicIsland {
     }
 
     private func openInlineYouTubeVideo(_ videoID: String) {
-        guard YouTubeURLParser.isValidVideoID(videoID) else { return }
+        guard YouTubeURLParser.isValidVideoID(videoID) else {
+            AppLogger.youtube.warning("openInlineYouTubeVideo: invalid video ID '\(videoID, privacy: .public)'")
+            return
+        }
+        AppLogger.youtube.info("Opening inline YouTube player for \(videoID, privacy: .public)")
 
         withAnimation(.spring(duration: 0.5, bounce: 0.35)) {
             state.activeDeckCard = .youtube
@@ -641,7 +685,7 @@ final class DynamicIsland {
         withAnimation(.spring(duration: 0.4, bounce: 0.2)) {
             state.isShowingInlineYouTubePlayer = false
             state.inlineYouTubeVideoID = nil
-            state.activeDeckCard = .youtube
+            state.activeDeckCard = .home
             if !state.isHovered {
                 state.isExpanded = false
             }

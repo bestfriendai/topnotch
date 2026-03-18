@@ -179,9 +179,10 @@ final class YouTubePlayerState: ObservableObject {
 
     func switchToWatchPageFallback() {
         error = nil
-        isReady = true
+        playbackMode = .watchPageFallback  // Set mode FIRST to prevent loading overlay flash
+        isReady = false
         isBuffering = false
-        playbackMode = .watchPageFallback
+        isPlaying = false
     }
     
     // MARK: - Helpers

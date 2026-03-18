@@ -49,8 +49,9 @@ final class VideoWindowManager: NSObject, ObservableObject {
     /// Shows a video in the floating player
     /// - Parameters:
     ///   - videoID: YouTube video ID
+    ///   - startTime: Seconds offset to resume playback from (default 0)
     ///   - fromNotchPosition: Optional point to animate from (e.g., notch position)
-    func showVideo(videoID: String, fromNotchPosition: NSPoint? = nil) {
+    func showVideo(videoID: String, startTime: Int = 0, fromNotchPosition: NSPoint? = nil) {
         let parsedID = YouTubeURLParser.extractVideoID(from: videoID) ?? videoID
 
         guard YouTubeURLParser.isValidVideoID(parsedID) else {
@@ -58,23 +59,47 @@ final class VideoWindowManager: NSObject, ObservableObject {
             return
         }
 
+        // Close any inline player first to avoid concurrent YouTube embeds
+        NotificationCenter.default.post(name: .closeInlineYouTubeVideo, object: nil)
+
         currentVideoID = parsedID
         playerState.loadVideo(id: parsedID)
         playerState.volume = lastVolume
-        NotificationCenter.default.post(name: .openInlineYouTubeVideo, object: parsedID)
-        isVisible = true
+
+        // Create panel if needed
+        if panel == nil {
+            createPanel()
+        }
+
+        // Update content with the new video
+        updateContent(videoID: parsedID, startTime: startTime)
+
+        // Show the panel
+        if let startPoint = fromNotchPosition {
+            animateIn(from: startPoint)
+        } else {
+            panel?.orderFront(nil)
+            panel?.alphaValue = 1.0
+            isVisible = true
+        }
     }
-    
+
     /// Hides the video player with animation
     func hideVideo() {
         guard isVisible else { return }
-        isVisible = false
+        savePosition()
+        animateOut { [weak self] in
+            self?.cleanupPanel()
+        }
         NotificationCenter.default.post(name: .closeInlineYouTubeVideo, object: nil)
     }
-    
+
     /// Closes the video player immediately
     func closeVideo() {
-        hideVideo()
+        guard isVisible else { return }
+        savePosition()
+        cleanupPanel()
+        NotificationCenter.default.post(name: .closeInlineYouTubeVideo, object: nil)
     }
     
     /// Toggles the video player visibility
@@ -98,39 +123,50 @@ final class VideoWindowManager: NSObject, ObservableObject {
         if lastX == 100 && lastY == 100 {
             savedOrigin = getNotchPosition()
         }
-        
-        let savedFrame = NSRect(
-            x: savedOrigin.x,
-            y: savedOrigin.y,
-            width: lastWidth,
-            height: lastHeight
-        )
-        
+
+        let width = lastWidth
+        let height = lastHeight
+
+        // Validate saved position is on-screen; if not, reset to notch position
+        let savedFrame: NSRect
+        if let screen = NSScreen.screens.first(where: { $0.frame.contains(savedOrigin) }) {
+            let visible = screen.visibleFrame
+            let clampedX = min(max(savedOrigin.x, visible.minX), visible.maxX - width)
+            let clampedY = min(max(savedOrigin.y, visible.minY), visible.maxY - height)
+            savedFrame = NSRect(x: clampedX, y: clampedY, width: width, height: height)
+        } else {
+            let fallback = getNotchPosition()
+            savedFrame = NSRect(x: fallback.x, y: fallback.y, width: width, height: height)
+        }
+
         panel = VideoPlayerPanel(contentRect: savedFrame)
         panel?.delegate = self
-        
+
         // Set custom content view with rounded corners
         let contentView = VideoPlayerNSContentView(frame: savedFrame)
         panel?.contentView = contentView
     }
     
-    private func updateContent(videoID: String) {
+    private func updateContent(videoID: String, startTime: Int = 0) {
         guard let panel = panel else { return }
-        
+
         let contentSwiftUIView = VideoPlayerContentView(
             videoID: videoID,
+            startTime: startTime,
             playerState: playerState,
             playerController: playerController,
             onClose: { [weak self] in
                 self?.hideVideo()
             }
         )
-        
+
         if hostingView == nil {
-            hostingView = NSHostingView(rootView: contentSwiftUIView)
-            hostingView?.frame = panel.contentView?.bounds ?? .zero
-            hostingView?.autoresizingMask = [.width, .height]
-            panel.contentView?.addSubview(hostingView!)
+            let newHostingView = NSHostingView(rootView: contentSwiftUIView)
+            let contentBounds = panel.contentView?.bounds ?? NSRect(origin: .zero, size: defaultSize)
+            newHostingView.frame = contentBounds
+            newHostingView.autoresizingMask = [.width, .height]
+            panel.contentView?.addSubview(newHostingView)
+            hostingView = newHostingView
         } else {
             hostingView?.rootView = contentSwiftUIView
         }
@@ -282,8 +318,8 @@ final class VideoWindowManager: NSObject, ObservableObject {
 extension VideoWindowManager {
     /// Opens a video from a YouTube URL or video ID
     func openVideo(from input: String) {
-        if let result = YouTubeURLParser.parse(input) {
-            showVideo(videoID: result.videoID)
+        if let request = YouTubeURLParser.playbackRequest(from: input) {
+            showVideo(videoID: request.videoID, startTime: request.startTime)
         } else {
             playerState.setError(.invalidVideoID)
         }
@@ -304,6 +340,19 @@ extension VideoWindowManager: NSWindowDelegate {
     nonisolated func windowDidMove(_ notification: Notification) {
         Task { @MainActor in
             self.savePosition()
+        }
+    }
+
+    nonisolated func windowDidResize(_ notification: Notification) {
+        Task { @MainActor in
+            self.savePosition()
+        }
+    }
+
+    nonisolated func windowWillClose(_ notification: Notification) {
+        Task { @MainActor in
+            self.savePosition()
+            self.cleanupPanel()
         }
     }
 }

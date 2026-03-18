@@ -1,6 +1,7 @@
 import AppKit
 import AudioToolbox
 import CoreAudio
+import OSLog
 
 final class MediaKeyManager {
     private let state: NotchState
@@ -16,9 +17,12 @@ final class MediaKeyManager {
 
     func start() {
         #if !APP_STORE_BUILD
-        let trusted = AXIsProcessTrusted()
-        if !trusted {
-            NSLog("[MediaKeyManager] Accessibility permission required")
+        guard AXIsProcessTrusted() else {
+            AppLogger.permissions.warning("[MediaKeyManager] Accessibility permission not granted — media keys unavailable")
+            DispatchQueue.main.async {
+                PermissionCoordinator.shared.presentAccessibilityPrompt()
+            }
+            return
         }
 
         let eventMask: CGEventMask = 1 << 14
@@ -31,13 +35,20 @@ final class MediaKeyManager {
             eventsOfInterest: eventMask,
             callback: mediaKeyCallback,
             userInfo: userInfo
-        ) else { return }
+        ) else {
+            AppLogger.permissions.error("[MediaKeyManager] Failed to create event tap — media keys unavailable")
+            DispatchQueue.main.async {
+                PermissionCoordinator.shared.presentAccessibilityUnavailableAlert()
+            }
+            return
+        }
 
         eventTap = tap
         let source = CFMachPortCreateRunLoopSource(kCFAllocatorDefault, tap, 0)
         runLoopSource = source
         CFRunLoopAddSource(CFRunLoopGetMain(), source, .commonModes)
         CGEvent.tapEnable(tap: tap, enable: true)
+        AppLogger.permissions.info("[MediaKeyManager] Event tap active — media keys intercepted")
         #endif
     }
 
@@ -114,8 +125,8 @@ final class MediaKeyManager {
 
         if delta != 0 { setMute(device: deviceID, muted: false) }
 
-        DispatchQueue.main.async {
-            self.state.hud = .volume(level: CGFloat(volume), muted: false)
+        DispatchQueue.main.async { [weak self] in
+            self?.state.hud = .volume(level: CGFloat(volume), muted: false)
         }
     }
 
@@ -127,8 +138,8 @@ final class MediaKeyManager {
         setMute(device: deviceID, muted: !muted)
         let volume = getVolume(device: deviceID)
 
-        DispatchQueue.main.async {
-            self.state.hud = .volume(level: CGFloat(volume), muted: !muted)
+        DispatchQueue.main.async { [weak self] in
+            self?.state.hud = .volume(level: CGFloat(volume), muted: !muted)
         }
     }
 
@@ -196,8 +207,8 @@ final class MediaKeyManager {
         let newValue = max(0, min(1, current + delta))
         _ = BrightnessHelper.set(newValue)
 
-        DispatchQueue.main.async {
-            self.state.hud = .brightness(level: CGFloat(newValue))
+        DispatchQueue.main.async { [weak self] in
+            self?.state.hud = .brightness(level: CGFloat(newValue))
         }
         #endif
     }
