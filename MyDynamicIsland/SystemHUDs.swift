@@ -13,11 +13,16 @@ struct NotchedHUDProgressBar: View {
     var body: some View {
         HStack(spacing: gap) {
             ForEach(0..<segmentCount, id: \.self) { i in
-                let fillThreshold = level * CGFloat(segmentCount)
+                let isActive = CGFloat(i) < level * CGFloat(segmentCount)
                 RoundedRectangle(cornerRadius: 2, style: .continuous)
-                    .fill(CGFloat(i) < fillThreshold ? activeColor : inactiveColor)
+                    .fill(isActive ? activeColor : inactiveColor)
                     .frame(maxWidth: .infinity)
                     .frame(height: segmentHeight)
+                    .shadow(color: isActive ? activeColor.opacity(0.55) : .clear, radius: 3)
+                    .animation(
+                        .spring(duration: 0.28, bounce: 0.18).delay(Double(i) * 0.015),
+                        value: isActive
+                    )
             }
         }
     }
@@ -38,8 +43,11 @@ struct VolumeHUDView: View {
             // Speaker icon -- 18pt, white (#FAFAF9)
             Image(systemName: muted ? "speaker.slash.fill" : volumeIcon)
                 .font(.system(size: 18, weight: .semibold))
-                .foregroundStyle(NotchDesign.textPrimary)
+                .foregroundStyle(muted ? NotchDesign.textMuted : NotchDesign.textPrimary)
                 .frame(width: 22)
+                .contentTransition(.symbolEffect(.replace.offUp))
+                .animation(.spring(duration: 0.3, bounce: 0.25), value: volumeIcon)
+                .animation(.spring(duration: 0.3, bounce: 0.25), value: muted)
 
             // 16 segmented bars -- filled: white, unfilled: borderSubtle, height 10, gap 3
             NotchedHUDProgressBar(
@@ -52,11 +60,13 @@ struct VolumeHUDView: View {
             )
 
             // Percentage -- 12pt medium, white
-            Text("\(Int(level * 100))%")
+            Text("\(Int((muted ? 0 : level) * 100))%")
                 .font(.system(size: 12, weight: .medium))
                 .foregroundStyle(NotchDesign.textPrimary)
                 .monospacedDigit()
                 .frame(width: 36, alignment: .trailing)
+                .contentTransition(.numericText())
+                .animation(.easeInOut(duration: 0.2), value: Int(level * 100))
         }
         .padding(.horizontal, 16)
         .frame(width: 320, height: 40)
@@ -84,10 +94,12 @@ struct BrightnessHUDView: View {
     var body: some View {
         HStack(spacing: 10) {
             // Sun icon -- 18pt, amber
-            Image(systemName: "sun.max.fill")
+            Image(systemName: level < 0.01 ? "sun.min.fill" : "sun.max.fill")
                 .font(.system(size: 18, weight: .semibold))
                 .foregroundStyle(NotchDesign.amber)
                 .frame(width: 22)
+                .contentTransition(.symbolEffect(.replace.offUp))
+                .animation(.spring(duration: 0.3, bounce: 0.25), value: level < 0.01)
 
             // 16 segments -- filled: amber (#FFB547), unfilled: borderSubtle, height 10, gap 3
             NotchedHUDProgressBar(
@@ -105,6 +117,8 @@ struct BrightnessHUDView: View {
                 .foregroundStyle(NotchDesign.textPrimary)
                 .monospacedDigit()
                 .frame(width: 36, alignment: .trailing)
+                .contentTransition(.numericText())
+                .animation(.easeInOut(duration: 0.2), value: Int(level * 100))
         }
         .padding(.horizontal, 16)
         .frame(width: 320, height: 40)
@@ -140,6 +154,8 @@ struct BatteryChargingAlert: View {
             Text("\(level)%")
                 .font(.system(size: 14, weight: .bold))
                 .foregroundStyle(NotchDesign.green)
+                .contentTransition(.numericText())
+                .animation(.easeInOut(duration: 0.2), value: level)
         }
         .padding(.horizontal, 24)
         .frame(width: 320, height: 48)
@@ -180,7 +196,7 @@ struct YouTubeDetectedAlert: View {
                             .fill(NotchDesign.red)
                     )
             }
-            .buttonStyle(.plain)
+            .buttonStyle(NotchPressButtonStyle())
         }
         .padding(.leading, 20)
         .padding(.trailing, 8)

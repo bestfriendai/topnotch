@@ -15,6 +15,7 @@ final class NotchWeatherStore: ObservableObject {
     @Published var lowTemp: String?
     @Published var weatherCode: Int = -1
     @Published var forecastDays: [ForecastDay] = []
+    @Published var hoursByDay: [String: [HourlyEntry]] = [:]
     @AppStorage("weatherUnit") private var weatherUnit = "celsius"
 
     private var lastLoadedCity = ""
@@ -23,7 +24,19 @@ final class NotchWeatherStore: ObservableObject {
         let id = UUID()
         let dayLabel: String
         let emoji: String
-        let temp: String
+        let temp: String        // high temp display value
+        let highTemp: String    // "72°"
+        let lowTemp: String     // "58°"
+        let weatherCode: Int
+        let dateKey: String     // "yyyy-MM-dd" for hourly lookup
+    }
+
+    struct HourlyEntry: Identifiable {
+        let id = UUID()
+        let hour: String        // "3pm", "12am"
+        let temp: String        // "72°"
+        let weatherCode: Int
+        var emoji: String { NotchWeatherStore.weatherEmoji(for: weatherCode) }
     }
 
     var hasWeather: Bool {
@@ -68,7 +81,7 @@ final class NotchWeatherStore: ObservableObject {
                 .joined(separator: ", ")
 
             let unitParam = weatherUnit == "fahrenheit" ? "&temperature_unit=fahrenheit" : ""
-            guard let weatherURL = URL(string: "https://api.open-meteo.com/v1/forecast?latitude=\(result.latitude)&longitude=\(result.longitude)&current=temperature_2m,weather_code&daily=temperature_2m_max,temperature_2m_min,weather_code\(unitParam)&timezone=auto&forecast_days=5") else {
+            guard let weatherURL = URL(string: "https://api.open-meteo.com/v1/forecast?latitude=\(result.latitude)&longitude=\(result.longitude)&current=temperature_2m,weather_code&daily=temperature_2m_max,temperature_2m_min,weather_code&hourly=temperature_2m,weather_code\(unitParam)&timezone=auto&forecast_days=7") else {
                 conditionText = "Weather unavailable"
                 temperatureText = "--°"
                 return
@@ -80,15 +93,18 @@ final class NotchWeatherStore: ObservableObject {
             conditionText = Self.conditionDescription(for: weatherResponse.current.weather_code)
             symbolName = Self.symbolName(for: weatherResponse.current.weather_code)
             weatherCode = weatherResponse.current.weather_code
+
             if let daily = weatherResponse.daily,
                let maxTemps = daily.temperature_2m_max, let maxT = maxTemps.first,
                let minTemps = daily.temperature_2m_min, let minT = minTemps.first {
                 highTemp = "\(Int(maxT.rounded()))°"
                 lowTemp = "\(Int(minT.rounded()))°"
             }
-            // Build 5-day forecast
+
+            // Build 7-day forecast
             if let daily = weatherResponse.daily,
                let maxTemps = daily.temperature_2m_max,
+               let minTemps = daily.temperature_2m_min,
                let times = daily.time,
                let codes = daily.weather_code {
                 let df = DateFormatter()
@@ -96,21 +112,63 @@ final class NotchWeatherStore: ObservableObject {
                 let dayFmt = DateFormatter()
                 dayFmt.dateFormat = "EEE"
                 var days: [ForecastDay] = []
-                let count = min(5, min(maxTemps.count, times.count))
+                let count = min(7, min(maxTemps.count, times.count))
                 for i in 0..<count {
                     let label: String
                     if let d = df.date(from: times[i]) {
-                        label = dayFmt.string(from: d).uppercased()
+                        label = i == 0 ? "TODAY" : dayFmt.string(from: d).uppercased()
                     } else {
                         label = "--"
                     }
                     let code = i < codes.count ? codes[i] : -1
                     let emoji = Self.weatherEmoji(for: code)
-                    let temp = "\(Int(maxTemps[i].rounded()))°"
-                    days.append(ForecastDay(dayLabel: label, emoji: emoji, temp: temp))
+                    let maxTStr = "\(Int(maxTemps[i].rounded()))°"
+                    let minTStr = i < minTemps.count ? "\(Int(minTemps[i].rounded()))°" : "--"
+                    days.append(ForecastDay(
+                        dayLabel: label,
+                        emoji: emoji,
+                        temp: maxTStr,
+                        highTemp: maxTStr,
+                        lowTemp: minTStr,
+                        weatherCode: code,
+                        dateKey: times[i]
+                    ))
                 }
                 forecastDays = days
             }
+
+            // Build hourly data grouped by day
+            if let hourly = weatherResponse.hourly,
+               let times = hourly.time,
+               let temps = hourly.temperature_2m,
+               let codes = hourly.weather_code {
+                let isoFmt = DateFormatter()
+                isoFmt.dateFormat = "yyyy-MM-dd'T'HH:mm"
+                isoFmt.locale = Locale(identifier: "en_US_POSIX")
+                let hourDisplayFmt = DateFormatter()
+                hourDisplayFmt.dateFormat = "ha"
+                hourDisplayFmt.locale = Locale(identifier: "en_US")
+                var byDay: [String: [HourlyEntry]] = [:]
+                let entryCount = min(times.count, min(temps.count, codes.count))
+                for i in 0..<entryCount {
+                    let timeStr = times[i]
+                    let dateKey = String(timeStr.prefix(10))
+                    let hourLabel: String
+                    if let date = isoFmt.date(from: timeStr) {
+                        hourLabel = hourDisplayFmt.string(from: date).lowercased()
+                    } else {
+                        hourLabel = "--"
+                    }
+                    let entry = HourlyEntry(
+                        hour: hourLabel,
+                        temp: "\(Int(temps[i].rounded()))°",
+                        weatherCode: codes[i]
+                    )
+                    byDay[dateKey, default: []].append(entry)
+                }
+                hoursByDay = byDay
+            }
+
             lastLoadedCity = trimmedCity
         } catch {
             AppLogger.weather.error("Weather fetch failed: \(error.localizedDescription, privacy: .public)")
@@ -177,6 +235,7 @@ private struct OpenMeteoGeocodeResult: Decodable {
 private struct OpenMeteoWeatherResponse: Decodable {
     let current: OpenMeteoCurrentWeather
     let daily: OpenMeteoDailyWeather?
+    let hourly: OpenMeteoHourlyWeather?
 }
 
 private struct OpenMeteoCurrentWeather: Decodable {
@@ -189,6 +248,12 @@ private struct OpenMeteoDailyWeather: Decodable {
     let temperature_2m_min: [Double]?
     let weather_code: [Int]?
     let time: [String]?
+}
+
+private struct OpenMeteoHourlyWeather: Decodable {
+    let time: [String]?
+    let temperature_2m: [Double]?
+    let weather_code: [Int]?
 }
 
 // MARK: - Animated Weather Particles
@@ -246,10 +311,10 @@ struct WeatherParticleView: View {
             ))
         }
 
-        animationTimer = Timer.scheduledTimer(withTimeInterval: 0.05, repeats: true) { _ in
-            withAnimation(.linear(duration: 0.05)) {
+        animationTimer = Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { _ in
+            withAnimation(.linear(duration: 0.1)) {
                 for i in particles.indices {
-                    particles[i].y += CGFloat(0.05 / particles[i].speed)
+                    particles[i].y += CGFloat(0.1 / particles[i].speed)
                     // Gentle horizontal drift
                     particles[i].x += CGFloat.random(in: -0.003...0.003)
                     // Reset when off-screen
