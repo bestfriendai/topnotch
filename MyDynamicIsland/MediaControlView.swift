@@ -1,8 +1,26 @@
+import Combine
 import SwiftUI
+
+/// Modifier that drives vinyl rotation only when active — avoids 30fps timer when idle
+private struct VinylSpinModifier: ViewModifier {
+    let isSpinning: Bool
+    @Binding var rotation: Double
+
+    func body(content: Content) -> some View {
+        if isSpinning {
+            content
+                .onReceive(Timer.publish(every: 1.0/30, on: .main, in: .common).autoconnect()) { _ in
+                    rotation += 360.0 / (8.0 * 30.0)
+                }
+        } else {
+            content
+        }
+    }
+}
 
 /// Beautiful expanded media control UI for the notch
 struct MediaControlView: View {
-    @ObservedObject private var mediaController = MediaRemoteController.shared
+    @StateObject private var mediaController = MediaRemoteController.shared
 
     @State private var isHoveringPlayPause = false
     @State private var isHoveringPrevious = false
@@ -10,42 +28,148 @@ struct MediaControlView: View {
     @State private var artworkScale: CGFloat = 1.0
     @State private var isHoveringChevron = false
 
+    // Vinyl spin
+    @AppStorage("vinylAnimation") private var vinylEnabled = false
+    @State private var artworkRotation: Double = 0
+    @State private var vinylSpinning = false
+
+    @AppStorage("colorMatchApp") private var colorMatchApp = true
+    @AppStorage("accentColorIndex") private var accentColorIndex = 0
+
+    private static let accentPalette: [Color] = [
+        Color(red: 0.039, green: 0.518, blue: 1.0),   // Blue
+        Color(red: 1.0,   green: 0.624, blue: 0.039),  // Orange
+        Color(red: 0.196, green: 0.835, blue: 0.514),  // Green
+        Color(red: 0.91,  green: 0.353, blue: 0.31),   // Red
+        Color(red: 0.749, green: 0.353, blue: 0.949),  // Purple
+        Color(red: 0.024, green: 0.714, blue: 0.831),  // Cyan
+    ]
+
     private var info: NowPlayingInfo { mediaController.nowPlayingInfo }
-    private var accentColor: Color { Color(info.appColor) }
+    private var accentColor: Color {
+        if colorMatchApp {
+            return Color(info.appColor)
+        }
+        let idx = max(0, min(accentColorIndex, Self.accentPalette.count - 1))
+        return Self.accentPalette[idx]
+    }
 
     var body: some View {
         if !info.hasMedia {
             // Empty state — per spec: 800pt wide, 220pt tall
             expandedEmptyState
+                .transition(.asymmetric(
+                    insertion: .opacity.combined(with: .scale(scale: 0.96)),
+                    removal: .opacity
+                ))
         } else {
             expandedMediaContent
+                .transition(.asymmetric(
+                    insertion: .opacity.combined(with: .scale(scale: 0.96)),
+                    removal: .opacity
+                ))
         }
     }
 
     // MARK: - Empty State (No Media Playing)
 
+    @State private var emptyIconPulse = false
+    @State private var emptyRingScale: CGFloat = 0.6
+    @State private var emptyRingOpacity: Double = 0
+
     private var expandedEmptyState: some View {
-        VStack(spacing: 12) {
+        VStack(spacing: 14) {
             Spacer(minLength: 0)
 
-            // Music icon — #2A2A2E, 48pt
-            Image(systemName: "music.note")
-                .font(.system(size: 48, weight: .medium))
-                .foregroundStyle(NotchDesign.borderSubtle)
+            ZStack {
+                // Pulsing outer ring
+                Circle()
+                    .stroke(NotchDesign.borderSubtle.opacity(0.5), lineWidth: 1)
+                    .frame(width: 72, height: 72)
+                    .scaleEffect(emptyRingScale)
+                    .opacity(emptyRingOpacity)
 
-            // "No Media Playing" — #4A4A50, 18pt 600
-            Text("No Media Playing")
-                .font(.system(size: 18, weight: .semibold))
-                .foregroundStyle(NotchDesign.textTertiary)
+                // Inner filled circle
+                Circle()
+                    .fill(NotchDesign.elevated)
+                    .frame(width: 56, height: 56)
 
-            // Subtitle — #3A3A40, 13pt 500
-            Text("Play music or media to see controls here")
-                .font(.system(size: 13, weight: .medium))
-                .foregroundStyle(NotchDesign.textSecondary)
+                Image(systemName: "music.note")
+                    .font(.system(size: 22, weight: .semibold))
+                    .foregroundStyle(NotchDesign.textTertiary)
+                    .scaleEffect(emptyIconPulse ? 1.08 : 1.0)
+            }
+            .onAppear {
+                // Set initial values first, then animate to targets
+                emptyRingOpacity = 0.6
+                emptyRingScale = 0.6
+                withAnimation(.easeInOut(duration: 2.2).repeatForever(autoreverses: true)) {
+                    emptyIconPulse = true
+                }
+                withAnimation(.easeOut(duration: 1.8).repeatForever(autoreverses: false).delay(0.1)) {
+                    emptyRingScale = 1.4
+                    emptyRingOpacity = 0
+                }
+            }
+
+            VStack(spacing: 4) {
+                Text(NSLocalizedString("media.noMediaPlaying", comment: ""))
+                    .font(.system(size: 15, weight: .semibold))
+                    .foregroundStyle(NotchDesign.textTertiary)
+
+                Text(NSLocalizedString("media.playMusicPrompt", comment: ""))
+                    .font(.system(size: 12, weight: .medium))
+                    .foregroundStyle(NotchDesign.textMuted.opacity(0.7))
+                    .multilineTextAlignment(.center)
+            }
+
+            // Quick-launch media apps
+            HStack(spacing: 10) {
+                MediaLaunchButton(label: NSLocalizedString("media.music", comment: ""), icon: "music.note", color: Color(red: 0.98, green: 0.27, blue: 0.37)) {
+                    NSWorkspace.shared.open(URL(fileURLWithPath: "/System/Applications/Music.app"))
+                }
+                MediaLaunchButton(label: NSLocalizedString("media.podcasts", comment: ""), icon: "mic.fill", color: Color(red: 0.75, green: 0.35, blue: 0.95)) {
+                    NSWorkspace.shared.open(URL(fileURLWithPath: "/System/Applications/Podcasts.app"))
+                }
+                MediaLaunchButton(label: NSLocalizedString("media.spotify", comment: ""), icon: "waveform", color: Color(red: 0.11, green: 0.73, blue: 0.33)) {
+                    if let url = URL(string: "spotify:") { NSWorkspace.shared.open(url) }
+                }
+            }
 
             Spacer(minLength: 0)
         }
         .frame(maxWidth: .infinity).frame(height: 180)
+    }
+
+    private struct MediaLaunchButton: View {
+        let label: String
+        let icon: String
+        let color: Color
+        let action: () -> Void
+        @State private var isHovering = false
+
+        var body: some View {
+            Button(action: action) {
+                HStack(spacing: 5) {
+                    Image(systemName: icon)
+                        .font(.system(size: 11, weight: .semibold))
+                    Text(label)
+                        .font(.system(size: 12, weight: .medium))
+                }
+                .foregroundStyle(isHovering ? color : NotchDesign.textSecondary)
+                .padding(.horizontal, 12)
+                .padding(.vertical, 6)
+                .background(
+                    Capsule()
+                        .fill(isHovering ? color.opacity(0.15) : NotchDesign.elevated)
+                )
+                .overlay(Capsule().strokeBorder(isHovering ? color.opacity(0.4) : NotchDesign.borderSubtle, lineWidth: 0.5))
+                .scaleEffect(isHovering ? 1.04 : 1.0)
+            }
+            .buttonStyle(.plain)
+            .onHover { isHovering = $0 }
+            .animation(.spring(duration: 0.2, bounce: 0.3), value: isHovering)
+        }
     }
 
     // MARK: - Media Content
@@ -93,105 +217,138 @@ struct MediaControlView: View {
         .clipped()
         .onAppear {
             mediaController.refresh()
+            vinylSpinning = vinylEnabled && info.isPlaying
         }
+        .onDisappear { vinylSpinning = false }
         .onChange(of: info.title) { _, _ in
-            // Subtle animation on track change
-            withAnimation(.spring()) {
-                artworkScale = 0.95
+            // Artwork bounce on track change
+            withAnimation(.spring(duration: 0.2, bounce: 0.5)) { artworkScale = 0.90 }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.12) {
+                withAnimation(.spring(duration: 0.45, bounce: 0.40)) { artworkScale = 1.0 }
             }
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
-                withAnimation(.spring()) {
-                    artworkScale = 1.0
-                }
+        }
+        .onChange(of: info.isPlaying) { _, playing in
+            if vinylEnabled {
+                vinylSpinning = playing
             }
         }
     }
 
     // MARK: - Artwork View
-    
+
     private var artworkView: some View {
         ZStack {
-            // Subtle colored glow shadow behind artwork
-            RoundedRectangle(cornerRadius: 12, style: .continuous)
-                .fill(accentColor.opacity(0.3))
+            // Colored glow (pulsing subtly)
+            artworkImageContent
                 .frame(width: 80, height: 80)
-                .blur(radius: 20)
-                .scaleEffect(1.1)
+                .clipShape(Circle())
+                .blur(radius: 22)
+                .opacity(0.45)
+                .scaleEffect(1.2)
 
-            // Main artwork
-            Group {
-                if let artwork = info.artwork {
-                    Image(nsImage: artwork)
-                        .resizable()
-                        .aspectRatio(contentMode: .fill)
-                } else {
-                    // Placeholder with app icon
-                    ZStack {
-                        LinearGradient(
-                            colors: [accentColor.opacity(0.6), accentColor.opacity(0.3)],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        )
-
-                        Image(systemName: info.appIcon)
-                            .font(.system(size: 28, weight: .medium))
-                            .foregroundStyle(.white)
+            // Main artwork — circular when vinyl, rounded rect otherwise
+            artworkImageContent
+                .frame(width: 80, height: 80)
+                .clipShape(
+                    vinylEnabled
+                        ? AnyShape(Circle())
+                        : AnyShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+                )
+                .shadow(color: accentColor.opacity(0.28), radius: 18, y: 5)
+                .rotationEffect(.degrees(vinylEnabled && vinylSpinning ? artworkRotation : 0))
+                .modifier(VinylSpinModifier(isSpinning: vinylEnabled && vinylSpinning, rotation: $artworkRotation))
+                // Vinyl concentric rings overlay
+                .overlay {
+                    if vinylEnabled {
+                        VinylRingsOverlay()
                     }
                 }
-            }
-            .frame(width: 80, height: 80)
-            .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
-            .shadow(color: accentColor.opacity(0.2), radius: 16, y: 4)
-            .scaleEffect(artworkScale)
-            .animation(.spring(), value: artworkScale)
+                .scaleEffect(artworkScale)
+                .animation(.notchSnap, value: artworkScale)
+                // Track-change transition: crossfade + subtle scale
+                .id(info.title)
+                .transition(.asymmetric(
+                    insertion: .opacity.combined(with: .scale(scale: 0.92)),
+                    removal: .opacity.combined(with: .scale(scale: 1.04))
+                ))
         }
         .frame(width: 80, height: 80)
         .onHover { hovering in
-            withAnimation(.spring()) {
-                artworkScale = hovering ? 1.03 : 1.0
+            withAnimation(.notchSnap) { artworkScale = hovering ? 1.04 : 1.0 }
+        }
+    }
+
+    @ViewBuilder
+    private var artworkImageContent: some View {
+        if let artwork = info.artwork {
+            Image(nsImage: artwork)
+                .resizable()
+                .aspectRatio(contentMode: .fill)
+        } else {
+            ZStack {
+                LinearGradient(
+                    colors: [accentColor.opacity(0.7), accentColor.opacity(0.35)],
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                )
+                Image(systemName: info.appIcon)
+                    .font(.system(size: 28, weight: .medium))
+                    .foregroundStyle(.white.opacity(0.9))
             }
         }
     }
     
     // MARK: - Track Info View
-    
+
+    @State private var sourceDotPulse = false
+
     private var trackInfoView: some View {
         VStack(alignment: .leading, spacing: 3) {
-            // Track title — 18pt semibold (600), white #FAFAF9
-            Text(info.title.isEmpty ? "Not Playing" : info.title)
-                .font(.system(size: 18, weight: .semibold))
+            // Track title — slides + fades in when track changes
+            Text(info.title.isEmpty ? NSLocalizedString("media.notPlaying", comment: "") : info.title)
+                .font(.system(size: 17, weight: .semibold))
                 .foregroundStyle(NotchDesign.textPrimary)
                 .lineLimit(1)
                 .truncationMode(.tail)
                 .id(info.title)
-                .transition(.opacity.combined(with: .scale(scale: 0.98)))
-                .animation(.spring(), value: info.title)
+                .transition(.asymmetric(
+                    insertion: .opacity.combined(with: .move(edge: .bottom)),
+                    removal: .opacity.combined(with: .move(edge: .top))
+                ))
+                .animation(.notchSnap, value: info.title)
 
-            // Artist — 14pt, #8E8E93
-            Text(info.artist.isEmpty ? "Unknown Artist" : info.artist)
-                .font(.system(size: 14, weight: .regular))
+            // Artist
+            Text(info.artist.isEmpty ? NSLocalizedString("media.unknownArtist", comment: "") : info.artist)
+                .font(.system(size: 13, weight: .regular))
                 .foregroundStyle(NotchDesign.textMuted)
                 .lineLimit(1)
                 .truncationMode(.tail)
+                .id(info.artist)
+                .transition(.opacity)
+                .animation(.notchDefault, value: info.artist)
 
-            // Source dot + app name — green dot + "Spotify" 12pt #8E8E93
+            // Live dot + app name
             HStack(spacing: 5) {
                 Circle()
-                    .fill(NotchDesign.green)
+                    .fill(info.isPlaying ? NotchDesign.green : NotchDesign.textTertiary)
                     .frame(width: 6, height: 6)
-                Text(info.appName.isEmpty ? "Media" : info.appName)
-                    .font(.system(size: 12, weight: .regular))
+                    .scaleEffect(sourceDotPulse && info.isPlaying ? 1.35 : 1.0)
+                    .animation(.easeInOut(duration: 1.0).repeatForever(autoreverses: true), value: sourceDotPulse)
+                    .notchGlow(info.isPlaying ? NotchDesign.green : .clear, radius: 6)
+                Text(info.appName.isEmpty ? NSLocalizedString("nav.media", comment: "") : info.appName)
+                    .font(.system(size: 12, weight: .medium))
                     .foregroundStyle(NotchDesign.textMuted)
             }
             .padding(.top, 2)
+            .onAppear { sourceDotPulse = true }
         }
     }
     
     // MARK: - Controls View
-    
+
     private var controlsView: some View {
         HStack(spacing: 10) {
-            // Skip back button
+            // Previous track
             Button(action: {
                 NSHapticFeedbackManager.defaultPerformer.perform(.generic, performanceTime: .now)
                 mediaController.previousTrack()
@@ -199,13 +356,16 @@ struct MediaControlView: View {
                 Image(systemName: "backward.fill")
                     .font(.system(size: 14, weight: .semibold))
                     .foregroundStyle(isHoveringPrevious ? NotchDesign.textPrimary : NotchDesign.textMuted)
-                    .scaleEffect(isHoveringPrevious ? 1.08 : 1.0)
-                    .animation(.spring(duration: 0.2), value: isHoveringPrevious)
+                    .frame(width: 32, height: 32)
+                    .background(
+                        Circle().fill(Color.white.opacity(isHoveringPrevious ? 0.10 : 0))
+                    )
+                    .animation(.notchSnap, value: isHoveringPrevious)
             }
-            .buttonStyle(.plain)
+            .buttonStyle(.notchPress(scale: 0.82, hover: 1.0))
             .onHover { isHoveringPrevious = $0 }
 
-            // Play/Pause — 40x40 white (#FAFAF9) circle with dark icon
+            // Play / Pause — white circle, dark icon, symbol crossfade
             Button(action: {
                 NSHapticFeedbackManager.defaultPerformer.perform(.generic, performanceTime: .now)
                 mediaController.togglePlayPause()
@@ -214,20 +374,21 @@ struct MediaControlView: View {
                     Circle()
                         .fill(NotchDesign.textPrimary)
                         .frame(width: 40, height: 40)
-                        .shadow(color: Color.white.opacity(0.15), radius: 12, y: 2)
+                        .shadow(color: .white.opacity(isHoveringPlayPause ? 0.22 : 0.12), radius: 14, y: 3)
 
                     Image(systemName: info.isPlaying ? "pause.fill" : "play.fill")
-                        .font(.system(size: 18, weight: .bold))
+                        .font(.system(size: 17, weight: .bold))
                         .foregroundStyle(NotchDesign.bgMain)
-                        .offset(x: 1)
+                        .contentTransition(.symbolEffect(.replace.offUp))
+                        .offset(x: info.isPlaying ? 0 : 1.5)
                 }
-                .scaleEffect(isHoveringPlayPause ? 1.08 : 1.0)
-                .animation(.spring(), value: isHoveringPlayPause)
+                .scaleEffect(isHoveringPlayPause ? 1.06 : 1.0)
+                .animation(.notchSnap, value: isHoveringPlayPause)
             }
-            .buttonStyle(.plain)
+            .buttonStyle(.notchPress(scale: 0.88))
             .onHover { isHoveringPlayPause = $0 }
 
-            // Skip forward button
+            // Next track
             Button(action: {
                 NSHapticFeedbackManager.defaultPerformer.perform(.generic, performanceTime: .now)
                 mediaController.nextTrack()
@@ -235,13 +396,46 @@ struct MediaControlView: View {
                 Image(systemName: "forward.fill")
                     .font(.system(size: 14, weight: .semibold))
                     .foregroundStyle(isHoveringNext ? NotchDesign.textPrimary : NotchDesign.textMuted)
-                    .scaleEffect(isHoveringNext ? 1.08 : 1.0)
-                    .animation(.spring(duration: 0.2), value: isHoveringNext)
+                    .frame(width: 32, height: 32)
+                    .background(
+                        Circle().fill(Color.white.opacity(isHoveringNext ? 0.10 : 0))
+                    )
+                    .animation(.notchSnap, value: isHoveringNext)
             }
-            .buttonStyle(.plain)
+            .buttonStyle(.notchPress(scale: 0.82, hover: 1.0))
             .onHover { isHoveringNext = $0 }
         }
     }
+}
+
+// MARK: - Vinyl Rings Overlay
+
+private struct VinylRingsOverlay: View {
+    var body: some View {
+        ZStack {
+            // Outer ring
+            Circle()
+                .stroke(.white.opacity(0.12), lineWidth: 1)
+                .padding(6)
+
+            // Middle ring
+            Circle()
+                .stroke(.black.opacity(0.40), lineWidth: 2)
+                .padding(14)
+
+            // Center hole
+            Circle()
+                .fill(.black.opacity(0.55))
+                .frame(width: 14, height: 14)
+        }
+    }
+}
+
+// Helper to erase shape types for conditional clipping
+private struct AnyShape: Shape, @unchecked Sendable {
+    private let _path: (CGRect) -> Path
+    init<S: Shape>(_ shape: S) { _path = { shape.path(in: $0) } }
+    func path(in rect: CGRect) -> Path { _path(rect) }
 }
 
 // MARK: - Media Control Button
@@ -410,13 +604,15 @@ struct VinylSpinOverlay: View {
 // MARK: - Compact Media View (for collapsed state)
 
 struct CompactMediaIndicator: View {
-    @ObservedObject private var mediaController = MediaRemoteController.shared
+    @StateObject private var mediaController = MediaRemoteController.shared
 
     private var info: NowPlayingInfo { mediaController.nowPlayingInfo }
     private var accentColor: Color { Color(info.appColor) }
 
     @State private var audioLevels: [CGFloat] = [0.3, 0.5, 0.7, 0.4, 0.6]
-    @State private var animationTimer: Timer?
+    @State private var isAnimating = false
+
+    private let timer = Timer.publish(every: 0.15, on: .main, in: .common).autoconnect()
 
     var body: some View {
         HStack(spacing: 3) {
@@ -427,34 +623,24 @@ struct CompactMediaIndicator: View {
                     .shadow(color: accentColor.opacity(0.37), radius: 4)
             }
         }
-        .onAppear { if info.isPlaying { startAnimation() } }
+        .onAppear { if info.isPlaying { isAnimating = true } }
         .onChange(of: info.isPlaying) { _, playing in
-            if playing { startAnimation() } else { stopAnimation() }
+            isAnimating = playing
         }
-        .onDisappear { stopAnimation() }
-    }
-
-    private func startAnimation() {
-        guard animationTimer == nil else { return }
-        animationTimer = Timer.scheduledTimer(withTimeInterval: 0.15, repeats: true) { [self] _ in
-            Task { @MainActor in
-                withAnimation(.easeInOut(duration: 0.1)) {
-                    audioLevels = audioLevels.map { _ in CGFloat.random(in: 0.2...1.0) }
-                }
+        .onDisappear { isAnimating = false }
+        .onReceive(timer) { _ in
+            guard isAnimating else { return }
+            withAnimation(.easeInOut(duration: 0.1)) {
+                audioLevels = audioLevels.map { _ in CGFloat.random(in: 0.2...1.0) }
             }
         }
-    }
-
-    private func stopAnimation() {
-        animationTimer?.invalidate()
-        animationTimer = nil
     }
 }
 
 // MARK: - Mini Artwork View (for left indicator)
 
 struct MiniArtworkView: View {
-    @ObservedObject private var mediaController = MediaRemoteController.shared
+    @StateObject private var mediaController = MediaRemoteController.shared
     
     private var info: NowPlayingInfo { mediaController.nowPlayingInfo }
     private var accentColor: Color { Color(info.appColor) }
@@ -624,7 +810,9 @@ private struct CompactTransportButton: View {
 // MARK: - Compact Now Playing Card (for 3-card deck layout)
 
 struct CompactNowPlayingCard: View {
-    @ObservedObject private var mediaController = MediaRemoteController.shared
+    @StateObject private var mediaController = MediaRemoteController.shared
+    @AppStorage("showAlbumArt") private var showAlbumArt = true
+    @AppStorage("nowPlayingControls") private var showControls = true
 
     private var info: NowPlayingInfo { mediaController.nowPlayingInfo }
     private var hasMedia: Bool { !info.title.isEmpty }
@@ -659,7 +847,7 @@ struct CompactNowPlayingCard: View {
         VStack(spacing: 8) {
             // Top row: artwork + track info
             HStack(spacing: 12) {
-                compactArtwork
+                if showAlbumArt { compactArtwork }
 
                 VStack(alignment: .leading, spacing: 4) {
                     // App source badge
@@ -685,7 +873,7 @@ struct CompactNowPlayingCard: View {
                         .animation(.easeInOut(duration: 0.3), value: info.title)
 
                     // Artist
-                    Text(info.artist.isEmpty ? "Unknown Artist" : info.artist)
+                    Text(info.artist.isEmpty ? NSLocalizedString("media.unknownArtist", comment: "") : info.artist)
                         .font(.system(size: 11, weight: .regular))
                         .foregroundStyle(.white.opacity(0.4))
                         .lineLimit(1)
@@ -715,7 +903,7 @@ struct CompactNowPlayingCard: View {
             }
 
             // Transport controls
-            compactTransportControls
+            if showControls { compactTransportControls }
         }
     }
 
@@ -853,7 +1041,7 @@ struct CompactNowPlayingCard: View {
                 .scaleEffect(emptyPulse ? 1.08 : 0.95)
                 .animation(.easeInOut(duration: 2.0).repeatForever(autoreverses: true), value: emptyPulse)
 
-            Text("No media")
+            Text(NSLocalizedString("media.noMedia", comment: ""))
                 .font(.system(size: 11, weight: .medium))
                 .foregroundStyle(.white.opacity(emptyTextVisible ? 0.35 : 0.0))
                 .animation(.easeIn(duration: 0.8), value: emptyTextVisible)
@@ -943,7 +1131,7 @@ struct CompactYouTubeCard: View {
                     Image(systemName: "play.rectangle.fill")
                         .font(.system(size: 14, weight: .semibold))
                         .foregroundStyle(.red)
-                    Text("YouTube")
+                    Text(NSLocalizedString("youtube.title", comment: ""))
                         .font(.system(size: 13, weight: .bold))
                         .foregroundStyle(.white)
                     Spacer(minLength: 0)
@@ -951,7 +1139,7 @@ struct CompactYouTubeCard: View {
             }
 
             // URL input with premium inner border
-            TextField("Paste URL...", text: $urlInput)
+            TextField(NSLocalizedString("youtube.pasteUrl", comment: ""), text: $urlInput)
                 .textFieldStyle(.plain)
                 .font(.system(size: 11))
                 .foregroundStyle(.white)
@@ -990,7 +1178,7 @@ struct CompactYouTubeCard: View {
                                 .padding(.horizontal, -4)
                         }
 
-                        Label(urlInput.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? "Browse" : "Play", systemImage: "play.fill")
+                        Label(urlInput.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? NSLocalizedString("youtube.browse", comment: "") : NSLocalizedString("youtube.play", comment: ""), systemImage: "play.fill")
                             .font(.system(size: 10, weight: .semibold))
                             .foregroundStyle(.white)
                             .padding(.horizontal, 10)
@@ -1029,7 +1217,7 @@ struct CompactYouTubeCard: View {
                         NSHapticFeedbackManager.defaultPerformer.perform(.generic, performanceTime: .now)
                         onPaste?()
                     } label: {
-                        Label("Paste", systemImage: "doc.on.clipboard")
+                        Label(NSLocalizedString("youtube.paste", comment: ""), systemImage: "doc.on.clipboard")
                             .font(.system(size: 10, weight: .medium))
                             .foregroundStyle(.white.opacity(0.7))
                             .padding(.horizontal, 8)
@@ -1093,7 +1281,7 @@ struct CompactYouTubeCard: View {
                     Image(systemName: "play.rectangle.fill")
                         .font(.system(size: 14, weight: .semibold))
                         .foregroundStyle(.red)
-                    Text("YouTube")
+                    Text(NSLocalizedString("youtube.title", comment: ""))
                         .font(.system(size: 13, weight: .bold))
                         .foregroundStyle(.white)
                     Spacer(minLength: 0)
@@ -1114,7 +1302,7 @@ struct CompactYouTubeCard: View {
                 .lineLimit(1)
                 .truncationMode(.tail)
 
-            Text(state.isPlaying ? "Playing in window" : "Paused")
+            Text(state.isPlaying ? NSLocalizedString("youtube.playingInWindow", comment: "") : NSLocalizedString("youtube.paused", comment: ""))
                 .font(.system(size: 11, weight: .medium))
                 .foregroundStyle(.white.opacity(0.5))
                 .lineLimit(1)
@@ -1178,7 +1366,7 @@ struct CompactYouTubeCard: View {
                     NSHapticFeedbackManager.defaultPerformer.perform(.generic, performanceTime: .now)
                     videoManager?.bringToFront()
                 } label: {
-                    Text("Show")
+                    Text(NSLocalizedString("youtube.show", comment: ""))
                         .font(.system(size: 10, weight: .semibold))
                         .foregroundStyle(.white)
                         .padding(.horizontal, 10)

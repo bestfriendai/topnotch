@@ -1,0 +1,265 @@
+/* Menu Bar */
+"menu.settings" = "Ayarlar...";
+"menu.quit" = "Top Notch'tan Çık";
+"window.settings.title" = "Top Notch Ayarları";
+
+/* Settings Sections */
+"settings.section.general" = "GENEL";
+"settings.section.appearance" = "GÖRÜNÜM";
+"settings.section.media" = "MEDYA";
+"settings.section.hud" = "HUD DEĞİŞTİRME";
+"settings.section.indicators" = "GÖSTERGELER & GERİ BİLDİRİM";
+"settings.section.widgets" = "WIDGET'LAR";
+"settings.section.intelligence" = "ZEKA";
+"settings.section.shortcuts" = "KLAVYE KISAYOLLARI";
+"settings.section.privacy" = "GİZLİLİK";
+
+/* General Settings */
+"settings.general.launchAtLogin" = "Girişte Başlat";
+"settings.general.hoverToExpand" = "Genişletmek için Üzerine Gel";
+"settings.general.autoCollapseDelay" = "Otomatik Daraltma Gecikmesi";
+"settings.general.showInMenuBar" = "Menü Çubuğunda Göster";
+
+/* Appearance Settings */
+"settings.appearance.theme" = "Tema";
+"settings.appearance.theme.auto" = "Otomatik";
+"settings.appearance.theme.light" = "Açık";
+"settings.appearance.theme.dark" = "Koyu";
+"settings.appearance.accentColor" = "Vurgu Rengi";
+"color.blue" = "Mavi";
+"color.orange" = "Turuncu";
+"color.green" = "Yeşil";
+"color.red" = "Kırmızı";
+"color.purple" = "Mor";
+"color.cyan" = "Camgöbeği";
+
+/* Media Settings */
+"settings.media.nowPlaying" = "Şu An Çalan Kontrolleri";
+"settings.media.albumArtwork" = "Albüm Kapağını Göster";
+"settings.media.vinylSpin" = "Plak Dönme Animasyonu";
+"settings.media.colorMatch" = "Uygulama Rengiyle Eşleştir";
+
+/* HUD Settings */
+"settings.hud.replaceVolume" = "Ses HUD'ını Değiştir";
+"settings.hud.replaceBrightness" = "Parlaklık HUD'ını Değiştir";
+"settings.hud.style" = "HUD Stili";
+"settings.hud.style.minimal" = "Minimal";
+"settings.hud.style.bar" = "Çubuk";
+"settings.hud.style.notched" = "Çentikli";
+
+/* Indicators Settings */
+"settings.indicators.battery" = "Pil Göstergesi";
+"settings.indicators.lockUnlock" = "Kilitle/Kilidi Aç Göstergesi";
+"settings.indicators.chargingSound" = "Şarj Sesi";
+"settings.indicators.haptic" = "Dokunsal Geri Bildirim";
+
+/* Widget Toggles */
+"widget.calendar" = "Takvim";
+"widget.weather" = "Hava Durumu";
+"widget.pomodoro" = "Pomodoro Zamanlayıcı";
+"widget.clipboard" = "Pano Geçmişi";
+"widget.youtube" = "YouTube Oynatıcı";
+"widget.battery" = "Pil Monitörü";
+"widget.shortcuts" = "Kısayollar Başlatıcı";
+"widget.activityFeed" = "Etkinlik Akışı";
+"widget.quickCapture" = "Hızlı Yakalama";
+"widget.lyrics" = "Senkronize Şarkı Sözleri";
+
+/* Intelligence Settings */
+"settings.ai.onDevice" = "Cihaz Üzerinde Yapay Zeka";
+"settings.ai.available" = "Mevcut";
+"settings.ai.requiresMacOS26" = "macOS 26 Gerektirir";
+"settings.ai.summarization" = "Yapay Zeka Özetleme";
+"settings.ai.claudeApiKey" = "Claude API Anahtarı";
+
+/* Keyboard Shortcuts */
+"shortcut.playPause" = "Oynat / Duraklat";
+"shortcut.previousTrack" = "Önceki Parça";
+"shortcut.nextTrack" = "Sonraki Parça";
+"shortcut.volumeUpDown" = "Sesi Aç / Kapat";
+"shortcut.openYouTube" = "YouTube'u Aç";
+
+/* Privacy Settings */
+"settings.privacy.clipboardMonitoring" = "Pano İzleme";
+"settings.privacy.calendarAccess" = "Takvim Erişimi";
+"settings.privacy.analytics" = "Analizler";
+"settings.privacy.showOnboarding" = "Tanıtımı Tekrar Göster";
+"settings.privacy.clearAllData" = "Tüm Verileri Temizle";
+
+/* Calendar Access Status */
+"access.granted" = "Verildi";
+"access.fullAccess" = "Tam Erişim";
+"access.writeOnly" = "Yalnızca Yazma";
+"access.denied" = "Reddedildi";
+"access.notGranted" = "Verilmedi";
+"access.unknown" = "Bilinmiyor";
+
+/* About Section */
+"about.appName" = "Top Notch";
+"about.version" = "Sürüm %@ (Derleme %@)";
+"about.madeWith" = "Mac için ❤️ ile yapıldı";
+"about.website" = "Web Sitesi";
+"about.support" = "Destek";
+"about.privacy" = "Gizlilik";
+
+/* Media Player */
+"media.noMediaPlaying" = "Medya Oynatılmıyor";
+"media.playMusicPrompt" = "Kontrolleri görmek için müzik veya medya oynatın";
+"media.notPlaying" = "Oynatılmıyor";
+"media.unknownArtist" = "Bilinmeyen Sanatçı";
+"media.noMedia" = "Medya yok";
+"media.music" = "Müzik";
+"media.podcasts" = "Podcast'ler";
+"media.spotify" = "Spotify";
+"media.playingFrom" = "%@ kaynağından oynatılıyor";
+
+/* YouTube Player */
+"youtube.title" = "YouTube";
+"youtube.pasteUrl" = "URL Yapıştır...";
+"youtube.browse" = "Göz At";
+"youtube.play" = "Oynat";
+"youtube.paste" = "Yapıştır";
+"youtube.pasteAndPlay" = "Yapıştır ve Oynat";
+"youtube.playingInWindow" = "Pencerede oynatılıyor";
+"youtube.paused" = "Duraklatıldı";
+"youtube.show" = "Göster";
+"youtube.pinned" = "Sabitlendi";
+"youtube.recentlyPlayed" = "SON OYNATILANLAR";
+"youtube.linkDetected" = "YouTube Bağlantısı Algılandı";
+"youtube.videoUnavailable" = "Video Kullanılamıyor";
+"youtube.tryAnother" = "Başka Bir Tane Dene";
+"youtube.openInSafari" = "Safari'de Aç";
+"youtube.closePlayer" = "Oynatıcıyı Kapat";
+"youtube.buffering" = "Ara Belleğe Alınıyor";
+"youtube.playing" = "Oynatılıyor";
+"youtube.openVideo" = "YouTube Videosunu Aç… ⌘⇧Y";
+"youtube.playDetected" = "Algılanan Videoyu Oynat";
+
+/* Weather */
+"weather.title" = "Hava Durumu";
+"weather.high" = "Y:";
+"weather.low" = "D:";
+"weather.enterCity" = "Hava durumunu yüklemek için bir şehir girin";
+"weather.invalidCity" = "Geçersiz şehir adı";
+"weather.cityNotFound" = "Şehir bulunamadı";
+"weather.unavailable" = "Hava durumu mevcut değil";
+"weather.condition.clear" = "Açık hava";
+"weather.condition.partlyCloudy" = "Parçalı bulutlu";
+"weather.condition.fog" = "Sisli";
+"weather.condition.drizzle" = "Çiseleme";
+"weather.condition.rain" = "Yağmurlu";
+"weather.condition.snow" = "Karlı";
+"weather.condition.rainShowers" = "Sağanak yağışlı";
+"weather.condition.snowShowers" = "Sağanak karlı";
+"weather.condition.thunderstorm" = "Gök gürültülü fırtına";
+"weather.condition.updating" = "Koşullar güncelleniyor";
+
+/* Calendar */
+"calendar.todaysEvents" = "Bugünkü Etkinlikler";
+"calendar.noEvents" = "Bugün etkinlik yok";
+"calendar.noUpcoming" = "Yaklaşan etkinlik yok";
+"calendar.openCalendar" = "Takvimi Aç";
+
+/* Pomodoro */
+"pomodoro.title" = "Odaklanma Zamanlayıcısı";
+"pomodoro.focus" = "Odaklan";
+"pomodoro.session" = "Oturum %d / %d";
+"pomodoro.minutes" = "%d dk";
+"pomodoro.readyToFocus" = "\U0001F3AF Odaklanmaya hazır";
+"pomodoro.takeABreak" = "\u2615 Mola ver";
+"pomodoro.deepFocus" = "\U0001F3AF Derin odaklanma";
+
+/* Clipboard */
+"clipboard.title" = "Pano Geçmişi";
+"clipboard.items" = "%d öğe";
+"clipboard.nothingCopied" = "Henüz hiçbir şey kopyalanmadı";
+"clipboard.copyPrompt" = "Metin veya URL'leri buraya kopyalayın";
+"clipboard.copySomething" = "Burada görmek için bir şeyler kopyalayın";
+"clipboard.clearAll" = "Tümünü Temizle";
+"clipboard.copied" = "Kopyalandı!";
+"clipboard.copy" = "Kopyala";
+"clipboard.more" = "+%d daha";
+
+/* Battery */
+"battery.title" = "Pil";
+"battery.noDevices" = "Cihaz bulunamadı";
+"battery.charging" = "Şarj Ediliyor";
+"battery.unplugged" = "Fişi Çekildi";
+"battery.remaining" = "• %@ kaldı";
+
+/* Shortcuts */
+"shortcuts.title" = "Kısayollar";
+"shortcuts.noShortcuts" = "Kısayol bulunamadı";
+
+/* Quick Capture */
+"capture.title" = "Hızlı Yakalama";
+"capture.notesAppear" = "Notlar burada görünür";
+
+/* Activity Feed */
+"activity.title" = "Etkinlik";
+
+/* System States */
+"system.locked" = "Kilitli";
+"system.macLocked" = "Mac Kilitli";
+"system.touchIdPrompt" = "Touch ID veya parola girin";
+"system.unlocked" = "Kilidi Açıldı";
+"system.welcomeBack" = "Tekrar hoş geldiniz!";
+"system.focus" = "Odak";
+"system.active" = "Aktif";
+
+/* Widget Navigation */
+"nav.home" = "Ana Sayfa";
+"nav.weather" = "Hava Durumu";
+"nav.youtube" = "YouTube";
+"nav.media" = "Medya";
+"nav.focus" = "Odak";
+"nav.clipboard" = "Pano";
+"nav.calendar" = "Takvim";
+"nav.battery" = "Pil";
+"nav.shortcuts" = "Kısayollar";
+"nav.activity" = "Etkinlik";
+"nav.capture" = "Yakalama";
+
+
+/* Language Settings */
+"settings.appearance.language" = "Dil";
+"settings.language.restartTitle" = "Yeniden Başlatma Gerekli";
+"settings.language.restartMessage" = "Top Notch'ın yeni dili uygulamak için yeniden başlatılması gerekiyor.";
+"settings.language.restartNow" = "Şimdi Yeniden Başlat";
+"settings.language.later" = "Daha Sonra";
+
+/* Additional Strings */
+"clipboard.edit" = "Düzenle";
+"media.controlsTooltip" = "Medya Kontrolleri (küresel kısayollar)";
+"youtube.watchPageMode" = "İzleme sayfası modu";
+"youtube.playingFromYT" = "YouTube'dan oynatılıyor";
+"youtube.urlPlaceholder" = "YouTube URL'sini veya video kimliğini yapıştırın...";
+
+/* HUD */
+"hud.mute" = "Sesi kapat";
+
+/* File Shelf */
+"fileShelf.title" = "Dosya Rafı";
+"fileShelf.clear" = "Temizle";
+"fileShelf.dropFilesHere" = "Dosyaları buraya bırakın";
+"fileShelf.releaseToAdd" = "Eklemek için bırakın";
+
+/* Calendar */
+"calendar.allDay" = "Tüm gün";
+
+/* Clipboard */
+"clipboard.itemCount" = "%d öğe";
+"clipboard.moreItems" = "+%d daha";
+
+/* Tooltips */
+"tooltip.play" = "Oynat";
+"tooltip.pause" = "Duraklat";
+"tooltip.mute" = "Sesi kapat";
+"tooltip.unmute" = "Sesi aç";
+"tooltip.close" = "Kapat";
+"tooltip.playbackSpeed" = "Oynatma hızı";
+
+/* Time Ago */
+"time.now" = "şimdi";
+"time.minutesAgo" = "%d dk önce";
+"time.hoursAgo" = "%d sa önce";

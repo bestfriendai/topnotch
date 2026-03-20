@@ -1,5 +1,8 @@
+import Combine
 import Foundation
+#if !APP_STORE_BUILD
 import IOBluetooth
+#endif
 import IOKit.ps
 
 enum DeviceType: String {
@@ -9,7 +12,7 @@ enum DeviceType: String {
     case keyboard = "keyboard"
     case trackpad = "trackpad"
     case other = "other"
-    
+
     var icon: String {
         switch self {
         case .mac: return "laptopcomputer"
@@ -28,7 +31,7 @@ struct DeviceBattery: Identifiable {
     let type: DeviceType
     let level: Int  // 0-100
     let isCharging: Bool
-    
+
     var icon: String { type.icon }
     var levelColor: String {
         if level > 50 { return "#34D399" }
@@ -40,75 +43,80 @@ struct DeviceBattery: Identifiable {
 @MainActor
 final class BatteryDeviceStore: ObservableObject {
     static let shared = BatteryDeviceStore()
-    
+
     @Published var devices: [DeviceBattery] = []
-    
+
     private var timer: Timer?
-    
+
     private init() {}
-    
+
     func startMonitoring() {
+        stopMonitoring()
         fetchDevices()
         timer = Timer.scheduledTimer(withTimeInterval: 30, repeats: true) { [weak self] _ in
-            Task { @MainActor in self?.fetchDevices() }
+            guard let self else { return }
+            Task { @MainActor in self.fetchDevices() }
         }
     }
-    
+
     func stopMonitoring() {
         timer?.invalidate()
         timer = nil
     }
-    
+
     func fetchDevices() {
         var result: [DeviceBattery] = []
-        
+
         // 1. Mac internal battery
         if let macBattery = getMacBattery() {
             result.append(macBattery)
         }
-        
-        // 2. Bluetooth devices
+
+        // 2. Bluetooth devices (direct build only — sandbox blocks IOBluetooth KVC)
+        #if !APP_STORE_BUILD
         result.append(contentsOf: getBluetoothDevices())
-        
+        #endif
+
         devices = result
     }
-    
+
     private func getMacBattery() -> DeviceBattery? {
-        let snapshot = IOPSCopyPowerSourcesInfo().takeRetainedValue()
-        let sources = IOPSCopyPowerSourcesList(snapshot).takeRetainedValue() as! [CFTypeRef]
-        
+        guard let snapshot = IOPSCopyPowerSourcesInfo()?.takeRetainedValue() else { return nil }
+        guard let cfSources = IOPSCopyPowerSourcesList(snapshot)?.takeRetainedValue() else { return nil }
+        let sources = cfSources as [CFTypeRef]
+
         for source in sources {
-            if let info = IOPSGetPowerSourceDescription(snapshot, source)?.takeUnretainedValue() as? [String: Any],
-               let type = info[kIOPSTypeKey] as? String,
-               type == kIOPSInternalBatteryType,
-               let capacity = info[kIOPSCurrentCapacityKey] as? Int {
-                let isCharging = (info[kIOPSIsChargingKey] as? Bool) ?? false
-                return DeviceBattery(id: "mac", name: "MacBook", type: .mac, level: capacity, isCharging: isCharging)
-            }
+            guard let info = IOPSGetPowerSourceDescription(snapshot, source)?.takeUnretainedValue() as? [String: Any],
+                  let type = info[kIOPSTypeKey] as? String,
+                  type == kIOPSInternalBatteryType,
+                  let capacity = info[kIOPSCurrentCapacityKey] as? Int else { continue }
+            let isCharging = (info[kIOPSIsChargingKey] as? Bool) ?? false
+            return DeviceBattery(id: "mac", name: "MacBook", type: .mac, level: capacity, isCharging: isCharging)
         }
         return nil
     }
-    
+
+    #if !APP_STORE_BUILD
     private func getBluetoothDevices() -> [DeviceBattery] {
         var result: [DeviceBattery] = []
         guard let pairedDevices = IOBluetoothDevice.pairedDevices() as? [IOBluetoothDevice] else {
             return result
         }
-        
+
         for device in pairedDevices {
             guard device.isConnected() else { continue }
-            
-            // Get battery level via IOBluetooth
-            // Battery percentage is available as a property on some devices
+
             var batteryLevel: Int = -1
-            if let battery = device.value(forKey: "batteryPercent") as? Int {
+            if device.responds(to: NSSelectorFromString("batteryPercent")),
+               let battery = device.value(forKey: "batteryPercent") as? Int {
                 batteryLevel = battery
-            } else if let battery = device.value(forKey: "BatteryPercent") as? Int {
+            } else if device.responds(to: NSSelectorFromString("BatteryPercent")),
+                      let battery = device.value(forKey: "BatteryPercent") as? Int {
                 batteryLevel = battery
             }
-            
+
             guard batteryLevel >= 0 else { continue }
-            
+
             let name = device.name ?? "Unknown Device"
             let type = classifyDevice(device)
             result.append(DeviceBattery(
@@ -121,7 +129,7 @@ final class BatteryDeviceStore: ObservableObject {
         }
         return result
     }
-    
+
     private func classifyDevice(_ device: IOBluetoothDevice) -> DeviceType {
         let name = (device.name ?? "").lowercased()
         if name.contains("airpod") { return .airpods }
@@ -130,4 +138,5 @@ final class BatteryDeviceStore: ObservableObject {
         if name.contains("trackpad") || name.contains("magic") { return .trackpad }
         return .other
     }
+    #endif
 }

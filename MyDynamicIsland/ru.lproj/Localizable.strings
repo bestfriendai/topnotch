@@ -1,0 +1,265 @@
+/* Menu Bar */
+"menu.settings" = "Настройки...";
+"menu.quit" = "Выйти из Top Notch";
+"window.settings.title" = "Настройки Top Notch";
+
+/* Settings Sections */
+"settings.section.general" = "ОБЩИЕ";
+"settings.section.appearance" = "ВНЕШНИЙ ВИД";
+"settings.section.media" = "МЕДИА";
+"settings.section.hud" = "ЗАМЕНА HUD";
+"settings.section.indicators" = "ИНДИКАТОРЫ И ОБРАТНАЯ СВЯЗЬ";
+"settings.section.widgets" = "ВИДЖЕТЫ";
+"settings.section.intelligence" = "ИНТЕЛЛЕКТ";
+"settings.section.shortcuts" = "КЛАВИАТУРНЫЕ СОЧЕТАНИЯ";
+"settings.section.privacy" = "КОНФИДЕНЦИАЛЬНОСТЬ";
+
+/* General Settings */
+"settings.general.launchAtLogin" = "Запускать при входе";
+"settings.general.hoverToExpand" = "Навести для разворачивания";
+"settings.general.autoCollapseDelay" = "Задержка автосворачивания";
+"settings.general.showInMenuBar" = "Показывать в строке меню";
+
+/* Appearance Settings */
+"settings.appearance.theme" = "Тема";
+"settings.appearance.theme.auto" = "Авто";
+"settings.appearance.theme.light" = "Светлая";
+"settings.appearance.theme.dark" = "Темная";
+"settings.appearance.accentColor" = "Акцентный цвет";
+"color.blue" = "Синий";
+"color.orange" = "Оранжевый";
+"color.green" = "Зеленый";
+"color.red" = "Красный";
+"color.purple" = "Фиолетовый";
+"color.cyan" = "Голубой";
+
+/* Media Settings */
+"settings.media.nowPlaying" = "Элементы управления «Сейчас играет»";
+"settings.media.albumArtwork" = "Показывать обложку альбома";
+"settings.media.vinylSpin" = "Анимация вращения винила";
+"settings.media.colorMatch" = "Сопоставление цвета приложения";
+
+/* HUD Settings */
+"settings.hud.replaceVolume" = "Заменить HUD громкости";
+"settings.hud.replaceBrightness" = "Заменить HUD яркости";
+"settings.hud.style" = "Стиль HUD";
+"settings.hud.style.minimal" = "Минимальный";
+"settings.hud.style.bar" = "Полоса";
+"settings.hud.style.notched" = "С вырезом";
+
+/* Indicators Settings */
+"settings.indicators.battery" = "Индикатор батареи";
+"settings.indicators.lockUnlock" = "Индикатор блокировки/разблокировки";
+"settings.indicators.chargingSound" = "Звук зарядки";
+"settings.indicators.haptic" = "Тактильная отдача";
+
+/* Widget Toggles */
+"widget.calendar" = "Календарь";
+"widget.weather" = "Погода";
+"widget.pomodoro" = "Таймер Pomodoro";
+"widget.clipboard" = "История буфера обмена";
+"widget.youtube" = "Плеер YouTube";
+"widget.battery" = "Монитор батареи";
+"widget.shortcuts" = "Запуск быстрых команд";
+"widget.activityFeed" = "Лента активности";
+"widget.quickCapture" = "Быстрый захват";
+"widget.lyrics" = "Синхронизированные тексты";
+
+/* Intelligence Settings */
+"settings.ai.onDevice" = "ИИ на устройстве";
+"settings.ai.available" = "Доступно";
+"settings.ai.requiresMacOS26" = "Требуется macOS 26";
+"settings.ai.summarization" = "Суммирование ИИ";
+"settings.ai.claudeApiKey" = "Ключ API Claude";
+
+/* Keyboard Shortcuts */
+"shortcut.playPause" = "Воспроизведение / Пауза";
+"shortcut.previousTrack" = "Предыдущий трек";
+"shortcut.nextTrack" = "Следующий трек";
+"shortcut.volumeUpDown" = "Громкость вверх / вниз";
+"shortcut.openYouTube" = "Открыть YouTube";
+
+/* Privacy Settings */
+"settings.privacy.clipboardMonitoring" = "Мониторинг буфера обмена";
+"settings.privacy.calendarAccess" = "Доступ к календарю";
+"settings.privacy.analytics" = "Аналитика";
+"settings.privacy.showOnboarding" = "Показать вводное обучение снова";
+"settings.privacy.clearAllData" = "Очистить все данные";
+
+/* Calendar Access Status */
+"access.granted" = "Предоставлен";
+"access.fullAccess" = "Полный доступ";
+"access.writeOnly" = "Только запись";
+"access.denied" = "Отказано";
+"access.notGranted" = "Не предоставлен";
+"access.unknown" = "Неизвестно";
+
+/* About Section */
+"about.appName" = "Top Notch";
+"about.version" = "Версия %@ (Сборка %@)";
+"about.madeWith" = "Сделано с ❤️ для Mac";
+"about.website" = "Веб-сайт";
+"about.support" = "Поддержка";
+"about.privacy" = "Конфиденциальность";
+
+/* Media Player */
+"media.noMediaPlaying" = "Медиа не воспроизводится";
+"media.playMusicPrompt" = "Включите музыку или медиа, чтобы увидеть элементы управления здесь";
+"media.notPlaying" = "Не воспроизводится";
+"media.unknownArtist" = "Неизвестный исполнитель";
+"media.noMedia" = "Нет медиа";
+"media.music" = "Музыка";
+"media.podcasts" = "Подкасты";
+"media.spotify" = "Spotify";
+"media.playingFrom" = "Воспроизводится из %@";
+
+/* YouTube Player */
+"youtube.title" = "YouTube";
+"youtube.pasteUrl" = "Вставить URL...";
+"youtube.browse" = "Обзор";
+"youtube.play" = "Воспроизвести";
+"youtube.paste" = "Вставить";
+"youtube.pasteAndPlay" = "Вставить и воспроизвести";
+"youtube.playingInWindow" = "Воспроизводится в окне";
+"youtube.paused" = "Приостановлено";
+"youtube.show" = "Показать";
+"youtube.pinned" = "Закреплено";
+"youtube.recentlyPlayed" = "НЕДАВНО ВОСПРОИЗВЕДЕННЫЕ";
+"youtube.linkDetected" = "Обнаружена ссылка YouTube";
+"youtube.videoUnavailable" = "Видео недоступно";
+"youtube.tryAnother" = "Попробовать другое";
+"youtube.openInSafari" = "Открыть в Safari";
+"youtube.closePlayer" = "Закрыть плеер";
+"youtube.buffering" = "Буферизация";
+"youtube.playing" = "Воспроизведение";
+"youtube.openVideo" = "Открыть видео YouTube…  ⌘⇧Y";
+"youtube.playDetected" = "Воспроизвести обнаруженное видео";
+
+/* Weather */
+"weather.title" = "Погода";
+"weather.high" = "Макс:";
+"weather.low" = "Мин:";
+"weather.enterCity" = "Введите город для загрузки погоды";
+"weather.invalidCity" = "Неверное название города";
+"weather.cityNotFound" = "Город не найден";
+"weather.unavailable" = "Погода недоступна";
+"weather.condition.clear" = "Ясно";
+"weather.condition.partlyCloudy" = "Переменная облачность";
+"weather.condition.fog" = "Туман";
+"weather.condition.drizzle" = "Морось";
+"weather.condition.rain" = "Дождь";
+"weather.condition.snow" = "Снег";
+"weather.condition.rainShowers" = "Ливневый дождь";
+"weather.condition.snowShowers" = "Ливневый снег";
+"weather.condition.thunderstorm" = "Гроза";
+"weather.condition.updating" = "Условия обновляются";
+
+/* Calendar */
+"calendar.todaysEvents" = "События на сегодня";
+"calendar.noEvents" = "На сегодня нет событий";
+"calendar.noUpcoming" = "Нет предстоящих событий";
+"calendar.openCalendar" = "Открыть Календарь";
+
+/* Pomodoro */
+"pomodoro.title" = "Таймер фокуса";
+"pomodoro.focus" = "Фокус";
+"pomodoro.session" = "Сессия %d из %d";
+"pomodoro.minutes" = "%d мин";
+"pomodoro.readyToFocus" = "\U0001F3AF Готов к работе";
+"pomodoro.takeABreak" = "\u2615 Сделайте перерыв";
+"pomodoro.deepFocus" = "\U0001F3AF Глубокая работа";
+
+/* Clipboard */
+"clipboard.title" = "История буфера обмена";
+"clipboard.items" = "%d элементов";
+"clipboard.nothingCopied" = "Пока ничего не скопировано";
+"clipboard.copyPrompt" = "Копируйте текст или ссылки, чтобы увидеть их здесь";
+"clipboard.copySomething" = "Скопируйте что-нибудь, чтобы увидеть это здесь";
+"clipboard.clearAll" = "Очистить все";
+"clipboard.copied" = "Скопировано!";
+"clipboard.copy" = "Копировать";
+"clipboard.more" = "+%d ещё";
+
+/* Battery */
+"battery.title" = "Батарея";
+"battery.noDevices" = "Устройства не найдены";
+"battery.charging" = "Зарядка";
+"battery.unplugged" = "Отключено";
+"battery.remaining" = "• %@ осталось";
+
+/* Shortcuts */
+"shortcuts.title" = "Быстрые команды";
+"shortcuts.noShortcuts" = "Быстрые команды не найдены";
+
+/* Quick Capture */
+"capture.title" = "Быстрый захват";
+"capture.notesAppear" = "Заметки появятся здесь";
+
+/* Activity Feed */
+"activity.title" = "Активность";
+
+/* System States */
+"system.locked" = "Заблокировано";
+"system.macLocked" = "Mac заблокирован";
+"system.touchIdPrompt" = "Touch ID или введите пароль";
+"system.unlocked" = "Разблокировано";
+"system.welcomeBack" = "С возвращением!";
+"system.focus" = "Фокусировка";
+"system.active" = "Активно";
+
+/* Widget Navigation */
+"nav.home" = "Главная";
+"nav.weather" = "Погода";
+"nav.youtube" = "YouTube";
+"nav.media" = "Медиа";
+"nav.focus" = "Фокус";
+"nav.clipboard" = "Буфер обмена";
+"nav.calendar" = "Календарь";
+"nav.battery" = "Батарея";
+"nav.shortcuts" = "Быстрые команды";
+"nav.activity" = "Активность";
+"nav.capture" = "Захват";
+
+
+/* Language Settings */
+"settings.appearance.language" = "Язык";
+"settings.language.restartTitle" = "Требуется перезапуск";
+"settings.language.restartMessage" = "Для применения нового языка Top Notch необходимо перезапустить.";
+"settings.language.restartNow" = "Перезапустить сейчас";
+"settings.language.later" = "Позже";
+
+/* Additional Strings */
+"clipboard.edit" = "Изменить";
+"media.controlsTooltip" = "Элементы управления медиа (глобальные быстрые команды)";
+"youtube.watchPageMode" = "Режим страницы просмотра";
+"youtube.playingFromYT" = "Воспроизводится из YouTube";
+"youtube.urlPlaceholder" = "Вставьте URL-адрес YouTube или идентификатор видео...";
+
+/* HUD */
+"hud.mute" = "Выключить звук";
+
+/* File Shelf */
+"fileShelf.title" = "Полка файлов";
+"fileShelf.clear" = "Очистить";
+"fileShelf.dropFilesHere" = "Перетащите файлы сюда";
+"fileShelf.releaseToAdd" = "Отпустите, чтобы добавить";
+
+/* Calendar */
+"calendar.allDay" = "Весь день";
+
+/* Clipboard */
+"clipboard.itemCount" = "%d элементов";
+"clipboard.moreItems" = "+%d ещё";
+
+/* Tooltips */
+"tooltip.play" = "Воспроизвести";
+"tooltip.pause" = "Пауза";
+"tooltip.mute" = "Выключить звук";
+"tooltip.unmute" = "Включить звук";
+"tooltip.close" = "Закрыть";
+"tooltip.playbackSpeed" = "Скорость воспроизведения";
+
+/* Time Ago */
+"time.now" = "сейчас";
+"time.minutesAgo" = "%d мин назад";
+"time.hoursAgo" = "%d ч назад";

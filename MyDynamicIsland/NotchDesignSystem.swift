@@ -1,5 +1,61 @@
 import SwiftUI
 
+// MARK: - Animation Presets
+
+extension Animation {
+    /// Fast, snappy spring — great for button presses and quick state changes.
+    static let notchSnap    = Animation.spring(duration: 0.22, bounce: 0.30)
+    /// Default spring — general purpose expand/collapse.
+    static let notchDefault = Animation.spring(duration: 0.40, bounce: 0.28)
+    /// Bouncy spring — deck navigation, card entrances.
+    static let notchBouncy  = Animation.spring(duration: 0.50, bounce: 0.45)
+    /// Gentle spring — large panel transitions.
+    static let notchGentle  = Animation.spring(duration: 0.55, bounce: 0.15)
+}
+
+// MARK: - Press Scale Button Style
+
+/// Scales the label down slightly on press — Apple-style tactile feedback.
+struct NotchPressButtonStyle: ButtonStyle {
+    var pressedScale: CGFloat = 0.88
+    var hoveredScale: CGFloat = 1.0
+    @State private var isHovering = false
+
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .scaleEffect(configuration.isPressed ? pressedScale : (isHovering ? hoveredScale : 1.0))
+            .animation(.spring(duration: 0.18, bounce: 0.30), value: configuration.isPressed)
+            .animation(.spring(duration: 0.22, bounce: 0.25), value: isHovering)
+            .onHover { isHovering = $0 }
+    }
+}
+
+extension ButtonStyle where Self == NotchPressButtonStyle {
+    static var notchPress: NotchPressButtonStyle { NotchPressButtonStyle() }
+    static func notchPress(scale: CGFloat, hover: CGFloat = 1.0) -> NotchPressButtonStyle {
+        NotchPressButtonStyle(pressedScale: scale, hoveredScale: hover)
+    }
+}
+
+// MARK: - Glow Modifier
+
+struct GlowModifier: ViewModifier {
+    let color: Color
+    let radius: CGFloat
+
+    func body(content: Content) -> some View {
+        content
+            .shadow(color: color.opacity(0.55), radius: radius / 2, y: 0)
+            .shadow(color: color.opacity(0.30), radius: radius, y: 0)
+    }
+}
+
+extension View {
+    func notchGlow(_ color: Color, radius: CGFloat = 10) -> some View {
+        modifier(GlowModifier(color: color, radius: radius))
+    }
+}
+
 // MARK: - Color Hex Extension
 
 extension Color {
@@ -31,8 +87,8 @@ extension Color {
 // MARK: - Design System
 
 struct NotchDesign {
-    // Backgrounds
-    static let bgMain = Color(red: 0.043, green: 0.043, blue: 0.055) // #0B0B0E
+    // Backgrounds — pure black to blend seamlessly with the hardware notch
+    static let bgMain = Color.black // #000000
     static let cardBg = Color(red: 0.086, green: 0.086, blue: 0.102) // #16161A
     static let elevated = Color(red: 0.102, green: 0.102, blue: 0.118) // #1A1A1E
 

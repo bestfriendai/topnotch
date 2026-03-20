@@ -17,13 +17,15 @@ final class SettingsWindowController: NSObject, NSWindowDelegate {
         self.hostingController = hostingController  // strong reference prevents dealloc
         let window = NSWindow(contentViewController: hostingController)
         window.title = "Top Notch Settings"
-        window.styleMask = [.titled, .closable, .miniaturizable, .fullSizeContentView]
+        window.styleMask = [.titled, .closable, .miniaturizable, .resizable, .fullSizeContentView]
         window.titlebarAppearsTransparent = true
         window.titleVisibility = .hidden
         window.backgroundColor = .clear
         window.isOpaque = false
+        window.isMovableByWindowBackground = true
         window.hasShadow = true
-        window.setContentSize(NSSize(width: 460, height: 640))
+        window.setContentSize(NSSize(width: 460, height: 720))
+        window.minSize = NSSize(width: 460, height: 500)
         window.center()
         window.delegate = self
         window.makeKeyAndOrderFront(nil)

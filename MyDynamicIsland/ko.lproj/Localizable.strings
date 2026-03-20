@@ -1,0 +1,265 @@
+/* Menu Bar */
+"menu.settings" = "설정...";
+"menu.quit" = "Top Notch 종료";
+"window.settings.title" = "Top Notch 설정";
+
+/* Settings Sections */
+"settings.section.general" = "일반";
+"settings.section.appearance" = "외형";
+"settings.section.media" = "미디어";
+"settings.section.hud" = "HUD 대체";
+"settings.section.indicators" = "표시기 및 피드백";
+"settings.section.widgets" = "위젯";
+"settings.section.intelligence" = "지능";
+"settings.section.shortcuts" = "키보드 단축키";
+"settings.section.privacy" = "개인 정보 보호";
+
+/* General Settings */
+"settings.general.launchAtLogin" = "로그인 시 실행";
+"settings.general.hoverToExpand" = "가리키면 확장";
+"settings.general.autoCollapseDelay" = "자동 축소 지연";
+"settings.general.showInMenuBar" = "메뉴 막대에 표시";
+
+/* Appearance Settings */
+"settings.appearance.theme" = "테마";
+"settings.appearance.theme.auto" = "자동";
+"settings.appearance.theme.light" = "밝게";
+"settings.appearance.theme.dark" = "어둡게";
+"settings.appearance.accentColor" = "강조 색상";
+"color.blue" = "파랑";
+"color.orange" = "주황";
+"color.green" = "초록";
+"color.red" = "빨강";
+"color.purple" = "보라";
+"color.cyan" = "청록";
+
+/* Media Settings */
+"settings.media.nowPlaying" = "지금 재생 중 제어";
+"settings.media.albumArtwork" = "앨범 아트워크 표시";
+"settings.media.vinylSpin" = "바이닐 회전 애니메이션";
+"settings.media.colorMatch" = "앱 색상 일치";
+
+/* HUD Settings */
+"settings.hud.replaceVolume" = "볼륨 HUD 대체";
+"settings.hud.replaceBrightness" = "밝기 HUD 대체";
+"settings.hud.style" = "HUD 스타일";
+"settings.hud.style.minimal" = "최소";
+"settings.hud.style.bar" = "막대";
+"settings.hud.style.notched" = "노치";
+
+/* Indicators Settings */
+"settings.indicators.battery" = "배터리 표시기";
+"settings.indicators.lockUnlock" = "잠금/잠금 해제 표시기";
+"settings.indicators.chargingSound" = "충전 소리";
+"settings.indicators.haptic" = "햅틱 피드백";
+
+/* Widget Toggles */
+"widget.calendar" = "캘린더";
+"widget.weather" = "날씨";
+"widget.pomodoro" = "Pomodoro 타이머";
+"widget.clipboard" = "클립보드 기록";
+"widget.youtube" = "YouTube 플레이어";
+"widget.battery" = "배터리 모니터";
+"widget.shortcuts" = "단축어 실행기";
+"widget.activityFeed" = "활동 피드";
+"widget.quickCapture" = "빠른 캡처";
+"widget.lyrics" = "동기화된 가사";
+
+/* Intelligence Settings */
+"settings.ai.onDevice" = "기기 내 AI";
+"settings.ai.available" = "사용 가능";
+"settings.ai.requiresMacOS26" = "macOS 26 필요";
+"settings.ai.summarization" = "AI 요약";
+"settings.ai.claudeApiKey" = "Claude API 키";
+
+/* Keyboard Shortcuts */
+"shortcut.playPause" = "재생 / 일시 정지";
+"shortcut.previousTrack" = "이전 트랙";
+"shortcut.nextTrack" = "다음 트랙";
+"shortcut.volumeUpDown" = "볼륨 높이기 / 낮추기";
+"shortcut.openYouTube" = "YouTube 열기";
+
+/* Privacy Settings */
+"settings.privacy.clipboardMonitoring" = "클립보드 모니터링";
+"settings.privacy.calendarAccess" = "캘린더 접근";
+"settings.privacy.analytics" = "분석";
+"settings.privacy.showOnboarding" = "온보딩 다시 보기";
+"settings.privacy.clearAllData" = "모든 데이터 지우기";
+
+/* Calendar Access Status */
+"access.granted" = "허용됨";
+"access.fullAccess" = "전체 접근";
+"access.writeOnly" = "쓰기 전용";
+"access.denied" = "거부됨";
+"access.notGranted" = "허용되지 않음";
+"access.unknown" = "알 수 없음";
+
+/* About Section */
+"about.appName" = "Top Notch";
+"about.version" = "버전 %@ (빌드 %@)";
+"about.madeWith" = "Mac을 위해 ❤️로 제작됨";
+"about.website" = "웹사이트";
+"about.support" = "지원";
+"about.privacy" = "개인 정보 보호";
+
+/* Media Player */
+"media.noMediaPlaying" = "재생 중인 미디어 없음";
+"media.playMusicPrompt" = "음악 또는 미디어를 재생하여 여기에서 컨트롤을 확인하세요";
+"media.notPlaying" = "재생 안 함";
+"media.unknownArtist" = "알 수 없는 아티스트";
+"media.noMedia" = "미디어 없음";
+"media.music" = "음악";
+"media.podcasts" = "팟캐스트";
+"media.spotify" = "Spotify";
+"media.playingFrom" = "%@에서 재생 중";
+
+/* YouTube Player */
+"youtube.title" = "YouTube";
+"youtube.pasteUrl" = "URL 붙여넣기...";
+"youtube.browse" = "탐색";
+"youtube.play" = "재생";
+"youtube.paste" = "붙여넣기";
+"youtube.pasteAndPlay" = "붙여넣고 재생";
+"youtube.playingInWindow" = "창에서 재생 중";
+"youtube.paused" = "일시 정지됨";
+"youtube.show" = "표시";
+"youtube.pinned" = "고정됨";
+"youtube.recentlyPlayed" = "최근 재생";
+"youtube.linkDetected" = "YouTube 링크 감지됨";
+"youtube.videoUnavailable" = "동영상 이용 불가";
+"youtube.tryAnother" = "다른 동영상 시도";
+"youtube.openInSafari" = "Safari에서 열기";
+"youtube.closePlayer" = "플레이어 닫기";
+"youtube.buffering" = "버퍼링 중";
+"youtube.playing" = "재생 중";
+"youtube.openVideo" = "YouTube 동영상 열기… ⌘⇧Y";
+"youtube.playDetected" = "감지된 동영상 재생";
+
+/* Weather */
+"weather.title" = "날씨";
+"weather.high" = "최고:";
+"weather.low" = "최저:";
+"weather.enterCity" = "도시를 입력하세요";
+"weather.invalidCity" = "잘못된 도시 이름";
+"weather.cityNotFound" = "도시를 찾을 수 없음";
+"weather.unavailable" = "날씨 정보 없음";
+"weather.condition.clear" = "맑음";
+"weather.condition.partlyCloudy" = "구름 조금";
+"weather.condition.fog" = "안개";
+"weather.condition.drizzle" = "이슬비";
+"weather.condition.rain" = "비";
+"weather.condition.snow" = "눈";
+"weather.condition.rainShowers" = "소나기";
+"weather.condition.snowShowers" = "소낙눈";
+"weather.condition.thunderstorm" = "뇌우";
+"weather.condition.updating" = "날씨 업데이트 중";
+
+/* Calendar */
+"calendar.todaysEvents" = "오늘의 이벤트";
+"calendar.noEvents" = "오늘 이벤트 없음";
+"calendar.noUpcoming" = "예정된 이벤트 없음";
+"calendar.openCalendar" = "캘린더 열기";
+
+/* Pomodoro */
+"pomodoro.title" = "집중 타이머";
+"pomodoro.focus" = "집중";
+"pomodoro.session" = "%d/%d 세션";
+"pomodoro.minutes" = "%d분";
+"pomodoro.readyToFocus" = "\U0001F3AF 집중할 준비 완료";
+"pomodoro.takeABreak" = "\u2615 휴식 시간";
+"pomodoro.deepFocus" = "\U0001F3AF 심층 집중";
+
+/* Clipboard */
+"clipboard.title" = "클립보드 기록";
+"clipboard.items" = "항목 %d개";
+"clipboard.nothingCopied" = "아직 복사된 항목이 없습니다";
+"clipboard.copyPrompt" = "텍스트 또는 URL을 복사하여 여기에 표시";
+"clipboard.copySomething" = "여기에 표시하려면 무언가를 복사하세요";
+"clipboard.clearAll" = "모두 지우기";
+"clipboard.copied" = "복사됨!";
+"clipboard.copy" = "복사";
+"clipboard.more" = "+%d개 더";
+
+/* Battery */
+"battery.title" = "배터리";
+"battery.noDevices" = "기기를 찾을 수 없음";
+"battery.charging" = "충전 중";
+"battery.unplugged" = "연결 해제됨";
+"battery.remaining" = "• %@ 남음";
+
+/* Shortcuts */
+"shortcuts.title" = "단축키";
+"shortcuts.noShortcuts" = "단축키를 찾을 수 없음";
+
+/* Quick Capture */
+"capture.title" = "빠른 캡처";
+"capture.notesAppear" = "메모가 여기에 표시됩니다";
+
+/* Activity Feed */
+"activity.title" = "활동";
+
+/* System States */
+"system.locked" = "잠김";
+"system.macLocked" = "Mac 잠김";
+"system.touchIdPrompt" = "Touch ID 또는 암호 입력";
+"system.unlocked" = "잠금 해제됨";
+"system.welcomeBack" = "환영합니다!";
+"system.focus" = "집중";
+"system.active" = "활성";
+
+/* Widget Navigation */
+"nav.home" = "홈";
+"nav.weather" = "날씨";
+"nav.youtube" = "YouTube";
+"nav.media" = "미디어";
+"nav.focus" = "집중";
+"nav.clipboard" = "클립보드";
+"nav.calendar" = "캘린더";
+"nav.battery" = "배터리";
+"nav.shortcuts" = "단축키";
+"nav.activity" = "활동";
+"nav.capture" = "캡처";
+
+
+/* Language Settings */
+"settings.appearance.language" = "언어";
+"settings.language.restartTitle" = "재시작 필요";
+"settings.language.restartMessage" = "새 언어를 적용하려면 Top Notch를 재시작해야 합니다.";
+"settings.language.restartNow" = "지금 재시작";
+"settings.language.later" = "나중에";
+
+/* Additional Strings */
+"clipboard.edit" = "편집";
+"media.controlsTooltip" = "미디어 제어 (전역 단축키)";
+"youtube.watchPageMode" = "시청 페이지 모드";
+"youtube.playingFromYT" = "YouTube에서 재생 중";
+"youtube.urlPlaceholder" = "YouTube URL 또는 동영상 ID 붙여넣기...";
+
+/* HUD */
+"hud.mute" = "음소거";
+
+/* File Shelf */
+"fileShelf.title" = "파일 선반";
+"fileShelf.clear" = "비우기";
+"fileShelf.dropFilesHere" = "여기에 파일 놓기";
+"fileShelf.releaseToAdd" = "놓아서 추가";
+
+/* Calendar */
+"calendar.allDay" = "하루 종일";
+
+/* Clipboard */
+"clipboard.itemCount" = "%d개 항목";
+"clipboard.moreItems" = "+%d개 더";
+
+/* Tooltips */
+"tooltip.play" = "재생";
+"tooltip.pause" = "일시 정지";
+"tooltip.mute" = "음소거";
+"tooltip.unmute" = "음소거 해제";
+"tooltip.close" = "닫기";
+"tooltip.playbackSpeed" = "재생 속도";
+
+/* Time Ago */
+"time.now" = "지금";
+"time.minutesAgo" = "%d분 전";
+"time.hoursAgo" = "%d시간 전";

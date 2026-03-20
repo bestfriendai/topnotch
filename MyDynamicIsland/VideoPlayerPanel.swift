@@ -97,7 +97,6 @@ class VideoPlayerPanel: NSPanel {
 
     override func mouseExited(with event: NSEvent) {
         isMouseInside = false
-        NSCursor.arrow.set()
         NSAnimationContext.runAnimationGroup { context in
             context.duration = 0.3
             context.timingFunction = CAMediaTimingFunction(name: .easeInEaseOut)

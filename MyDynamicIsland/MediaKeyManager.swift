@@ -7,6 +7,7 @@ final class MediaKeyManager {
     private let state: NotchState
     fileprivate var eventTap: CFMachPort?
     private var runLoopSource: CFRunLoopSource?
+    private var retainedSelfPointer: UnsafeMutableRawPointer?
 
     private let volumeStep: Float32 = 1.0 / 16.0
     private let brightnessStep: Float = 1.0 / 16.0
@@ -26,7 +27,8 @@ final class MediaKeyManager {
         }
 
         let eventMask: CGEventMask = 1 << 14
-        let userInfo = Unmanaged.passUnretained(self).toOpaque()
+        let userInfo = Unmanaged.passRetained(self).toOpaque()
+        retainedSelfPointer = userInfo
 
         guard let tap = CGEvent.tapCreate(
             tap: .cgSessionEventTap,
@@ -36,6 +38,9 @@ final class MediaKeyManager {
             callback: mediaKeyCallback,
             userInfo: userInfo
         ) else {
+            // Release the retained self since the tap was not created
+            Unmanaged<MediaKeyManager>.fromOpaque(userInfo).release()
+            retainedSelfPointer = nil
             AppLogger.permissions.error("[MediaKeyManager] Failed to create event tap — media keys unavailable")
             DispatchQueue.main.async {
                 PermissionCoordinator.shared.presentAccessibilityUnavailableAlert()
@@ -55,6 +60,11 @@ final class MediaKeyManager {
     func stop() {
         if let tap = eventTap { CGEvent.tapEnable(tap: tap, enable: false) }
         if let source = runLoopSource { CFRunLoopRemoveSource(CFRunLoopGetMain(), source, .commonModes) }
+        // Release the retained self that was passed to the event tap callback
+        if let ptr = retainedSelfPointer {
+            Unmanaged<MediaKeyManager>.fromOpaque(ptr).release()
+            retainedSelfPointer = nil
+        }
         eventTap = nil
         runLoopSource = nil
     }

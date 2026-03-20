@@ -91,7 +91,6 @@ final class VideoWindowManager: NSObject, ObservableObject {
         animateOut { [weak self] in
             self?.cleanupPanel()
         }
-        NotificationCenter.default.post(name: .closeInlineYouTubeVideo, object: nil)
     }
 
     /// Closes the video player immediately
@@ -99,7 +98,6 @@ final class VideoWindowManager: NSObject, ObservableObject {
         guard isVisible else { return }
         savePosition()
         cleanupPanel()
-        NotificationCenter.default.post(name: .closeInlineYouTubeVideo, object: nil)
     }
     
     /// Toggles the video player visibility

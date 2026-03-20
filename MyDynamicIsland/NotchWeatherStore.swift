@@ -6,9 +6,15 @@ import SwiftUI
 
 @MainActor
 final class NotchWeatherStore: ObservableObject {
+    private static let session: URLSession = {
+        let config = URLSessionConfiguration.default
+        config.timeoutIntervalForRequest = 10
+        config.timeoutIntervalForResource = 20
+        return URLSession(configuration: config)
+    }()
     @Published var cityName = "San Francisco"
     @Published var temperatureText = "--°"
-    @Published var conditionText = "Enter a city to load weather"
+    @Published var conditionText = NSLocalizedString("weather.enterCity", comment: "")
     @Published var symbolName = "cloud.sun.fill"
     @Published var isLoading = false
     @Published var highTemp: String?
@@ -47,7 +53,7 @@ final class NotchWeatherStore: ObservableObject {
         let trimmedCity = city.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmedCity.isEmpty else {
             temperatureText = "--°"
-            conditionText = "Enter a city to load weather"
+            conditionText = NSLocalizedString("weather.enterCity", comment: "")
             symbolName = "cloud.sun.fill"
             return
         }
@@ -60,17 +66,23 @@ final class NotchWeatherStore: ObservableObject {
         defer { isLoading = false }
 
         do {
-            let encodedCity = trimmedCity.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? trimmedCity
-            guard let geocodeURL = URL(string: "https://geocoding-api.open-meteo.com/v1/search?name=\(encodedCity)&count=1&language=en&format=json") else {
-                conditionText = "Invalid city name"
+            var geocodeComponents = URLComponents(string: "https://geocoding-api.open-meteo.com/v1/search")!
+            geocodeComponents.queryItems = [
+                URLQueryItem(name: "name", value: trimmedCity),
+                URLQueryItem(name: "count", value: "1"),
+                URLQueryItem(name: "language", value: "en"),
+                URLQueryItem(name: "format", value: "json")
+            ]
+            guard let geocodeURL = geocodeComponents.url else {
+                conditionText = NSLocalizedString("weather.invalidCity", comment: "")
                 temperatureText = "--°"
                 return
             }
-            let (geocodeData, _) = try await URLSession.shared.data(from: geocodeURL)
+            let (geocodeData, _) = try await Self.session.data(from: geocodeURL)
             let geocodeResponse = try JSONDecoder().decode(OpenMeteoGeocodeResponse.self, from: geocodeData)
 
             guard let result = geocodeResponse.results?.first else {
-                conditionText = "City not found"
+                conditionText = NSLocalizedString("weather.cityNotFound", comment: "")
                 temperatureText = "--°"
                 symbolName = "mappin.slash"
                 return
@@ -80,16 +92,30 @@ final class NotchWeatherStore: ObservableObject {
                 .compactMap { $0 }
                 .joined(separator: ", ")
 
-            let unitParam = weatherUnit == "fahrenheit" ? "&temperature_unit=fahrenheit" : ""
-            guard let weatherURL = URL(string: "https://api.open-meteo.com/v1/forecast?latitude=\(result.latitude)&longitude=\(result.longitude)&current=temperature_2m,weather_code&daily=temperature_2m_max,temperature_2m_min,weather_code&hourly=temperature_2m,weather_code\(unitParam)&timezone=auto&forecast_days=7") else {
-                conditionText = "Weather unavailable"
+            var weatherComponents = URLComponents(string: "https://api.open-meteo.com/v1/forecast")!
+            var weatherQueryItems = [
+                URLQueryItem(name: "latitude", value: "\(result.latitude)"),
+                URLQueryItem(name: "longitude", value: "\(result.longitude)"),
+                URLQueryItem(name: "current", value: "temperature_2m,weather_code"),
+                URLQueryItem(name: "daily", value: "temperature_2m_max,temperature_2m_min,weather_code"),
+                URLQueryItem(name: "hourly", value: "temperature_2m,weather_code"),
+                URLQueryItem(name: "timezone", value: "auto"),
+                URLQueryItem(name: "forecast_days", value: "7")
+            ]
+            if weatherUnit == "fahrenheit" {
+                weatherQueryItems.append(URLQueryItem(name: "temperature_unit", value: "fahrenheit"))
+            }
+            weatherComponents.queryItems = weatherQueryItems
+            guard let weatherURL = weatherComponents.url else {
+                conditionText = NSLocalizedString("weather.unavailable", comment: "")
                 temperatureText = "--°"
                 return
             }
-            let (weatherData, _) = try await URLSession.shared.data(from: weatherURL)
+            let (weatherData, _) = try await Self.session.data(from: weatherURL)
             let weatherResponse = try JSONDecoder().decode(OpenMeteoWeatherResponse.self, from: weatherData)
 
-            temperatureText = "\(Int(weatherResponse.current.temperature_2m.rounded()))°"
+            let unitSuffix = weatherUnit == "fahrenheit" ? "°F" : "°C"
+            temperatureText = "\(Int(weatherResponse.current.temperature_2m.rounded()))\(unitSuffix)"
             conditionText = Self.conditionDescription(for: weatherResponse.current.weather_code)
             symbolName = Self.symbolName(for: weatherResponse.current.weather_code)
             weatherCode = weatherResponse.current.weather_code
@@ -97,8 +123,8 @@ final class NotchWeatherStore: ObservableObject {
             if let daily = weatherResponse.daily,
                let maxTemps = daily.temperature_2m_max, let maxT = maxTemps.first,
                let minTemps = daily.temperature_2m_min, let minT = minTemps.first {
-                highTemp = "\(Int(maxT.rounded()))°"
-                lowTemp = "\(Int(minT.rounded()))°"
+                highTemp = "\(Int(maxT.rounded()))\(unitSuffix)"
+                lowTemp = "\(Int(minT.rounded()))\(unitSuffix)"
             }
 
             // Build 7-day forecast
@@ -122,8 +148,8 @@ final class NotchWeatherStore: ObservableObject {
                     }
                     let code = i < codes.count ? codes[i] : -1
                     let emoji = Self.weatherEmoji(for: code)
-                    let maxTStr = "\(Int(maxTemps[i].rounded()))°"
-                    let minTStr = i < minTemps.count ? "\(Int(minTemps[i].rounded()))°" : "--"
+                    let maxTStr = "\(Int(maxTemps[i].rounded()))\(unitSuffix)"
+                    let minTStr = i < minTemps.count ? "\(Int(minTemps[i].rounded()))\(unitSuffix)" : "--"
                     days.append(ForecastDay(
                         dayLabel: label,
                         emoji: emoji,
@@ -161,7 +187,7 @@ final class NotchWeatherStore: ObservableObject {
                     }
                     let entry = HourlyEntry(
                         hour: hourLabel,
-                        temp: "\(Int(temps[i].rounded()))°",
+                        temp: "\(Int(temps[i].rounded()))\(unitSuffix)",
                         weatherCode: codes[i]
                     )
                     byDay[dateKey, default: []].append(entry)
@@ -172,7 +198,7 @@ final class NotchWeatherStore: ObservableObject {
             lastLoadedCity = trimmedCity
         } catch {
             AppLogger.weather.error("Weather fetch failed: \(error.localizedDescription, privacy: .public)")
-            conditionText = "Weather unavailable"
+            conditionText = NSLocalizedString("weather.unavailable", comment: "")
             temperatureText = "--°"
             symbolName = "wifi.exclamationmark"
         }
@@ -180,16 +206,16 @@ final class NotchWeatherStore: ObservableObject {
 
     private static func conditionDescription(for code: Int) -> String {
         switch code {
-        case 0: return "Clear sky"
-        case 1, 2, 3: return "Partly cloudy"
-        case 45, 48: return "Fog"
-        case 51, 53, 55, 56, 57: return "Drizzle"
-        case 61, 63, 65, 66, 67: return "Rain"
-        case 71, 73, 75, 77: return "Snow"
-        case 80, 81, 82: return "Rain showers"
-        case 85, 86: return "Snow showers"
-        case 95, 96, 99: return "Thunderstorm"
-        default: return "Conditions updating"
+        case 0: return NSLocalizedString("weather.condition.clear", comment: "")
+        case 1, 2, 3: return NSLocalizedString("weather.condition.partlyCloudy", comment: "")
+        case 45, 48: return NSLocalizedString("weather.condition.fog", comment: "")
+        case 51, 53, 55, 56, 57: return NSLocalizedString("weather.condition.drizzle", comment: "")
+        case 61, 63, 65, 66, 67: return NSLocalizedString("weather.condition.rain", comment: "")
+        case 71, 73, 75, 77: return NSLocalizedString("weather.condition.snow", comment: "")
+        case 80, 81, 82: return NSLocalizedString("weather.condition.rainShowers", comment: "")
+        case 85, 86: return NSLocalizedString("weather.condition.snowShowers", comment: "")
+        case 95, 96, 99: return NSLocalizedString("weather.condition.thunderstorm", comment: "")
+        default: return NSLocalizedString("weather.condition.updating", comment: "")
         }
     }
 
@@ -262,7 +288,9 @@ struct WeatherParticleView: View {
     let weatherCode: Int
 
     @State private var particles: [WeatherParticle] = []
-    @State private var animationTimer: Timer?
+    @State private var isAnimating = false
+
+    private let timer = Timer.publish(every: 0.1, on: .main, in: .common).autoconnect()
 
     private var particleConfig: (emoji: String, count: Int, speed: ClosedRange<Double>)? {
         switch weatherCode {
@@ -288,30 +316,14 @@ struct WeatherParticleView: View {
             }
         }
         .clipped()
-        .onAppear { startParticles() }
-        .onDisappear { stopParticles() }
+        .onAppear { seedParticles() }
+        .onDisappear { isAnimating = false }
         .onChange(of: weatherCode) { _, _ in
             particles.removeAll()
-            startParticles()
+            seedParticles()
         }
-    }
-
-    private func startParticles() {
-        guard let config = particleConfig else { return }
-        // Seed initial particles
-        for _ in 0..<config.count {
-            particles.append(WeatherParticle(
-                symbol: config.emoji,
-                x: CGFloat.random(in: 0...1),
-                y: CGFloat.random(in: 0...1),
-                size: CGFloat.random(in: 6...10),
-                opacity: Double.random(in: 0.15...0.4),
-                speed: Double.random(in: config.speed),
-                blur: CGFloat.random(in: 0...1)
-            ))
-        }
-
-        animationTimer = Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { _ in
+        .onReceive(timer) { _ in
+            guard isAnimating, !particles.isEmpty else { return }
             withAnimation(.linear(duration: 0.1)) {
                 for i in particles.indices {
                     particles[i].y += CGFloat(0.1 / particles[i].speed)
@@ -328,9 +340,20 @@ struct WeatherParticleView: View {
         }
     }
 
-    private func stopParticles() {
-        animationTimer?.invalidate()
-        animationTimer = nil
+    private func seedParticles() {
+        guard let config = particleConfig else { return }
+        for _ in 0..<config.count {
+            particles.append(WeatherParticle(
+                symbol: config.emoji,
+                x: CGFloat.random(in: 0...1),
+                y: CGFloat.random(in: 0...1),
+                size: CGFloat.random(in: 6...10),
+                opacity: Double.random(in: 0.15...0.4),
+                speed: Double.random(in: config.speed),
+                blur: CGFloat.random(in: 0...1)
+            ))
+        }
+        isAnimating = true
     }
 }
 

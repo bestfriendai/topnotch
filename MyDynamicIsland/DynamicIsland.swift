@@ -1,7 +1,6 @@
 import AppKit
 import AudioToolbox
 import Combine
-import IOKit.ps
 import OSLog
 import SwiftUI
 
@@ -118,6 +117,10 @@ enum NotchDeckCard: String, CaseIterable {
     case clipboard
     case calendar
     case fileShelf
+    case battery
+    case shortcuts
+    case notifications
+    case quickCapture
 }
 
 struct BatteryInfo: Equatable {
@@ -129,36 +132,29 @@ struct BatteryInfo: Equatable {
 final class NotchState: ObservableObject {
     private static let activeDeckCardDefaultsKey = "activeNotchDeckCard"
 
+    // Core UI state (kept directly on NotchState)
     @Published var activity: LiveActivity = .none
     @Published var isExpanded = false
     @Published var isHovered = false
     @Published var hud: HUDType = .none
-    @Published var isScreenLocked = false
-    @Published var showUnlockAnimation = false
-    @Published var battery = BatteryInfo()
-    @Published var showChargingAnimation = false
-    @Published var showUnplugAnimation = false
     @Published var notchWidth: CGFloat = 200
     @Published var notchHeight: CGFloat = 32
-    @Published var detectedYouTubeURL: String? = nil
-    @Published var showYouTubePrompt = false
-    @Published var inlineYouTubeVideoID: String? = nil
-    @Published var youtubePlayerWidth: CGFloat = 480
-    @Published var youtubePlayerHeight: CGFloat = 270
+    @Published var hasPhysicalNotch: Bool = true
     @Published var focusedContentHeight: CGFloat = 200
-    @Published var inlineYouTubeMinimized: Bool = false
-    @Published var inlineYouTubeStartTime: Int = 0
-    @Published var inlineYouTubeIsPlaying: Bool = false
-    @Published var inlineYouTubeProgress: Double = 0
-    let inlineYouTubePlayerState = YouTubePlayerState()
-    let inlineYouTubePlayerController = YouTubePlayerController()
-
-    @Published var isShowingInlineYouTubePlayer = false
     @Published var activeDeckCard: NotchDeckCard = .home {
         didSet {
             UserDefaults.standard.set(activeDeckCard.rawValue, forKey: Self.activeDeckCardDefaultsKey)
         }
     }
+
+    // Domain-specific sub-state objects
+    @Published var battery = BatteryState()
+    @Published var youtube = YouTubeState()
+    @Published var system = SystemState()
+
+    // Reference-type YouTube player objects (cannot live in a struct)
+    let inlineYouTubePlayerState = YouTubePlayerState()
+    let inlineYouTubePlayerController = YouTubePlayerController()
 
     init() {
         if let rawValue = UserDefaults.standard.string(forKey: Self.activeDeckCardDefaultsKey),
@@ -174,38 +170,50 @@ final class DynamicIsland {
     private var mediaKeyManager: MediaKeyManager?
     private var observers: [NSObjectProtocol] = []
     private var eventMonitors: [Any?] = []
-    private var batteryRunLoopSource: CFRunLoopSource?
-    private var lastChargingState = false
     private var nowPlayingTimer: Timer?
-    private var clipboardTask: Task<Void, Never>?
-    private var lastClipboardChangeCount: Int = 0
+    private var cachedMRGetNowPlayingInfo: ((DispatchQueue, @escaping ([String: Any]) -> Void) -> Void)?
     private var lastMusicNotificationTime: Date = .distantPast
+    private var lastMusicActivitySetTime: Date = .distantPast
+    private var lastMusicAutoExpandTime: Date = .distantPast
+    private var mediaControllerCancellable: AnyCancellable?
+    private var activityCancellable: AnyCancellable?
+
+    // Coordinators
+    private var batteryCoordinator: BatteryCoordinator?
+    private var clipboardCoordinator: ClipboardCoordinator?
 
     init() {
         setupWindow()
         AppLogger.lifecycle.info("DynamicIsland initializing — variant: \(AppBuildVariant.current.releaseChannelName, privacy: .public)")
-        if AppBuildVariant.current.supportsAdvancedMediaControls {
-            setupMusicDetection()
-        }
+        // Always set up music detection — DistributedNotificationCenter is available in both builds.
+        // The MediaRemote polling path inside is gated with #if !APP_STORE_BUILD.
+        setupMusicDetection()
         if AppBuildVariant.current.supportsPrivateSystemIntegrations {
             setupMediaKeys()
         }
         if AppBuildVariant.current.supportsLockScreenIndicators {
             setupLockDetection()
         }
-        setupBatteryMonitoring()
+        batteryCoordinator = BatteryCoordinator(state: state)
+        batteryCoordinator?.start()
         setupLifecycleObservers()
-        setupClipboardMonitoring()
+        clipboardCoordinator = ClipboardCoordinator(state: state)
+        clipboardCoordinator?.start()
         setupKeyboardShortcuts()
         setupYouTubeNotifications()
+        setupFocusMonitoring()
+        BatteryDeviceStore.shared.startMonitoring()
+        NotificationDigestStore.shared.startMonitoring()
         AppLogger.lifecycle.info("DynamicIsland fully initialized")
     }
 
     deinit {
-        // Remove all block-based observers (covers both NotificationCenter and DistributedNotificationCenter)
+        // Remove all block-based observers (covers NotificationCenter, DistributedNotificationCenter,
+        // and NSWorkspace.shared.notificationCenter)
         for observer in observers {
             NotificationCenter.default.removeObserver(observer)
             DistributedNotificationCenter.default().removeObserver(observer)
+            NSWorkspace.shared.notificationCenter.removeObserver(observer)
         }
         // Remove global/local event monitors to prevent leaks
         for monitor in eventMonitors {
@@ -214,13 +222,11 @@ final class DynamicIsland {
             }
         }
         nowPlayingTimer?.invalidate()
-        clipboardTask?.cancel()
         mediaKeyManager?.stop()
-        if let source = batteryRunLoopSource {
-            CFRunLoopRemoveSource(CFRunLoopGetMain(), source, .defaultMode)
-            // Balance the passRetained from setupBatteryMonitoring
-            Unmanaged.passUnretained(self).release()
-        }
+        activityCancellable?.cancel()
+        // Coordinators clean up in their own deinit
+        batteryCoordinator = nil
+        clipboardCoordinator = nil
     }
 
     private func setupWindow() {
@@ -248,12 +254,15 @@ final class DynamicIsland {
     }
 
     private func detectNotchSize(screen: NSScreen) {
-        state.notchHeight = screen.safeAreaInsets.top > 0 ? screen.safeAreaInsets.top : screen.frame.maxY - screen.visibleFrame.maxY
+        let hasPhysicalNotch = screen.safeAreaInsets.top > 0 && screen.auxiliaryTopLeftArea != nil
+        state.notchHeight = hasPhysicalNotch ? screen.safeAreaInsets.top : screen.frame.maxY - screen.visibleFrame.maxY
         if let left = screen.auxiliaryTopLeftArea, let right = screen.auxiliaryTopRightArea {
             state.notchWidth = screen.frame.width - left.width - right.width
         } else {
-            state.notchWidth = 200
+            // No physical notch — use a compact floating bar width
+            state.notchWidth = 220
         }
+        state.hasPhysicalNotch = hasPhysicalNotch
     }
 
     private func handleScreenChange() {
@@ -265,18 +274,23 @@ final class DynamicIsland {
     private func setupLifecycleObservers() {
         guard AppBuildVariant.current.supportsAdvancedMediaControls else { return }
 
-        observers.append(NotificationCenter.default.addObserver(
+        // NSWorkspace notifications are posted on NSWorkspace.shared.notificationCenter,
+        // not NotificationCenter.default.
+        let workspaceNC = NSWorkspace.shared.notificationCenter
+
+        observers.append(workspaceNC.addObserver(
             forName: NSWorkspace.screensDidSleepNotification, object: nil, queue: .main
         ) { [weak self] _ in self?.nowPlayingTimer?.invalidate(); self?.nowPlayingTimer = nil })
 
-        observers.append(NotificationCenter.default.addObserver(
+        observers.append(workspaceNC.addObserver(
             forName: NSWorkspace.screensDidWakeNotification, object: nil, queue: .main
         ) { [weak self] _ in self?.startNowPlayingMonitor() })
     }
 
     private func setupMusicDetection() {
-        guard AppBuildVariant.current.supportsAdvancedMediaControls else { return }
-
+        // DistributedNotificationCenter is available in both direct and App Store builds.
+        // This is the primary mechanism for detecting when a music app starts/stops playing
+        // and for setting state.activity so the notch expands to show the media card.
         let center = DistributedNotificationCenter.default()
         let musicApps: [(String, String)] = [
             ("com.apple.Music.playerInfo", "Music"),
@@ -292,26 +306,74 @@ final class DynamicIsland {
                 self?.handleMusicNotification(notif, app: app)
             })
         }
+
+        // MediaRemote polling is only available in the direct (non-App Store) build.
+        // The App Store build relies on the distributed notifications above and
+        // MediaRemoteController's own 3-second AppleScript polling.
+        #if !APP_STORE_BUILD
         startNowPlayingMonitor()
+        #endif
+
+        // Combine fallback: sync state.activity from MediaRemoteController's published
+        // isPlaying state. This handles cases where Spotify doesn't send distributed
+        // notifications (newer Spotify versions on macOS) but is detected via polling.
+        mediaControllerCancellable = MediaRemoteController.shared.$isPlaying
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] isPlaying in
+                guard let self else { return }
+                // If a distributed notification just fired, trust it for 5 seconds
+                // to avoid flickering from polling lag.
+                let recentNotification = Date().timeIntervalSince(self.lastMusicNotificationTime) < 5
+                if recentNotification { return }
+
+                let info = MediaRemoteController.shared.nowPlayingInfo
+                if isPlaying, !info.title.isEmpty {
+                    let appName = info.appName.isEmpty ? "Music" : info.appName
+                    if case .music(let current) = self.state.activity, current == appName { return }
+                    self.state.activity = .music(app: appName)
+                    self.lastMusicActivitySetTime = Date()
+                } else if !isPlaying {
+                    // Only clear if nothing set the music activity recently (from any path)
+                    let recentActivity = Date().timeIntervalSince(self.lastMusicActivitySetTime) < 10
+                    if !recentActivity, case .music(_) = self.state.activity {
+                        self.state.activity = .none
+                    }
+                }
+            }
+
+        // Auto-expand notch when music activity starts (like iOS Dynamic Island)
+        activityCancellable = state.$activity
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] activity in
+                guard let self else { return }
+                if case .music = activity { self.triggerMusicStarted() }
+            }
     }
 
     private func handleMusicNotification(_ notif: Notification, app: String) {
-        guard let info = notif.userInfo, let playerState = info["Player State"] as? String else { return }
+        // "Player State" may be absent in newer Spotify versions — don't hard-require it.
+        let playerState = notif.userInfo?["Player State"] as? String
         DispatchQueue.main.async { [weak self] in
             guard let self else { return }
             self.lastMusicNotificationTime = Date()
-            if playerState == "Playing" {
+            // Force MediaRemoteController to re-fetch so the card picks up the track info
+            MediaRemoteController.shared.refresh()
+            if playerState == "Playing" || playerState == nil {
+                // nil means the notification fired without an explicit state key;
+                // treat it as a play event and let MediaRemote confirm the track.
                 self.state.activity = .music(app: app)
-                // Force MediaRemoteController to re-fetch so the card picks up the track info
-                MediaRemoteController.shared.refresh()
-            } else if case .music(let currentApp) = self.state.activity, currentApp == app {
-                self.state.activity = .none
+                self.lastMusicActivitySetTime = Date()
+            } else if playerState == "Paused" || playerState == "Stopped" {
+                if case .music(let currentApp) = self.state.activity, currentApp == app {
+                    self.state.activity = .none
+                }
             }
         }
     }
 
     private func startNowPlayingMonitor() {
         guard AppBuildVariant.current.supportsAdvancedMediaControls else { return }
+        nowPlayingTimer?.invalidate()
         nowPlayingTimer = Timer.scheduledTimer(withTimeInterval: 5.0, repeats: true) { [weak self] _ in
             self?.checkNowPlaying()
         }
@@ -326,11 +388,16 @@ final class DynamicIsland {
             if timeSinceLastNotification < 15 { return }
         }
 
-        guard let bundle = CFBundleCreate(kCFAllocatorDefault, NSURL(fileURLWithPath: "/System/Library/PrivateFrameworks/MediaRemote.framework")),
-              let ptr = CFBundleGetFunctionPointerForName(bundle, "MRMediaRemoteGetNowPlayingInfo" as CFString) else { return }
+        // Cache the function pointer on first use instead of reloading the framework every poll cycle.
+        if cachedMRGetNowPlayingInfo == nil {
+            if let bundle = CFBundleCreate(kCFAllocatorDefault, NSURL(fileURLWithPath: "/System/Library/PrivateFrameworks/MediaRemote.framework")),
+               let ptr = CFBundleGetFunctionPointerForName(bundle, "MRMediaRemoteGetNowPlayingInfo" as CFString) {
+                typealias Func = @convention(c) (DispatchQueue, @escaping ([String: Any]) -> Void) -> Void
+                cachedMRGetNowPlayingInfo = unsafeBitCast(ptr, to: Func.self)
+            }
+        }
 
-        typealias Func = @convention(c) (DispatchQueue, @escaping ([String: Any]) -> Void) -> Void
-        let getInfo = unsafeBitCast(ptr, to: Func.self)
+        guard let getInfo = cachedMRGetNowPlayingInfo else { return }
 
         getInfo(DispatchQueue.main) { [weak self] info in
             guard let self else { return }
@@ -358,14 +425,16 @@ final class DynamicIsland {
                     else if deviceId.contains("arc") { appName = "Arc" }
                 }
                 self.state.activity = .music(app: appName)
+                self.lastMusicActivitySetTime = Date()
             } else {
-                // Don't clear activity if a notification set it within the last 15 seconds
-                let recentNotification = Date().timeIntervalSince(self.lastMusicNotificationTime) < 15
-                if !recentNotification {
+                // Don't clear if music activity was set recently from ANY path (notification or polling)
+                let recentActivity = Date().timeIntervalSince(self.lastMusicActivitySetTime) < 15
+                if !recentActivity {
                     if case .music(let app) = self.state.activity, ["Safari", "Chrome", "Firefox", "Arc", "Media"].contains(app) {
                         self.state.activity = .none
                     }
-                    // Also clear known music apps if MediaRemote confirms they're not playing
+                    // Also clear known music apps only if MediaRemote confirms they're not playing
+                    // and bundleId is non-empty (i.e. MediaRemote is reporting a real app, just not playing)
                     if case .music(_) = self.state.activity, !bundleId.isEmpty {
                         self.state.activity = .none
                     }
@@ -385,107 +454,22 @@ final class DynamicIsland {
         guard AppBuildVariant.current.supportsLockScreenIndicators else { return }
         let center = DistributedNotificationCenter.default()
         observers.append(center.addObserver(forName: NSNotification.Name("com.apple.screenIsLocked"), object: nil, queue: .main) { [weak self] _ in
-            self?.state.isScreenLocked = true
-            self?.state.showUnlockAnimation = false
+            self?.state.system.isScreenLocked = true
+            self?.state.system.showUnlockAnimation = false
         })
 
         observers.append(center.addObserver(forName: NSNotification.Name("com.apple.screenIsUnlocked"), object: nil, queue: .main) { [weak self] _ in
             guard let self, UserDefaults.standard.object(forKey: "showLockIndicator") as? Bool ?? true else { return }
-            self.state.isScreenLocked = false
-            self.state.showUnlockAnimation = true
+            self.state.system.isScreenLocked = false
+            self.state.system.showUnlockAnimation = true
             self.playSound("Glass", volume: 0.4, fallback: 1057)
             NSHapticFeedbackManager.defaultPerformer.perform(.levelChange, performanceTime: .now)
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) { NSHapticFeedbackManager.defaultPerformer.perform(.generic, performanceTime: .now) }
-            DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { [weak self] in self?.state.showUnlockAnimation = false }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { [weak self] in self?.state.system.showUnlockAnimation = false }
         })
     }
 
-    private func setupBatteryMonitoring() {
-        updateBatteryInfo()
-        lastChargingState = state.battery.isCharging
-
-        // Use passRetained so the DynamicIsland stays alive as long as the run loop
-        // source exists. We balance this in deinit by removing the source.
-        let context = Unmanaged.passRetained(self).toOpaque()
-        if let source = IOPSNotificationCreateRunLoopSource({ ctx in
-            guard let ctx else { return }
-            let island = Unmanaged<DynamicIsland>.fromOpaque(ctx).takeUnretainedValue()
-            DispatchQueue.main.async { [weak island] in island?.checkBatteryChanges() }
-        }, context)?.takeRetainedValue() {
-            batteryRunLoopSource = source
-            CFRunLoopAddSource(CFRunLoopGetMain(), source, .defaultMode)
-        } else {
-            // If source creation failed, release the retained reference
-            Unmanaged<DynamicIsland>.fromOpaque(context).release()
-        }
-    }
-
-    private func checkBatteryChanges() {
-        guard let snapshot = IOPSCopyPowerSourcesInfo()?.takeRetainedValue(),
-              let sources = IOPSCopyPowerSourcesList(snapshot)?.takeRetainedValue() as? [CFTypeRef],
-              let source = sources.first,
-              let info = IOPSGetPowerSourceDescription(snapshot, source)?.takeUnretainedValue() as? [String: Any] else { return }
-
-        let isCharging = (info[kIOPSPowerSourceStateKey] as? String) == kIOPSACPowerValue
-        let wasCharging = lastChargingState
-        lastChargingState = isCharging
-
-        DispatchQueue.main.async { [weak self] in
-            guard let self else { return }
-            if let capacity = info[kIOPSCurrentCapacityKey] as? Int { self.state.battery.level = capacity }
-            self.state.battery.isCharging = isCharging
-            if let time = info[kIOPSTimeToEmptyKey] as? Int, time > 0 { self.state.battery.timeRemaining = time }
-            else if let time = info[kIOPSTimeToFullChargeKey] as? Int, time > 0 { self.state.battery.timeRemaining = time }
-            else { self.state.battery.timeRemaining = nil }
-
-            guard UserDefaults.standard.object(forKey: "showBatteryIndicator") as? Bool ?? true else { return }
-            if isCharging && !wasCharging { self.triggerCharging(started: true) }
-            else if !isCharging && wasCharging { self.triggerCharging(started: false) }
-        }
-    }
-
-    private func updateBatteryInfo() {
-        guard let snapshot = IOPSCopyPowerSourcesInfo()?.takeRetainedValue(),
-              let sources = IOPSCopyPowerSourcesList(snapshot)?.takeRetainedValue() as? [CFTypeRef],
-              let source = sources.first,
-              let info = IOPSGetPowerSourceDescription(snapshot, source)?.takeUnretainedValue() as? [String: Any] else { return }
-
-        let isCharging = (info[kIOPSPowerSourceStateKey] as? String) == kIOPSACPowerValue
-        DispatchQueue.main.async { [weak self] in
-            guard let self else { return }
-            if let capacity = info[kIOPSCurrentCapacityKey] as? Int { self.state.battery.level = capacity }
-            self.state.battery.isCharging = isCharging
-        }
-        lastChargingState = isCharging
-    }
-
-    private func triggerCharging(started: Bool) {
-        if started {
-            AppLogger.battery.info("Charging started — battery \(self.state.battery.level, privacy: .public)%")
-            state.showChargingAnimation = true
-            state.isExpanded = true
-            NSHapticFeedbackManager.defaultPerformer.perform(.levelChange, performanceTime: .now)
-            playSound("Blow", volume: 0.4, fallback: 1004)
-            DispatchQueue.main.asyncAfter(deadline: .now() + 2.5) { [weak self] in
-                guard let self else { return }
-                self.state.showChargingAnimation = false
-                if !self.state.isHovered && !self.state.isShowingInlineYouTubePlayer { self.state.isExpanded = false }
-            }
-        } else {
-            state.showUnplugAnimation = true
-            state.isExpanded = true
-            NSHapticFeedbackManager.defaultPerformer.perform(.generic, performanceTime: .now)
-            playSound("Pop", volume: 0.35, fallback: 1057)
-            DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) { [weak self] in
-                guard let self else { return }
-                self.state.showUnplugAnimation = false
-                if !self.state.isHovered && !self.state.isShowingInlineYouTubePlayer { self.state.isExpanded = false }
-            }
-        }
-    }
-
     private func playSound(_ name: String, volume: Float, fallback: UInt32) {
-        guard UserDefaults.standard.object(forKey: "chargingSoundEnabled") as? Bool ?? true else { return }
         if let sound = NSSound(named: NSSound.Name(name)) {
             sound.volume = volume
             sound.play()
@@ -493,67 +477,7 @@ final class DynamicIsland {
             AudioServicesPlaySystemSound(fallback)
         }
     }
-    
-    // MARK: - YouTube Integration
-    
-    private func setupClipboardMonitoring() {
-        lastClipboardChangeCount = NSPasteboard.general.changeCount
 
-        // Ask for consent on first run (App Store build defaults off)
-        #if APP_STORE_BUILD
-        let defaultEnabled = false
-        #else
-        let defaultEnabled = true
-        #endif
-
-        let consentAsked = UserDefaults.standard.bool(forKey: "clipboardConsentAsked")
-        if !consentAsked && defaultEnabled {
-            UserDefaults.standard.set(true, forKey: "clipboardConsentAsked")
-            UserDefaults.standard.set(true, forKey: "youtubeClipboardDetection")
-        }
-
-        clipboardTask = Task { [weak self] in
-            while !Task.isCancelled {
-                try? await Task.sleep(for: .seconds(2))
-                guard !Task.isCancelled else { break }
-                await MainActor.run { self?.checkClipboardForYouTubeURL() }
-            }
-        }
-        AppLogger.clipboard.info("Clipboard monitoring started (2s interval)")
-    }
-
-    private func checkClipboardForYouTubeURL() {
-        guard UserDefaults.standard.object(forKey: "youtubeClipboardDetection") as? Bool ?? true else { return }
-        let currentCount = NSPasteboard.general.changeCount
-        guard currentCount != lastClipboardChangeCount else { return }
-        lastClipboardChangeCount = currentCount
-
-        guard let clipboardString = NSPasteboard.general.string(forType: .string) else { return }
-        
-        if YouTubeURLParser.extractVideoID(from: clipboardString) != nil {
-            AppLogger.clipboard.info("YouTube URL detected in clipboard")
-            DispatchQueue.main.async { [weak self] in
-                guard let self else { return }
-                self.state.detectedYouTubeURL = clipboardString
-
-                // Show the YouTube prompt inline in the collapsed notch (44pt height per spec)
-                withAnimation(.spring(duration: 0.4, bounce: 0.3)) {
-                    self.state.showYouTubePrompt = true
-                }
-
-                // Auto-dismiss after 4 seconds
-                DispatchQueue.main.asyncAfter(deadline: .now() + 4.0) { [weak self] in
-                    guard let self else { return }
-                    if !self.state.isHovered && !self.state.isShowingInlineYouTubePlayer {
-                        withAnimation(.spring(duration: 0.3, bounce: 0.2)) {
-                            self.state.showYouTubePrompt = false
-                        }
-                    }
-                }
-            }
-        }
-    }
-    
     // MARK: - Keyboard Shortcuts
 
     private func setupKeyboardShortcuts() {
@@ -625,7 +549,7 @@ final class DynamicIsland {
         guard !state.isExpanded else { return }
         withAnimation(.spring(duration: 0.4, bounce: 0.3)) { state.isExpanded = true }
         DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) { [weak self] in
-            guard let self, !self.state.isHovered, !self.state.isShowingInlineYouTubePlayer else { return }
+            guard let self, !self.state.isHovered, !self.state.youtube.isShowingPlayer else { return }
             withAnimation(.spring(duration: 0.3, bounce: 0.2)) { self.state.isExpanded = false }
         }
     }
@@ -639,11 +563,39 @@ final class DynamicIsland {
 
         withAnimation(.spring(duration: 0.45, bounce: 0.3)) {
             state.activeDeckCard = .youtube
-            state.showYouTubePrompt = false
+            state.youtube.showPrompt = false
             state.isExpanded = true
         }
 
         panel?.makeKeyAndOrderFront(nil)
+    }
+
+    /// Briefly expands the notch to show Now Playing info when music starts.
+    /// Throttled to once per 30 seconds so repeated play/pause doesn't spam.
+    private func triggerMusicStarted() {
+        let elapsed = Date().timeIntervalSince(lastMusicAutoExpandTime)
+        guard elapsed > 30 else { return }
+        guard !state.isExpanded, !state.isHovered, !state.youtube.isShowingPlayer else { return }
+        lastMusicAutoExpandTime = Date()
+        withAnimation(.spring(duration: 0.4, bounce: 0.3)) { state.isExpanded = true }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2.5) { [weak self] in
+            guard let self, !self.state.isHovered, !self.state.youtube.isShowingPlayer else { return }
+            withAnimation(.spring(duration: 0.3, bounce: 0.2)) { self.state.isExpanded = false }
+        }
+    }
+
+    private func setupFocusMonitoring() {
+        let focusObserver = DistributedNotificationCenter.default().addObserver(
+            forName: NSNotification.Name("com.apple.donotdisturb.stateChanged"),
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            guard let self else { return }
+            // Query current DND state via defaults
+            let isDND = UserDefaults(suiteName: "com.apple.ncprefs")?.bool(forKey: "dnd_prefs") ?? false
+            self.state.system.focusMode = isDND ? "Focus" : nil
+        }
+        observers.append(focusObserver)
     }
 
     private func setupYouTubeNotifications() {
@@ -674,17 +626,17 @@ final class DynamicIsland {
 
         withAnimation(.spring(duration: 0.5, bounce: 0.35)) {
             state.activeDeckCard = .youtube
-            state.inlineYouTubeVideoID = videoID
-            state.isShowingInlineYouTubePlayer = true
-            state.showYouTubePrompt = false
+            state.youtube.videoID = videoID
+            state.youtube.isShowingPlayer = true
+            state.youtube.showPrompt = false
             state.isExpanded = true
         }
     }
 
     private func closeInlineYouTubeVideo() {
         withAnimation(.spring(duration: 0.4, bounce: 0.2)) {
-            state.isShowingInlineYouTubePlayer = false
-            state.inlineYouTubeVideoID = nil
+            state.youtube.isShowingPlayer = false
+            state.youtube.videoID = nil
             state.activeDeckCard = .home
             if !state.isHovered {
                 state.isExpanded = false

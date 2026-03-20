@@ -1,0 +1,265 @@
+/* Menu Bar */
+"menu.settings" = "Innstillinger...";
+"menu.quit" = "Avslutt Top Notch";
+"window.settings.title" = "Top Notch Innstillinger";
+
+/* Settings Sections */
+"settings.section.general" = "GENERAL";
+"settings.section.appearance" = "UTSEENDE";
+"settings.section.media" = "MEDIA";
+"settings.section.hud" = "HUD ERSTATNING";
+"settings.section.indicators" = "INDIKATORER OG TILBAKEBRING";
+"settings.section.widgets" = "WIDGETS";
+"settings.section.intelligence" = "INTELLIGENS";
+"settings.section.shortcuts" = "TASTATURSnarveier";
+"settings.section.privacy" = "PRIVATLIV";
+
+/* General Settings */
+"settings.general.launchAtLogin" = "Start ved pålogging";
+"settings.general.hoverToExpand" = "Hold musepekeren for å utvide";
+"settings.general.autoCollapseDelay" = "Auto-kollaps forsinkelse";
+"settings.general.showInMenuBar" = "Vis i menylinjen";
+
+/* Appearance Settings */
+"settings.appearance.theme" = "Tema";
+"settings.appearance.theme.auto" = "Auto";
+"settings.appearance.theme.light" = "Lys";
+"settings.appearance.theme.dark" = "Mørk";
+"settings.appearance.accentColor" = "Aksentfarge";
+"color.blue" = "Blå";
+"color.orange" = "Orange";
+"color.green" = "Grønn";
+"color.red" = "Rød";
+"color.purple" = "Lilla";
+"color.cyan" = "Cyan";
+
+/* Media Settings */
+"settings.media.nowPlaying" = "Spiller nå kontroller";
+"settings.media.albumArtwork" = "Vis albumgrafikk";
+"settings.media.vinylSpin" = "Vinyl Spin-animasjon";
+"settings.media.colorMatch" = "Fargematch-app";
+
+/* HUD Settings */
+"settings.hud.replaceVolume" = "Erstatt volum HUD";
+"settings.hud.replaceBrightness" = "Bytt ut lysstyrke HUD";
+"settings.hud.style" = "HUD Stil";
+"settings.hud.style.minimal" = "Minimal";
+"settings.hud.style.bar" = "Bar";
+"settings.hud.style.notched" = "Hakket";
+
+/* Indicators Settings */
+"settings.indicators.battery" = "Batteriindikator";
+"settings.indicators.lockUnlock" = "Lås/lås opp-indikator";
+"settings.indicators.chargingSound" = "Ladelyd";
+"settings.indicators.haptic" = "Haptisk tilbakemelding";
+
+/* Widget Toggles */
+"widget.calendar" = "Kalender";
+"widget.weather" = "Vær";
+"widget.pomodoro" = "Pomodoro Timer";
+"widget.clipboard" = "Utklippstavlehistorikk";
+"widget.youtube" = "YouTube spiller";
+"widget.battery" = "Batterimonitor";
+"widget.shortcuts" = "Snarveisstarter";
+"widget.activityFeed" = "Aktivitetsfeed";
+"widget.quickCapture" = "Rask fangst";
+"widget.lyrics" = "Synkroniserte tekster";
+
+/* Intelligence Settings */
+"settings.ai.onDevice" = "AI på enheten";
+"settings.ai.available" = "Tilgjengelig";
+"settings.ai.requiresMacOS26" = "Krever macOS 26";
+"settings.ai.summarization" = "AI oppsummering";
+"settings.ai.claudeApiKey" = "Claude API-nøkkel";
+
+/* Keyboard Shortcuts */
+"shortcut.playPause" = "Spill / Pause";
+"shortcut.previousTrack" = "Forrige spor";
+"shortcut.nextTrack" = "Neste spor";
+"shortcut.volumeUpDown" = "Volum opp/ned";
+"shortcut.openYouTube" = "Åpne YouTube";
+
+/* Privacy Settings */
+"settings.privacy.clipboardMonitoring" = "Utklippstavleovervåking";
+"settings.privacy.calendarAccess" = "Kalendertilgang";
+"settings.privacy.analytics" = "Analytics";
+"settings.privacy.showOnboarding" = "Vis onboarding igjen";
+"settings.privacy.clearAllData" = "Fjern alle data";
+
+/* Calendar Access Status */
+"access.granted" = "Gitt";
+"access.fullAccess" = "Full tilgang";
+"access.writeOnly" = "Skriv kun";
+"access.denied" = "Nektet";
+"access.notGranted" = "Ikke gitt";
+"access.unknown" = "Ukjent";
+
+/* About Section */
+"about.appName" = "Top Notch";
+"about.version" = "Versjon %@ (bygg %@ )";
+"about.madeWith" = "Laget med ❤️ for Mac";
+"about.website" = "Nettsted";
+"about.support" = "Støtte";
+"about.privacy" = "Privatliv";
+
+/* Media Player */
+"media.noMediaPlaying" = "Ingen medieavspilling";
+"media.playMusicPrompt" = "Spill musikk eller media for å se kontrollene her";
+"media.notPlaying" = "Spiller ikke";
+"media.unknownArtist" = "Ukjent artist";
+"media.noMedia" = "Ingen media";
+"media.music" = "Musikk";
+"media.podcasts" = "Podcasts";
+"media.spotify" = "Spotify";
+"media.playingFrom" = "Spiller fra %@";
+
+/* YouTube Player */
+"youtube.title" = "YouTube";
+"youtube.pasteUrl" = "Lim inn URL...";
+"youtube.browse" = "Bla gjennom";
+"youtube.play" = "Spille";
+"youtube.paste" = "Lim inn";
+"youtube.pasteAndPlay" = "Lim inn og spill";
+"youtube.playingInWindow" = "Spiller i vinduet";
+"youtube.paused" = "Pause";
+"youtube.show" = "Vise";
+"youtube.pinned" = "Festet";
+"youtube.recentlyPlayed" = "NYLIG SPILLET";
+"youtube.linkDetected" = "YouTube Link oppdaget";
+"youtube.videoUnavailable" = "Video utilgjengelig";
+"youtube.tryAnother" = "Prøv en annen";
+"youtube.openInSafari" = "Åpne i Safari";
+"youtube.closePlayer" = "Lukk spiller";
+"youtube.buffering" = "Bufring";
+"youtube.playing" = "Spiller";
+"youtube.openVideo" = "Åpne YouTube Video... ⌘⇧Y";
+"youtube.playDetected" = "Spill av oppdaget video";
+
+/* Weather */
+"weather.title" = "Vær";
+"weather.high" = "H:";
+"weather.low" = "L:";
+"weather.enterCity" = "Skriv inn en by for å laste vær";
+"weather.invalidCity" = "Ugyldig bynavn";
+"weather.cityNotFound" = "Byen ble ikke funnet";
+"weather.unavailable" = "Værdata utilgjengelig";
+"weather.condition.clear" = "Klar himmel";
+"weather.condition.partlyCloudy" = "Delvis skyet";
+"weather.condition.fog" = "Tåke";
+"weather.condition.drizzle" = "Yr";
+"weather.condition.rain" = "Regn";
+"weather.condition.snow" = "Snø";
+"weather.condition.rainShowers" = "Regnbyger";
+"weather.condition.snowShowers" = "Snøbyger";
+"weather.condition.thunderstorm" = "Torden";
+"weather.condition.updating" = "Oppdaterer forhold";
+
+/* Calendar */
+"calendar.todaysEvents" = "Dagens begivenheter";
+"calendar.noEvents" = "Ingen arrangementer i dag";
+"calendar.noUpcoming" = "Ingen kommende arrangementer";
+"calendar.openCalendar" = "Åpne Kalender";
+
+/* Pomodoro */
+"pomodoro.title" = "Fokustimer";
+"pomodoro.focus" = "Fokus";
+"pomodoro.session" = "Økt %d av %d";
+"pomodoro.minutes" = "%d min";
+"pomodoro.readyToFocus" = "\U0001F3AF Klar til å fokusere";
+"pomodoro.takeABreak" = "\u2615 Ta en pause";
+"pomodoro.deepFocus" = "\U0001F3AF Dyp fokus";
+
+/* Clipboard */
+"clipboard.title" = "Utklippstavlehistorikk";
+"clipboard.items" = "%d elementer";
+"clipboard.nothingCopied" = "Ingenting er kopiert ennå";
+"clipboard.copyPrompt" = "Kopier tekst eller URL-er for å se dem her";
+"clipboard.copySomething" = "Kopier noe for å se det her";
+"clipboard.clearAll" = "Fjern alle";
+"clipboard.copied" = "Kopiert!";
+"clipboard.copy" = "Kopiere";
+"clipboard.more" = "+ %d til";
+
+/* Battery */
+"battery.title" = "Batteri";
+"battery.noDevices" = "Ingen enheter funnet";
+"battery.charging" = "Lader";
+"battery.unplugged" = "Koblet fra";
+"battery.remaining" = "• %@ gjenstår";
+
+/* Shortcuts */
+"shortcuts.title" = "Snarveier";
+"shortcuts.noShortcuts" = "Finner ingen snarveier";
+
+/* Quick Capture */
+"capture.title" = "Rask fangst";
+"capture.notesAppear" = "Notater vises her";
+
+/* Activity Feed */
+"activity.title" = "Aktivitet";
+
+/* System States */
+"system.locked" = "Låst";
+"system.macLocked" = "Mac Låst";
+"system.touchIdPrompt" = "Touch ID eller skriv inn passord";
+"system.unlocked" = "Ulåst";
+"system.welcomeBack" = "Velkommen tilbake!";
+"system.focus" = "Fokus";
+"system.active" = "Aktiv";
+
+/* Widget Navigation */
+"nav.home" = "Hjem";
+"nav.weather" = "Vær";
+"nav.youtube" = "YouTube";
+"nav.media" = "Media";
+"nav.focus" = "Fokus";
+"nav.clipboard" = "Utklippstavle";
+"nav.calendar" = "Kalender";
+"nav.battery" = "Batteri";
+"nav.shortcuts" = "Snarveier";
+"nav.activity" = "Aktivitet";
+"nav.capture" = "Capture";
+
+
+/* Language Settings */
+"settings.appearance.language" = "Språk";
+"settings.language.restartTitle" = "Restart nødvendig";
+"settings.language.restartMessage" = "Top Notch må starte på nytt for å bruke det nye språket.";
+"settings.language.restartNow" = "Start på nytt nå";
+"settings.language.later" = "Seinere";
+
+/* Additional Strings */
+"clipboard.edit" = "Redigere";
+"media.controlsTooltip" = "Mediekontroller (globale snarveier)";
+"youtube.watchPageMode" = "Visningssidemodus";
+"youtube.playingFromYT" = "Spiller fra YouTube";
+"youtube.urlPlaceholder" = "Lim inn YouTube-URL eller video-ID...";
+
+/* HUD */
+"hud.mute" = "Demp";
+
+/* File Shelf */
+"fileShelf.title" = "Filhylle";
+"fileShelf.clear" = "Tøm";
+"fileShelf.dropFilesHere" = "Slipp filer her";
+"fileShelf.releaseToAdd" = "Slipp for å legge til";
+
+/* Calendar */
+"calendar.allDay" = "Hele dagen";
+
+/* Clipboard */
+"clipboard.itemCount" = "%d elementer";
+"clipboard.moreItems" = "+%d mer";
+
+/* Tooltips */
+"tooltip.play" = "Spill av";
+"tooltip.pause" = "Pause";
+"tooltip.mute" = "Demp";
+"tooltip.unmute" = "Slå på lyd";
+"tooltip.close" = "Lukk";
+"tooltip.playbackSpeed" = "Avspillingshastighet";
+
+/* Time Ago */
+"time.now" = "nå";
+"time.minutesAgo" = "%dm siden";
+"time.hoursAgo" = "%dh siden";

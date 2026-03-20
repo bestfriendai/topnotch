@@ -1,0 +1,265 @@
+/* Menu Bar */
+"menu.settings" = "Beállítások...";
+"menu.quit" = "Kilépés Top Notch";
+"window.settings.title" = "Top Notch Beállítások";
+
+/* Settings Sections */
+"settings.section.general" = "ÁLTALÁNOS";
+"settings.section.appearance" = "MEGJELENÉS";
+"settings.section.media" = "MÉDIA";
+"settings.section.hud" = "HUD CSERE";
+"settings.section.indicators" = "INDIKÁTOROK ÉS VISSZAJELZÉSEK";
+"settings.section.widgets" = "WIDGETEK";
+"settings.section.intelligence" = "INTELLIGENCIA";
+"settings.section.shortcuts" = "BILLENTYŰZET GYORSÍTVÁNYOK";
+"settings.section.privacy" = "MAGÁNÉLET";
+
+/* General Settings */
+"settings.general.launchAtLogin" = "Indítsa el a Bejelentkezésnél";
+"settings.general.hoverToExpand" = "Mutasson rá az egérrel a kibontáshoz";
+"settings.general.autoCollapseDelay" = "Automatikus összecsukás késleltetése";
+"settings.general.showInMenuBar" = "Megjelenítés a menüsorban";
+
+/* Appearance Settings */
+"settings.appearance.theme" = "Téma";
+"settings.appearance.theme.auto" = "Auto";
+"settings.appearance.theme.light" = "Fény";
+"settings.appearance.theme.dark" = "Sötét";
+"settings.appearance.accentColor" = "Kiemelt szín";
+"color.blue" = "Kék";
+"color.orange" = "Orange";
+"color.green" = "Zöld";
+"color.red" = "Piros";
+"color.purple" = "Lila";
+"color.cyan" = "Cyan";
+
+/* Media Settings */
+"settings.media.nowPlaying" = "Most lejátszási vezérlők";
+"settings.media.albumArtwork" = "Albumborító megjelenítése";
+"settings.media.vinylSpin" = "Vinyl Spin Animáció";
+"settings.media.colorMatch" = "Color Match App";
+
+/* HUD Settings */
+"settings.hud.replaceVolume" = "Kötet cseréje HUD";
+"settings.hud.replaceBrightness" = "Cserélje ki a fényerőt HUD";
+"settings.hud.style" = "HUD Stílus";
+"settings.hud.style.minimal" = "Minimális";
+"settings.hud.style.bar" = "Bár";
+"settings.hud.style.notched" = "Vágott";
+
+/* Indicators Settings */
+"settings.indicators.battery" = "Elem jelző";
+"settings.indicators.lockUnlock" = "Zárás/feloldás jelző";
+"settings.indicators.chargingSound" = "Töltési hang";
+"settings.indicators.haptic" = "Haptikus visszajelzés";
+
+/* Widget Toggles */
+"widget.calendar" = "Naptár";
+"widget.weather" = "Időjárás";
+"widget.pomodoro" = "Pomodoro Időzítő";
+"widget.clipboard" = "Vágólap előzmények";
+"widget.youtube" = "YouTube Lejátszó";
+"widget.battery" = "Akkumulátor monitor";
+"widget.shortcuts" = "Parancsikonok indítója";
+"widget.activityFeed" = "Tevékenység hírcsatorna";
+"widget.quickCapture" = "Gyors rögzítés";
+"widget.lyrics" = "Szinkronizált dalszöveg";
+
+/* Intelligence Settings */
+"settings.ai.onDevice" = "On-Device AI";
+"settings.ai.available" = "Elérhető";
+"settings.ai.requiresMacOS26" = "MacOS 26 szükséges";
+"settings.ai.summarization" = "AI Összegzés";
+"settings.ai.claudeApiKey" = "Claude API-kulcs";
+
+/* Keyboard Shortcuts */
+"shortcut.playPause" = "Lejátszás / Szünet";
+"shortcut.previousTrack" = "Előző szám";
+"shortcut.nextTrack" = "Következő szám";
+"shortcut.volumeUpDown" = "Hangerő fel/le";
+"shortcut.openYouTube" = "Megnyitás YouTube";
+
+/* Privacy Settings */
+"settings.privacy.clipboardMonitoring" = "Vágólap figyelése";
+"settings.privacy.calendarAccess" = "Hozzáférés a naptárhoz";
+"settings.privacy.analytics" = "Analitika";
+"settings.privacy.showOnboarding" = "Mutasd újra a Belépést";
+"settings.privacy.clearAllData" = "Minden adat törlése";
+
+/* Calendar Access Status */
+"access.granted" = "Megadott";
+"access.fullAccess" = "Teljes hozzáférés";
+"access.writeOnly" = "Csak írás";
+"access.denied" = "Megtagadva";
+"access.notGranted" = "Nincs megadva";
+"access.unknown" = "Ismeretlen";
+
+/* About Section */
+"about.appName" = "Top Notch";
+"about.version" = "%@ verzió (Build %@)";
+"about.madeWith" = "Készült: ❤️ a Mac számára";
+"about.website" = "Weboldal";
+"about.support" = "Támogatás";
+"about.privacy" = "Magánélet";
+
+/* Media Player */
+"media.noMediaPlaying" = "Nincs médialejátszás";
+"media.playMusicPrompt" = "A vezérlők megtekintéséhez játsszon le zenét vagy médiát";
+"media.notPlaying" = "Nem játszik";
+"media.unknownArtist" = "Ismeretlen előadó";
+"media.noMedia" = "Nincs média";
+"media.music" = "Zene";
+"media.podcasts" = "Podcasts";
+"media.spotify" = "Spotify";
+"media.playingFrom" = "Lejátszás innen: %@";
+
+/* YouTube Player */
+"youtube.title" = "YouTube";
+"youtube.pasteUrl" = "URL beillesztése...";
+"youtube.browse" = "Tallózás";
+"youtube.play" = "Játék";
+"youtube.paste" = "Paszta";
+"youtube.pasteAndPlay" = "Beillesztés és lejátszás";
+"youtube.playingInWindow" = "Játék az ablakban";
+"youtube.paused" = "Szüneteltetve";
+"youtube.show" = "Megmutat";
+"youtube.pinned" = "Rögzítve";
+"youtube.recentlyPlayed" = "Nemrég JÁTSZOTT";
+"youtube.linkDetected" = "YouTube Hivatkozás észlelve";
+"youtube.videoUnavailable" = "A videó nem elérhető";
+"youtube.tryAnother" = "Próbáljon ki egy másikat";
+"youtube.openInSafari" = "Megnyitás: Safari";
+"youtube.closePlayer" = "Zárja be a lejátszót";
+"youtube.buffering" = "Pufferelés";
+"youtube.playing" = "Játék";
+"youtube.openVideo" = "YouTube Videó megnyitása… ⌘⇧Y";
+"youtube.playDetected" = "Az észlelt videó lejátszása";
+
+/* Weather */
+"weather.title" = "Időjárás";
+"weather.high" = "H:";
+"weather.low" = "L:";
+"weather.enterCity" = "Adjon meg egy várost az időjárás betöltéséhez";
+"weather.invalidCity" = "Érvénytelen városnév";
+"weather.cityNotFound" = "Város nem található";
+"weather.unavailable" = "Időjárás nem elérhető";
+"weather.condition.clear" = "Derült";
+"weather.condition.partlyCloudy" = "Részben felhős";
+"weather.condition.fog" = "Köd";
+"weather.condition.drizzle" = "Szitálás";
+"weather.condition.rain" = "Eső";
+"weather.condition.snow" = "Hó";
+"weather.condition.rainShowers" = "Esőzáporok";
+"weather.condition.snowShowers" = "Hózáporok";
+"weather.condition.thunderstorm" = "Zivatar";
+"weather.condition.updating" = "Adatok frissítése";
+
+/* Calendar */
+"calendar.todaysEvents" = "A mai nap eseményei";
+"calendar.noEvents" = "Ma nincs esemény";
+"calendar.noUpcoming" = "Nincsenek közelgő események";
+"calendar.openCalendar" = "Nyissa meg a Naptárt";
+
+/* Pomodoro */
+"pomodoro.title" = "Fókusz időzítő";
+"pomodoro.focus" = "Fókusz";
+"pomodoro.session" = "%d / %d munkamenet";
+"pomodoro.minutes" = "%d min";
+"pomodoro.readyToFocus" = "\U0001F3AF Fókuszálásra kész";
+"pomodoro.takeABreak" = "\u2615 Tartson szünetet";
+"pomodoro.deepFocus" = "\U0001F3AF Mély fókusz";
+
+/* Clipboard */
+"clipboard.title" = "Vágólap előzmények";
+"clipboard.items" = "%d elem";
+"clipboard.nothingCopied" = "Még nincs másolva semmi";
+"clipboard.copyPrompt" = "Másolja ki a szöveget vagy az URL-eket, ha itt szeretné látni őket";
+"clipboard.copySomething" = "Másoljon valamit, hogy itt lássa";
+"clipboard.clearAll" = "Összes törlése";
+"clipboard.copied" = "Másolva!";
+"clipboard.copy" = "Másolat";
+"clipboard.more" = "+ %d további";
+
+/* Battery */
+"battery.title" = "Akkumulátor";
+"battery.noDevices" = "Nem találhatók eszközök";
+"battery.charging" = "Töltés";
+"battery.unplugged" = "Kihúzva";
+"battery.remaining" = "• %@ maradt";
+
+/* Shortcuts */
+"shortcuts.title" = "Parancsikonok";
+"shortcuts.noShortcuts" = "Nem találhatók parancsikonok";
+
+/* Quick Capture */
+"capture.title" = "Gyors rögzítés";
+"capture.notesAppear" = "A megjegyzések itt jelennek meg";
+
+/* Activity Feed */
+"activity.title" = "Tevékenység";
+
+/* System States */
+"system.locked" = "Bezárt";
+"system.macLocked" = "Mac Lezárva";
+"system.touchIdPrompt" = "Touch ID vagy írja be a jelszót";
+"system.unlocked" = "Feloldva";
+"system.welcomeBack" = "Üdvözöljük újra!";
+"system.focus" = "Fókusz";
+"system.active" = "Aktív";
+
+/* Widget Navigation */
+"nav.home" = "Otthon";
+"nav.weather" = "Időjárás";
+"nav.youtube" = "YouTube";
+"nav.media" = "Média";
+"nav.focus" = "Fókusz";
+"nav.clipboard" = "Vágólap";
+"nav.calendar" = "Naptár";
+"nav.battery" = "Akkumulátor";
+"nav.shortcuts" = "Parancsikonok";
+"nav.activity" = "Tevékenység";
+"nav.capture" = "Elfog";
+
+
+/* Language Settings */
+"settings.appearance.language" = "Nyelv";
+"settings.language.restartTitle" = "Újraindítás szükséges";
+"settings.language.restartMessage" = "A Top Notch-t újra kell indítani az új nyelv alkalmazásához.";
+"settings.language.restartNow" = "Indítsa újra most";
+"settings.language.later" = "Később";
+
+/* Additional Strings */
+"clipboard.edit" = "Szerkesztés";
+"media.controlsTooltip" = "Médiavezérlők (globális parancsikonok)";
+"youtube.watchPageMode" = "Nézőoldal mód";
+"youtube.playingFromYT" = "Lejátszás innen: YouTube";
+"youtube.urlPlaceholder" = "Illessze be a YouTube URL-t vagy videóazonosítót...";
+
+/* HUD */
+"hud.mute" = "Némítás";
+
+/* File Shelf */
+"fileShelf.title" = "Fájlpolc";
+"fileShelf.clear" = "Ürítés";
+"fileShelf.dropFilesHere" = "Húzza ide a fájlokat";
+"fileShelf.releaseToAdd" = "Engedje el a hozzáadáshoz";
+
+/* Calendar */
+"calendar.allDay" = "Egész nap";
+
+/* Clipboard */
+"clipboard.itemCount" = "%d elem";
+"clipboard.moreItems" = "+%d további";
+
+/* Tooltips */
+"tooltip.play" = "Lejátszás";
+"tooltip.pause" = "Szünet";
+"tooltip.mute" = "Némítás";
+"tooltip.unmute" = "Némítás feloldása";
+"tooltip.close" = "Bezárás";
+"tooltip.playbackSpeed" = "Lejátszási sebesség";
+
+/* Time Ago */
+"time.now" = "most";
+"time.minutesAgo" = "%d perce";
+"time.hoursAgo" = "%d órája";

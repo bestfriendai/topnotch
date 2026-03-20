@@ -1,5 +1,6 @@
-import SwiftUI
+import Combine
 import EventKit
+import SwiftUI
 
 // MARK: - Design Colors (focused)
 // Colors without a NotchDesign equivalent
@@ -8,7 +9,12 @@ private let cyanFV = Color(red: 0.024, green: 0.714, blue: 0.831)
 // MARK: - Media Focused View
 
 struct MediaFocusedView: View {
-    @ObservedObject private var mediaController = MediaRemoteController.shared
+    @StateObject private var mediaController = MediaRemoteController.shared
+    @StateObject private var lyricsStore = LyricsStore.shared
+    @StateObject private var queueStore = MusicQueueStore.shared
+    @AppStorage("lyricsEnabled") private var lyricsEnabled = true
+    @AppStorage("showAlbumArt") private var showAlbumArt = true
+    @AppStorage("nowPlayingControls") private var showControls = true
     private var info: NowPlayingInfo { mediaController.nowPlayingInfo }
     private var accentColor: Color { Color(info.appColor) }
 
@@ -18,8 +24,10 @@ struct MediaFocusedView: View {
     @State private var isHoveringNext = false
 
     var body: some View {
+        VStack(spacing: 0) {
         HStack(spacing: 16) {
             // 160x160 Glowing Album Art (sized to fit 320pt card with padding 16)
+            if showAlbumArt {
             ZStack {
                 if let artwork = info.artwork {
                     Image(nsImage: artwork)
@@ -55,15 +63,16 @@ struct MediaFocusedView: View {
                     artworkGlowPulse = true
                 }
             }
+            } // end if showAlbumArt
 
             VStack(alignment: .leading, spacing: 16) {
                 VStack(alignment: .leading, spacing: 4) {
-                    Text(info.title.isEmpty ? "Not Playing" : info.title)
+                    Text(info.title.isEmpty ? NSLocalizedString("media.notPlaying", comment: "") : info.title)
                         .font(.system(size: 28, weight: .bold))
                         .foregroundStyle(NotchDesign.textPrimary)
                         .lineLimit(1)
 
-                    Text(info.artist.isEmpty ? "---" : info.artist)
+                    Text(info.artist.isEmpty ? NSLocalizedString("media.unknownArtist", comment: "") : info.artist)
                         .font(.system(size: 18, weight: .medium))
                         .foregroundStyle(NotchDesign.textMuted)
                         .lineLimit(1)
@@ -82,6 +91,7 @@ struct MediaFocusedView: View {
                 }
 
                 // Large Playback Controls
+                if showControls {
                 HStack(spacing: 32) {
                     Button(action: {
                         NSHapticFeedbackManager.defaultPerformer.perform(.generic, performanceTime: .now)
@@ -107,7 +117,7 @@ struct MediaFocusedView: View {
                             Image(systemName: info.isPlaying ? "pause.fill" : "play.fill")
                                 .font(.system(size: 24))
                                 .foregroundStyle(.black)
-                                .offset(x: 1)
+                                .offset(x: info.isPlaying ? 0 : 1)
                         }
                         .scaleEffect(isHoveringPlayPause ? 1.08 : 1.0)
                         .animation(.spring(duration: 0.2), value: isHoveringPlayPause)
@@ -135,6 +145,7 @@ struct MediaFocusedView: View {
                     }
                     .buttonStyle(.plain)
                 }
+                } // end if showControls
 
                 // "Playing from" badge
                 if !info.appName.isEmpty {
@@ -142,7 +153,7 @@ struct MediaFocusedView: View {
                         Image(systemName: info.appIcon)
                             .font(.system(size: 10))
                             .foregroundStyle(NotchDesign.textSecondary)
-                        Text("Playing from \(info.appName)")
+                        Text(String(format: NSLocalizedString("media.playingFrom", comment: ""), info.appName))
                             .font(.system(size: 12, weight: .medium))
                             .foregroundStyle(NotchDesign.textSecondary)
                     }
@@ -153,7 +164,76 @@ struct MediaFocusedView: View {
             }
         }
         .padding(16)
+
+        // Lyrics section
+        if lyricsEnabled && !lyricsStore.lines.isEmpty {
+            lyricsSection
+                .padding(.horizontal, 16)
+                .padding(.bottom, 12)
+        }
+        } // end outer VStack
         .frame(maxWidth: .infinity)
+        .onAppear {
+            fetchLyrics()
+            Task { await queueStore.fetchQueue(appName: info.appName) }
+        }
+        .onChange(of: info.title) { _, _ in
+            fetchLyrics()
+            Task { await queueStore.fetchQueue(appName: info.appName) }
+        }
+        .onChange(of: info.elapsedTime) { _, newTime in
+            if info.isPlaying {
+                lyricsStore.updateCurrentLine(elapsedTime: newTime)
+            }
+        }
+    }
+
+    private var lyricsSection: some View {
+        lyricsScrollContent
+    }
+
+    private var lyricsScrollContent: some View {
+        let activeIndex = lyricsStore.currentLineIndex
+        return ScrollViewReader { proxy in
+            ScrollView(.vertical, showsIndicators: false) {
+                VStack(spacing: 4) {
+                    ForEach(Array(lyricsStore.lines.enumerated()), id: \.element.id) { idx, line in
+                        LyricLineView(line: line, isActive: idx == activeIndex)
+                    }
+                }
+                .padding(.vertical, 8)
+                .padding(.horizontal, 4)
+            }
+            .frame(height: 80)
+            .onChange(of: lyricsStore.currentLineIndex) { _, newIdx in
+                if newIdx < lyricsStore.lines.count {
+                    let lineID = lyricsStore.lines[newIdx].id
+                    withAnimation(.easeInOut(duration: 0.5)) { proxy.scrollTo(lineID, anchor: .center) }
+                }
+            }
+        }
+        .background(RoundedRectangle(cornerRadius: 12, style: .continuous).fill(Color.white.opacity(0.05)))
+        .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous).strokeBorder(Color.white.opacity(0.08), lineWidth: 0.5))
+    }
+
+    private func fetchLyrics() {
+        guard lyricsEnabled, !info.title.isEmpty else { return }
+        Task { await lyricsStore.fetchLyrics(artist: info.artist, title: info.title, album: info.album) }
+    }
+}
+
+// MARK: - Lyric Line View (helper to avoid type-check complexity)
+
+private struct LyricLineView: View {
+    let line: LRCLine
+    let isActive: Bool
+    var body: some View {
+        Text(line.text.isEmpty ? "♪" : line.text)
+            .id(line.id)
+            .font(.system(size: isActive ? 14 : 12, weight: isActive ? .semibold : .regular))
+            .foregroundStyle(isActive ? Color.white : Color.white.opacity(0.3))
+            .multilineTextAlignment(.center)
+            .animation(.easeInOut(duration: 0.3), value: isActive)
     }
 }
 
@@ -162,7 +242,9 @@ struct MediaFocusedView: View {
 struct WeatherFocusedView: View {
     @ObservedObject var weatherStore: NotchWeatherStore
 
+    @State private var selectedDayIndex: Int? = nil
     @State private var tempOpacity: Double = 1.0
+    @State private var daysAppeared = false
 
     /// Gradient background colors based on weather condition
     private var conditionGradient: LinearGradient {
@@ -211,119 +293,344 @@ struct WeatherFocusedView: View {
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            // Header
-            HStack(spacing: 8) {
-                Image(systemName: "cloud.sun.fill")
-                    .font(.system(size: 16, weight: .semibold))
-                    .foregroundStyle(NotchDesign.amber)
-                Text("Weather")
-                    .font(.system(size: 18, weight: .bold))
-                    .foregroundStyle(NotchDesign.textPrimary)
-                Spacer(minLength: 0)
-                Text("Updated 2m ago")
-                    .font(.system(size: 12, weight: .medium))
-                    .foregroundStyle(NotchDesign.textTertiary)
-            }
+        ZStack {
+            // Ambient live weather animation (rain streaks, snow, sun rays, etc.)
+            WeatherAmbientCanvas(weatherCode: weatherStore.weatherCode)
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
 
-            // Main weather display
-            HStack(alignment: .top) {
-                VStack(alignment: .leading, spacing: 6) {
-                    // Large temperature with fade transition on change
-                    Text(weatherStore.temperatureText)
-                        .font(.system(size: 56, weight: .bold))
+            VStack(alignment: .leading, spacing: 12) {
+                // Header
+                HStack(spacing: 8) {
+                    Image(systemName: weatherStore.symbolName)
+                        .font(.system(size: 15, weight: .semibold))
+                        .foregroundStyle(NotchDesign.amber)
+                        .symbolRenderingMode(.hierarchical)
+                    Text(NSLocalizedString("weather.title", comment: ""))
+                        .font(.system(size: 18, weight: .bold))
                         .foregroundStyle(NotchDesign.textPrimary)
-                        .opacity(tempOpacity)
-                        .contentTransition(.numericText())
-                        .animation(.easeInOut(duration: 0.4), value: weatherStore.temperatureText)
-                        .onChange(of: weatherStore.temperatureText) { oldVal, newVal in
-                            if oldVal != newVal {
-                                withAnimation(.easeOut(duration: 0.15)) { tempOpacity = 0.5 }
-                                withAnimation(.easeIn(duration: 0.3).delay(0.15)) { tempOpacity = 1.0 }
+                    Spacer(minLength: 0)
+                    if !weatherStore.cityName.isEmpty {
+                        HStack(spacing: 3) {
+                            Image(systemName: "mappin.and.ellipse")
+                                .font(.system(size: 10))
+                            Text(weatherStore.cityName.components(separatedBy: ", ").first ?? weatherStore.cityName)
+                                .font(.system(size: 11, weight: .medium))
+                                .lineLimit(1)
+                        }
+                        .foregroundStyle(NotchDesign.textTertiary)
+                    }
+                }
+
+                // Main weather display
+                HStack(alignment: .top) {
+                    VStack(alignment: .leading, spacing: 4) {
+                        // Large temperature with roll animation
+                        Text(weatherStore.temperatureText)
+                            .font(.system(size: 56, weight: .bold))
+                            .foregroundStyle(NotchDesign.textPrimary)
+                            .opacity(tempOpacity)
+                            .contentTransition(.numericText())
+                            .animation(.easeInOut(duration: 0.4), value: weatherStore.temperatureText)
+                            .onChange(of: weatherStore.temperatureText) { oldVal, newVal in
+                                if oldVal != newVal {
+                                    withAnimation(.easeOut(duration: 0.15)) { tempOpacity = 0.5 }
+                                    withAnimation(.easeIn(duration: 0.3).delay(0.15)) { tempOpacity = 1.0 }
+                                }
                             }
-                        }
 
-                    // Condition
-                    Text(weatherStore.conditionText)
-                        .font(.system(size: 16, weight: .medium))
-                        .foregroundStyle(NotchDesign.textMuted)
+                        Text(weatherStore.conditionText)
+                            .font(.system(size: 15, weight: .medium))
+                            .foregroundStyle(NotchDesign.textMuted)
 
-                    // Hi/Lo
-                    HStack(spacing: 12) {
-                        HStack(spacing: 4) {
-                            Text("H:")
-                                .font(.system(size: 13, weight: .medium))
-                                .foregroundStyle(NotchDesign.textSecondary)
-                            Text(weatherStore.highTemp ?? "--")
-                                .font(.system(size: 13, weight: .semibold))
-                                .foregroundStyle(NotchDesign.red)
-                        }
-                        HStack(spacing: 4) {
-                            Text("L:")
-                                .font(.system(size: 13, weight: .medium))
-                                .foregroundStyle(NotchDesign.textSecondary)
-                            Text(weatherStore.lowTemp ?? "--")
-                                .font(.system(size: 13, weight: .semibold))
-                                .foregroundStyle(NotchDesign.blue)
+                        HStack(spacing: 10) {
+                            if let h = weatherStore.highTemp {
+                                HStack(spacing: 3) {
+                                    Text(NSLocalizedString("weather.high", comment: ""))
+                                        .font(.system(size: 12, weight: .medium))
+                                        .foregroundStyle(NotchDesign.textSecondary)
+                                    Text(h)
+                                        .font(.system(size: 12, weight: .semibold))
+                                        .foregroundStyle(NotchDesign.red)
+                                }
+                            }
+                            if let l = weatherStore.lowTemp {
+                                HStack(spacing: 3) {
+                                    Text(NSLocalizedString("weather.low", comment: ""))
+                                        .font(.system(size: 12, weight: .medium))
+                                        .foregroundStyle(NotchDesign.textSecondary)
+                                    Text(l)
+                                        .font(.system(size: 12, weight: .semibold))
+                                        .foregroundStyle(NotchDesign.blue)
+                                }
+                            }
                         }
                     }
 
-                    // Feels like + Location on same line
-                    HStack(spacing: 12) {
-                        Text("Feels like \(weatherStore.temperatureText)")
-                            .font(.system(size: 13, weight: .medium))
-                            .foregroundStyle(NotchDesign.textSecondary)
+                    Spacer(minLength: 0)
 
-                        HStack(spacing: 4) {
-                            Image(systemName: "mappin.and.ellipse")
-                                .font(.system(size: 11))
-                                .foregroundStyle(NotchDesign.textSecondary)
-                            Text(weatherStore.cityName)
-                                .font(.system(size: 13, weight: .medium))
-                                .foregroundStyle(NotchDesign.textSecondary)
+                    AnimatedWeatherIcon(
+                        symbolName: weatherStore.symbolName,
+                        weatherCode: weatherStore.weatherCode,
+                        size: 52
+                    )
+                }
+
+                // 7-day tappable forecast
+                if !weatherStore.forecastDays.isEmpty {
+                    HStack(spacing: 5) {
+                        ForEach(Array(weatherStore.forecastDays.prefix(7).enumerated()), id: \.offset) { index, day in
+                            DayForecastCard(
+                                day: day,
+                                isSelected: selectedDayIndex == index,
+                                appeared: daysAppeared,
+                                staggerIndex: index
+                            ) {
+                                withAnimation(.spring(duration: 0.3, bounce: 0.25)) {
+                                    selectedDayIndex = selectedDayIndex == index ? nil : index
+                                }
+                            }
+                        }
+                    }
+                    .onAppear {
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.08) {
+                            daysAppeared = true
                         }
                     }
                 }
 
-                Spacer(minLength: 0)
-
-                // Large animated weather icon
-                AnimatedWeatherIcon(
-                    symbolName: weatherStore.symbolName,
-                    weatherCode: weatherStore.weatherCode,
-                    size: 52
-                )
-            }
-
-            // 5-day forecast
-            if !weatherStore.forecastDays.isEmpty {
-                HStack(spacing: 8) {
-                    ForEach(weatherStore.forecastDays.prefix(5)) { day in
-                        VStack(spacing: 4) {
-                            Text(day.dayLabel)
-                                .font(.system(size: 11, weight: .semibold))
-                                .foregroundStyle(NotchDesign.textSecondary)
-
-                            Text(day.emoji)
-                                .font(.system(size: 20))
-
-                            Text(day.temp)
-                                .font(.system(size: 13, weight: .semibold))
-                                .foregroundStyle(NotchDesign.textPrimary)
-                        }
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 8)
-                        .background(
-                            RoundedRectangle(cornerRadius: 12, style: .continuous)
-                                .fill(NotchDesign.cardBg)
-                        )
+                // Hourly strip — slides in when a day is selected
+                if let idx = selectedDayIndex, idx < weatherStore.forecastDays.count {
+                    let dayKey = weatherStore.forecastDays[idx].dateKey
+                    let hours = weatherStore.hoursByDay[dayKey] ?? []
+                    if !hours.isEmpty {
+                        HourlyStrip(entries: hours)
+                            .transition(.asymmetric(
+                                insertion: .move(edge: .bottom).combined(with: .opacity),
+                                removal: .opacity.animation(.easeOut(duration: 0.15))
+                            ))
                     }
+                }
+            }
+            .padding(16)
+        }
+        .frame(maxWidth: .infinity)
+        .background(conditionGradient)
+        .onDisappear {
+            daysAppeared = false
+            selectedDayIndex = nil
+        }
+    }
+}
+
+// MARK: - Day Forecast Card
+
+private struct DayForecastCard: View {
+    let day: NotchWeatherStore.ForecastDay
+    let isSelected: Bool
+    let appeared: Bool
+    let staggerIndex: Int
+    let onTap: () -> Void
+
+    @State private var isHovering = false
+
+    var body: some View {
+        Button(action: onTap) {
+            VStack(spacing: 3) {
+                Text(day.dayLabel)
+                    .font(.system(size: 9, weight: .bold))
+                    .foregroundStyle(isSelected ? NotchDesign.textPrimary : NotchDesign.textSecondary)
+                    .lineLimit(1)
+                Text(day.emoji)
+                    .font(.system(size: 17))
+                Text(day.temp)
+                    .font(.system(size: 11, weight: .bold))
+                    .foregroundStyle(NotchDesign.textPrimary)
+                Text(day.lowTemp)
+                    .font(.system(size: 9, weight: .medium))
+                    .foregroundStyle(NotchDesign.blue)
+            }
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 7)
+            .background(
+                RoundedRectangle(cornerRadius: 10, style: .continuous)
+                    .fill(isSelected ? NotchDesign.elevated : NotchDesign.cardBg)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 10, style: .continuous)
+                            .strokeBorder(
+                                isSelected ? NotchDesign.borderStrong : NotchDesign.borderSubtle,
+                                lineWidth: isSelected ? 1.0 : 0.5
+                            )
+                    )
+            )
+        }
+        .buttonStyle(.plain)
+        .onHover { isHovering = $0 }
+        .scaleEffect(appeared ? (isHovering ? 1.04 : 1.0) : 0.75)
+        .opacity(appeared ? 1.0 : 0.0)
+        .animation(
+            .spring(duration: 0.45, bounce: 0.3).delay(Double(staggerIndex) * 0.04),
+            value: appeared
+        )
+        .animation(.spring(duration: 0.2), value: isHovering)
+        .animation(.spring(duration: 0.25), value: isSelected)
+    }
+}
+
+// MARK: - Hourly Strip
+
+private struct HourlyStrip: View {
+    let entries: [NotchWeatherStore.HourlyEntry]
+    @State private var appeared = false
+
+    var body: some View {
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: 5) {
+                ForEach(Array(entries.enumerated()), id: \.offset) { index, entry in
+                    VStack(spacing: 3) {
+                        Text(entry.hour)
+                            .font(.system(size: 9, weight: .medium))
+                            .foregroundStyle(NotchDesign.textTertiary)
+                            .lineLimit(1)
+                        Text(entry.emoji)
+                            .font(.system(size: 14))
+                        Text(entry.temp)
+                            .font(.system(size: 11, weight: .semibold))
+                            .foregroundStyle(NotchDesign.textPrimary)
+                    }
+                    .frame(width: 40, height: 58)
+                    .background(
+                        RoundedRectangle(cornerRadius: 9, style: .continuous)
+                            .fill(NotchDesign.cardBg)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 9, style: .continuous)
+                                    .strokeBorder(NotchDesign.borderSubtle, lineWidth: 0.5)
+                            )
+                    )
+                    .scaleEffect(appeared ? 1.0 : 0.8)
+                    .opacity(appeared ? 1.0 : 0.0)
+                    .animation(
+                        .spring(duration: 0.3, bounce: 0.25).delay(Double(index) * 0.015),
+                        value: appeared
+                    )
+                }
+            }
+            .padding(.horizontal, 1)
+            .padding(.vertical, 2)
+        }
+        .onAppear {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
+                appeared = true
+            }
+        }
+    }
+}
+
+// MARK: - Weather Ambient Canvas
+
+/// Live condition-based animation drawn via Canvas + TimelineView at 30fps.
+/// Rain streaks, snowfall, sun rays, fog drifts, thunder flashes.
+private struct WeatherAmbientCanvas: View {
+    let weatherCode: Int
+
+    var body: some View {
+        TimelineView(.animation(minimumInterval: 1.0 / 30.0)) { timeline in
+            Canvas { context, size in
+                let t = timeline.date.timeIntervalSinceReferenceDate
+                switch weatherCode {
+                case 51, 53, 55, 56, 57, 61, 63, 65, 66, 67, 80, 81, 82:
+                    drawRain(&context, size: size, time: t)
+                case 71, 73, 75, 77, 85, 86:
+                    drawSnow(&context, size: size, time: t)
+                case 95, 96, 99:
+                    drawThunder(&context, size: size, time: t)
+                case 0:
+                    drawSunRays(&context, size: size, time: t)
+                case 45, 48:
+                    drawFog(&context, size: size, time: t)
+                default:
+                    break
                 }
             }
         }
-        .padding(20)
-        .frame(maxWidth: .infinity)
-        .background(conditionGradient)
+        .allowsHitTesting(false)
+        .opacity(0.6)
+    }
+
+    private func drawRain(_ context: inout GraphicsContext, size: CGSize, time: Double) {
+        for i in 0..<18 {
+            let seed = Double(i) * 137.508
+            let x = (sin(seed * 0.7) * 0.5 + 0.5) * size.width
+            let speed = 0.4 + Double(i % 5) * 0.07
+            let phase = (time * speed + Double(i) * 0.11).truncatingRemainder(dividingBy: 1.0)
+            let y = phase * (size.height + 24) - 12
+            let opacity = 0.12 + 0.10 * abs(sin(seed * 1.3))
+            var path = Path()
+            path.move(to: CGPoint(x: x, y: y))
+            path.addLine(to: CGPoint(x: x - 1.5, y: y + 11))
+            context.stroke(path, with: .color(.cyan.opacity(opacity)), lineWidth: 1.0)
+        }
+    }
+
+    private func drawSnow(_ context: inout GraphicsContext, size: CGSize, time: Double) {
+        for i in 0..<12 {
+            let seed = Double(i) * 137.508
+            let xBase = (sin(seed * 0.7) * 0.5 + 0.5) * size.width
+            let speed = 0.10 + Double(i % 3) * 0.03
+            let phase = (time * speed + Double(i) * 0.09).truncatingRemainder(dividingBy: 1.0)
+            let y = phase * (size.height + 14) - 8
+            let x = xBase + sin(time * 0.45 + seed) * 14
+            let radius: CGFloat = 1.5 + CGFloat(i % 3) * 0.6
+            let opacity = 0.18 + 0.14 * abs(sin(seed * 1.3))
+            context.fill(
+                Path(ellipseIn: CGRect(x: x - radius, y: y - radius, width: radius * 2, height: radius * 2)),
+                with: .color(.white.opacity(opacity))
+            )
+        }
+    }
+
+    private func drawThunder(_ context: inout GraphicsContext, size: CGSize, time: Double) {
+        // Occasional double flash — subtle white then purple
+        let cycle = (time * 1.4).truncatingRemainder(dividingBy: 5.0)
+        if cycle < 0.12 {
+            let alpha = (1.0 - cycle / 0.12) * 0.10
+            context.fill(Path(CGRect(origin: .zero, size: size)), with: .color(.white.opacity(alpha)))
+        }
+        let cycle2 = ((time * 1.4) + 0.25).truncatingRemainder(dividingBy: 5.0)
+        if cycle2 < 0.08 {
+            let alpha = (1.0 - cycle2 / 0.08) * 0.07
+            context.fill(Path(CGRect(origin: .zero, size: size)), with: .color(.purple.opacity(alpha)))
+        }
+    }
+
+    private func drawSunRays(_ context: inout GraphicsContext, size: CGSize, time: Double) {
+        let cx = size.width * 0.83
+        let cy = size.height * 0.13
+        let rayCount = 8
+        for i in 0..<rayCount {
+            let angle = Double(i) * (Double.pi * 2.0 / Double(rayCount)) + time * 0.12
+            let innerR = CGFloat(14)
+            let outerR = CGFloat(22 + (i % 3) * 7) + innerR
+            let opacity = 0.08 + 0.05 * sin(time * 0.8 + Double(i))
+            var path = Path()
+            path.move(to: CGPoint(x: cx + CGFloat(cos(angle)) * innerR, y: cy + CGFloat(sin(angle)) * innerR))
+            path.addLine(to: CGPoint(x: cx + CGFloat(cos(angle)) * outerR, y: cy + CGFloat(sin(angle)) * outerR))
+            context.stroke(path, with: .color(.yellow.opacity(opacity)), lineWidth: 1.5)
+        }
+    }
+
+    private func drawFog(_ context: inout GraphicsContext, size: CGSize, time: Double) {
+        for i in 0..<4 {
+            let yBase = size.height * CGFloat(i) / 4.0 + size.height * 0.1
+            let drift = CGFloat(sin(time * 0.15 + Double(i) * 1.1)) * 8
+            var path = Path()
+            path.move(to: CGPoint(x: 0, y: yBase + drift))
+            path.addCurve(
+                to: CGPoint(x: size.width, y: yBase + drift + 6),
+                control1: CGPoint(x: size.width * 0.3, y: yBase + drift - 8),
+                control2: CGPoint(x: size.width * 0.7, y: yBase + drift + 14)
+            )
+            context.stroke(path, with: .color(.white.opacity(0.04 + 0.02 * Double(i))), lineWidth: 10)
+        }
     }
 }
 
@@ -400,7 +707,7 @@ struct AnimatedWeatherIcon: View {
 // MARK: - Calendar Focused View
 
 struct CalendarFocusedView: View {
-    @ObservedObject private var store = CalendarStore.shared
+    @StateObject private var store = CalendarStore.shared
 
     private let calendarRedFV = Color(red: 1.0, green: 0.271, blue: 0.227)
     private let cal = Calendar.current
@@ -475,7 +782,7 @@ struct CalendarFocusedView: View {
                     Image(systemName: "calendar")
                         .font(.system(size: 14, weight: .semibold))
                         .foregroundStyle(calendarRedFV)
-                    Text("Today's Events")
+                    Text(NSLocalizedString("calendar.todaysEvents", comment: ""))
                         .font(.system(size: 15, weight: .bold))
                         .foregroundStyle(NotchDesign.textPrimary)
                     Spacer(minLength: 0)
@@ -487,7 +794,7 @@ struct CalendarFocusedView: View {
                         Image(systemName: "calendar.badge.checkmark")
                             .font(.system(size: 28, weight: .medium))
                             .foregroundStyle(NotchDesign.textTertiary)
-                        Text("No events today")
+                        Text(NSLocalizedString("calendar.noEvents", comment: ""))
                             .font(.system(size: 14, weight: .medium))
                             .foregroundStyle(NotchDesign.textSecondary)
                         Spacer(minLength: 4)
@@ -533,7 +840,7 @@ struct CalendarFocusedView: View {
                     NSWorkspace.shared.open(URL(fileURLWithPath: "/System/Applications/Calendar.app"))
                 }) {
                     HStack(spacing: 4) {
-                        Text("Open Calendar")
+                        Text(NSLocalizedString("calendar.openCalendar", comment: ""))
                             .font(.system(size: 13, weight: .medium))
                         Image(systemName: "arrow.up.right")
                             .font(.system(size: 10, weight: .medium))
@@ -556,16 +863,22 @@ struct CalendarFocusedView: View {
         return Array(symbols[1...]) + [symbols[0]]
     }
 
+    private static let dayNameFmt: DateFormatter = {
+        let f = DateFormatter(); f.dateFormat = "EEEE"; return f
+    }()
+    private static let todayDateFmt: DateFormatter = {
+        let f = DateFormatter(); f.dateFormat = "MMMM d, yyyy"; return f
+    }()
+    private static let eventTimeFmt: DateFormatter = {
+        let f = DateFormatter(); f.dateFormat = "h:mm a"; return f
+    }()
+
     private var fullDayName: String {
-        let f = DateFormatter()
-        f.dateFormat = "EEEE"
-        return f.string(from: Date())
+        Self.dayNameFmt.string(from: Date())
     }
 
     private var todayDateString: String {
-        let f = DateFormatter()
-        f.dateFormat = "MMMM d, yyyy"
-        return f.string(from: Date())
+        Self.todayDateFmt.string(from: Date())
     }
 
     private func isCurrentMonth(_ date: Date) -> Bool {
@@ -605,17 +918,15 @@ struct CalendarFocusedView: View {
     }
 
     private func formatEventTime(_ event: EKEvent) -> String {
-        let f = DateFormatter()
-        f.dateFormat = "h:mm a"
-        if event.isAllDay { return "All day" }
-        return f.string(from: event.startDate)
+        if event.isAllDay { return NSLocalizedString("calendar.allDay", comment: "") }
+        return Self.eventTimeFmt.string(from: event.startDate)
     }
 }
 
 // MARK: - Pomodoro Focused View
 
 struct PomodoroFocusedView: View {
-    @ObservedObject private var timer = PomodoroTimer.shared
+    @StateObject private var timer = PomodoroTimer.shared
 
     var body: some View {
         HStack(spacing: 24) {
@@ -675,7 +986,7 @@ struct PomodoroFocusedView: View {
                     }
                 }
 
-                Text("Session \(timer.completedSessions + 1) of \(timer.totalSessions)")
+                Text(String(format: NSLocalizedString("pomodoro.session", comment: ""), timer.completedSessions + 1, timer.totalSessions))
                     .font(.system(size: 12, weight: .medium))
                     .foregroundStyle(NotchDesign.textSecondary)
             }
@@ -687,7 +998,7 @@ struct PomodoroFocusedView: View {
                     Image(systemName: "timer")
                         .font(.system(size: 16, weight: .semibold))
                         .foregroundStyle(NotchDesign.orange)
-                    Text("Focus Timer")
+                    Text(NSLocalizedString("pomodoro.title", comment: ""))
                         .font(.system(size: 18, weight: .bold))
                         .foregroundStyle(NotchDesign.textPrimary)
                     Spacer(minLength: 0)
@@ -795,8 +1106,11 @@ struct PomodoroFocusedView: View {
 // MARK: - Clipboard Focused View
 
 struct ClipboardFocusedView: View {
-    @ObservedObject private var clipboard = ClipboardHistoryStore.shared
+    @StateObject private var clipboard = ClipboardHistoryStore.shared
     @State private var copiedItemID: UUID?
+    @AppStorage("aiSummarizationEnabled") private var aiEnabled = true
+    @State private var summaries: [UUID: String] = [:]
+    @State private var summarizingIDs: Set<UUID> = []
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -805,7 +1119,7 @@ struct ClipboardFocusedView: View {
                 Image(systemName: "clipboard")
                     .font(.system(size: 16, weight: .semibold))
                     .foregroundStyle(cyanFV)
-                Text("Clipboard History")
+                Text(NSLocalizedString("clipboard.title", comment: ""))
                     .font(.system(size: 18, weight: .bold))
                     .foregroundStyle(NotchDesign.textPrimary)
                 Spacer(minLength: 0)
@@ -823,10 +1137,10 @@ struct ClipboardFocusedView: View {
                     Image(systemName: "clipboard")
                         .font(.system(size: 28, weight: .medium))
                         .foregroundStyle(NotchDesign.textTertiary.opacity(0.5))
-                    Text("Nothing copied yet")
+                    Text(NSLocalizedString("clipboard.nothingCopied", comment: ""))
                         .font(.system(size: 16, weight: .semibold))
                         .foregroundStyle(NotchDesign.textSecondary)
-                    Text("Copy text or URLs to see them here")
+                    Text(NSLocalizedString("clipboard.copyPrompt", comment: ""))
                         .font(.system(size: 13, weight: .medium))
                         .foregroundStyle(NotchDesign.textTertiary)
                 }
@@ -842,7 +1156,7 @@ struct ClipboardFocusedView: View {
                 }
             }
 
-            // "Clear All" button at the bottom
+            // NSLocalizedString("clipboard.clearAll", comment: "") button at the bottom
             if !clipboard.items.isEmpty {
                 HStack {
                     Spacer()
@@ -850,7 +1164,7 @@ struct ClipboardFocusedView: View {
                         HStack(spacing: 5) {
                             Image(systemName: "trash")
                                 .font(.system(size: 11, weight: .medium))
-                            Text("Clear All")
+                            Text(NSLocalizedString("clipboard.clearAll", comment: ""))
                                 .font(.system(size: 13, weight: .medium))
                         }
                         .foregroundStyle(NotchDesign.red)
@@ -906,11 +1220,35 @@ struct ClipboardFocusedView: View {
                     Image(systemName: "checkmark.circle.fill")
                         .font(.system(size: 12, weight: .bold))
                         .foregroundStyle(.green)
-                    Text("Copied!")
+                    Text(NSLocalizedString("clipboard.copied", comment: ""))
                         .font(.system(size: 11, weight: .semibold))
                         .foregroundStyle(.green)
                 }
                 .transition(.scale.combined(with: .opacity))
+            }
+
+            // AI Summarize button — only for text/code with enough content
+            if aiEnabled && item.type != .url && item.content.count > 80 {
+                let isSummarizing = summarizingIDs.contains(item.id)
+                let hasSummary = summaries[item.id] != nil
+                Button(action: {
+                    guard !isSummarizing && !hasSummary else { return }
+                    summarizingIDs.insert(item.id)
+                    Task {
+                        let result = await OnDeviceAIHelper.shared.summarize(item.content)
+                        await MainActor.run {
+                            summarizingIDs.remove(item.id)
+                            if let s = result { summaries[item.id] = s }
+                        }
+                    }
+                }) {
+                    Image(systemName: isSummarizing ? "ellipsis" : (hasSummary ? "sparkles" : "sparkle"))
+                        .font(.system(size: 12, weight: .medium))
+                        .foregroundStyle(hasSummary ? Color(hex: "BF5AF2") : NotchDesign.textTertiary.opacity(0.6))
+                        .symbolEffect(.pulse, isActive: isSummarizing)
+                }
+                .buttonStyle(.plain)
+                .help(hasSummary ? summaries[item.id]! : "Summarize with AI")
             }
 
             // Delete button (X)
@@ -920,6 +1258,21 @@ struct ClipboardFocusedView: View {
                     .foregroundStyle(NotchDesign.textTertiary.opacity(0.5))
             }
             .buttonStyle(.plain)
+        }
+        // Show AI summary below if available
+        .overlay(alignment: .bottom) {
+            if let summary = summaries[item.id] {
+                Text(summary)
+                    .font(.system(size: 11, weight: .medium))
+                    .foregroundStyle(Color(hex: "BF5AF2").opacity(0.9))
+                    .lineLimit(2)
+                    .padding(.horizontal, 14)
+                    .padding(.vertical, 4)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .background(Color(hex: "BF5AF2").opacity(0.07))
+                    .clipShape(RoundedRectangle(cornerRadius: 8))
+                    .offset(y: 32)
+            }
         }
         .padding(.horizontal, 14)
         .padding(.vertical, 10)
@@ -957,5 +1310,531 @@ struct ClipboardFocusedView: View {
             .padding(.horizontal, 6)
             .padding(.vertical, 2)
             .background(Capsule().fill(color.opacity(0.15)))
+    }
+}
+
+// MARK: - Battery Focused View
+
+struct BatteryFocusedView: View {
+    @StateObject private var store = BatteryDeviceStore.shared
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            Text(NSLocalizedString("battery.title", comment: ""))
+                .font(.system(size: 13, weight: .semibold))
+                .foregroundStyle(NotchDesign.textSecondary)
+                .padding(.bottom, 10)
+
+            if store.devices.isEmpty {
+                Spacer()
+                HStack {
+                    Spacer()
+                    VStack(spacing: 8) {
+                        Image(systemName: "battery.100percent")
+                            .font(.system(size: 28))
+                            .foregroundStyle(Color(hex: "34D399").opacity(0.4))
+                        Text(NSLocalizedString("battery.noDevices", comment: ""))
+                            .font(.system(size: 13))
+                            .foregroundStyle(NotchDesign.textSecondary)
+                    }
+                    Spacer()
+                }
+                Spacer()
+            } else {
+                ScrollView(.vertical, showsIndicators: false) {
+                    VStack(spacing: 8) {
+                        ForEach(store.devices) { device in
+                            BatteryDeviceRow(device: device)
+                        }
+                    }
+                }
+            }
+        }
+        .padding(16)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+    }
+}
+
+private struct BatteryDeviceRow: View {
+    let device: DeviceBattery
+
+    var body: some View {
+        HStack(spacing: 12) {
+            Image(systemName: device.type.icon)
+                .font(.system(size: 16))
+                .foregroundStyle(Color(hex: device.levelColor))
+                .frame(width: 24)
+
+            VStack(alignment: .leading, spacing: 3) {
+                Text(device.name)
+                    .font(.system(size: 13, weight: .medium))
+                    .foregroundStyle(NotchDesign.textPrimary)
+                    .lineLimit(1)
+
+                GeometryReader { geo in
+                    ZStack(alignment: .leading) {
+                        Capsule().fill(Color.white.opacity(0.08)).frame(height: 5)
+                        Capsule()
+                            .fill(Color(hex: device.levelColor))
+                            .frame(width: geo.size.width * CGFloat(device.level) / 100, height: 5)
+                    }
+                }
+                .frame(height: 5)
+            }
+
+            Text("\(device.level)%")
+                .font(.system(size: 13, weight: .bold, design: .rounded))
+                .foregroundStyle(Color(hex: device.levelColor))
+                .monospacedDigit()
+                .frame(width: 40, alignment: .trailing)
+
+            if device.isCharging {
+                Image(systemName: "bolt.fill")
+                    .font(.system(size: 10))
+                    .foregroundStyle(Color(hex: "34D399"))
+            }
+        }
+        .padding(.horizontal, 12)
+        .padding(.vertical, 8)
+        .background(RoundedRectangle(cornerRadius: 10, style: .continuous).fill(NotchDesign.cardBg))
+    }
+}
+
+// MARK: - Shortcuts Focused View
+
+struct ShortcutsFocusedView: View {
+    @StateObject private var store = ShortcutsStore.shared
+
+    let columns = [GridItem(.flexible()), GridItem(.flexible()), GridItem(.flexible())]
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            Text(NSLocalizedString("shortcuts.title", comment: ""))
+                .font(.system(size: 13, weight: .semibold))
+                .foregroundStyle(NotchDesign.textSecondary)
+                .padding(.bottom, 10)
+
+            if store.isLoading {
+                Spacer()
+                HStack { Spacer(); ProgressView().scaleEffect(0.8); Spacer() }
+                Spacer()
+            } else if store.shortcuts.isEmpty {
+                Spacer()
+                HStack {
+                    Spacer()
+                    VStack(spacing: 8) {
+                        Image(systemName: "wand.and.stars")
+                            .font(.system(size: 28))
+                            .foregroundStyle(Color(hex: "BF5AF2").opacity(0.4))
+                        Text(NSLocalizedString("shortcuts.noShortcuts", comment: ""))
+                            .font(.system(size: 13))
+                            .foregroundStyle(NotchDesign.textSecondary)
+                    }
+                    Spacer()
+                }
+                Spacer()
+            } else {
+                ScrollView(.vertical, showsIndicators: false) {
+                    LazyVGrid(columns: columns, spacing: 8) {
+                        ForEach(store.shortcuts) { item in
+                            ShortcutButton(item: item, store: store)
+                        }
+                    }
+                }
+            }
+        }
+        .padding(16)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+        .onAppear { Task { await store.fetchShortcuts() } }
+    }
+}
+
+private struct ShortcutButton: View {
+    let item: ShortcutItem
+    @ObservedObject var store: ShortcutsStore
+    @State private var isHovered = false
+    private var isRunning: Bool { store.isRunning && store.lastRunName == item.name }
+
+    var body: some View {
+        Button(action: { store.runShortcut(item.name) }) {
+            VStack(spacing: 6) {
+                ZStack {
+                    if isRunning {
+                        ProgressView().scaleEffect(0.7)
+                    } else {
+                        Image(systemName: item.icon)
+                            .font(.system(size: 16))
+                            .foregroundStyle(Color(hex: "BF5AF2"))
+                    }
+                }
+                .frame(width: 28, height: 28)
+
+                Text(item.name)
+                    .font(.system(size: 10, weight: .medium))
+                    .foregroundStyle(NotchDesign.textPrimary)
+                    .lineLimit(2)
+                    .multilineTextAlignment(.center)
+            }
+            .padding(8)
+            .frame(maxWidth: .infinity)
+            .background(RoundedRectangle(cornerRadius: 10, style: .continuous)
+                .fill(isHovered ? Color(hex: "BF5AF2").opacity(0.12) : NotchDesign.cardBg))
+            .overlay(RoundedRectangle(cornerRadius: 10, style: .continuous)
+                .strokeBorder(isHovered ? Color(hex: "BF5AF2").opacity(0.3) : Color.clear, lineWidth: 0.5))
+        }
+        .buttonStyle(.plain)
+        .onHover { isHovered = $0 }
+        .animation(.easeInOut(duration: 0.15), value: isHovered)
+    }
+}
+
+// MARK: - Activity Feed Focused View
+
+// MARK: - Activity Feed Focused View
+
+private enum ActivityFilter: String, CaseIterable {
+    case all = "All"
+    case music = "Music"
+    case clipboard = "Clipboard"
+    case system = "System"
+
+    func matches(_ event: ActivityEvent) -> Bool {
+        switch self {
+        case .all:       return true
+        case .music:     return event.type == .music
+        case .clipboard: return event.type == .clipboard
+        case .system:    return event.type == .charging || event.type == .battery
+                              || event.type == .focus   || event.type == .system
+        }
+    }
+}
+
+struct ActivityFeedFocusedView: View {
+    @StateObject private var store = NotificationDigestStore.shared
+    @StateObject private var focusStore = FocusStatusStore.shared
+    @State private var selectedFilter: ActivityFilter = .all
+    @State private var now = Date()
+
+    private let clockTimer = Timer.publish(every: 30, on: .main, in: .common).autoconnect()
+    private static let timeFormatter: DateFormatter = {
+        let f = DateFormatter(); f.dateFormat = "HH:mm"; return f
+    }()
+
+    private var filteredEvents: [ActivityEvent] {
+        store.events.filter { selectedFilter.matches($0) }
+    }
+
+    var body: some View {
+        VStack(spacing: 10) {
+            focusBanner
+            filterRow
+            activityList
+        }
+        .padding(16)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+        .onReceive(clockTimer) { now = $0 }
+    }
+
+    // MARK: Focus banner
+
+    private var focusBanner: some View {
+        let accentColor = Color(hex: "A78BFA")
+        let isActive = focusStore.isDNDActive
+        return HStack(spacing: 12) {
+            // Moon icon with animated glow when active
+            ZStack {
+                if isActive {
+                    Circle()
+                        .fill(accentColor.opacity(0.18))
+                        .frame(width: 40, height: 40)
+                        .blur(radius: 6)
+                }
+                Circle()
+                    .fill(isActive ? accentColor.opacity(0.15) : Color.white.opacity(0.06))
+                    .frame(width: 40, height: 40)
+                Image(systemName: isActive ? "moon.fill" : "moon")
+                    .font(.system(size: 17, weight: .semibold))
+                    .foregroundStyle(isActive ? accentColor : NotchDesign.textSecondary)
+            }
+            .animation(.easeInOut(duration: 0.4), value: isActive)
+
+            VStack(alignment: .leading, spacing: 2) {
+                Text(isActive ? "Do Not Disturb" : "Focus")
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundStyle(NotchDesign.textPrimary)
+                HStack(spacing: 4) {
+                    Circle()
+                        .fill(isActive ? accentColor : Color(hex: "34D399"))
+                        .frame(width: 5, height: 5)
+                    Text(isActive ? "Active" : "Off")
+                        .font(.system(size: 11, weight: .medium))
+                        .foregroundStyle(isActive ? accentColor : NotchDesign.textSecondary)
+                }
+            }
+            .animation(.easeInOut(duration: 0.3), value: isActive)
+
+            Spacer()
+
+            // Live clock
+            Text(Self.timeFormatter.string(from: now))
+                .font(.system(size: 24, weight: .bold, design: .rounded))
+                .foregroundStyle(NotchDesign.textPrimary)
+                .monospacedDigit()
+                .contentTransition(.numericText())
+        }
+        .padding(.horizontal, 14)
+        .padding(.vertical, 10)
+        .background(
+            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                .fill(isActive ? accentColor.opacity(0.08) : Color.white.opacity(0.05))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 14, style: .continuous)
+                        .strokeBorder(
+                            isActive ? accentColor.opacity(0.3) : Color.white.opacity(0.08),
+                            lineWidth: 0.5
+                        )
+                )
+        )
+        .animation(.spring(duration: 0.4), value: isActive)
+    }
+
+    // MARK: Filter pills + clear button
+
+    private var filterRow: some View {
+        HStack(spacing: 6) {
+            ForEach(ActivityFilter.allCases, id: \.self) { filter in
+                Button(action: {
+                    withAnimation(.spring(duration: 0.25, bounce: 0.3)) { selectedFilter = filter }
+                }) {
+                    Text(filter.rawValue)
+                        .font(.system(size: 11, weight: .medium))
+                        .foregroundStyle(selectedFilter == filter ? .black : NotchDesign.textSecondary)
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 5)
+                        .background(
+                            Capsule()
+                                .fill(selectedFilter == filter
+                                      ? Color(hex: "F472B6")
+                                      : Color.white.opacity(0.08))
+                        )
+                }
+                .buttonStyle(.plain)
+            }
+            Spacer()
+            if !store.events.isEmpty {
+                Button(action: { withAnimation { store.clearAll() } }) {
+                    Image(systemName: "trash")
+                        .font(.system(size: 11, weight: .medium))
+                        .foregroundStyle(NotchDesign.textTertiary)
+                }
+                .buttonStyle(.plain)
+            }
+        }
+    }
+
+    // MARK: Activity list
+
+    private var activityList: some View {
+        Group {
+            if filteredEvents.isEmpty {
+                Spacer()
+                VStack(spacing: 8) {
+                    Image(systemName: "sparkles")
+                        .font(.system(size: 22))
+                        .foregroundStyle(Color(hex: "F472B6").opacity(0.35))
+                    Text(selectedFilter == .all ? "No recent activity" : "No \(selectedFilter.rawValue.lowercased()) events")
+                        .font(.system(size: 12))
+                        .foregroundStyle(NotchDesign.textSecondary)
+                }
+                .frame(maxWidth: .infinity)
+                Spacer()
+            } else {
+                ScrollView(.vertical, showsIndicators: false) {
+                    VStack(spacing: 2) {
+                        ForEach(filteredEvents) { event in
+                            ActivityEventRow(event: event)
+                                .transition(.asymmetric(
+                                    insertion: .move(edge: .top).combined(with: .opacity),
+                                    removal: .opacity
+                                ))
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+private struct ActivityEventRow: View {
+    let event: ActivityEvent
+
+    private var typeColor: Color { Color(hex: event.type.color) }
+
+    private var timeAgo: String {
+        let secs = Int(-event.timestamp.timeIntervalSinceNow)
+        if secs < 10 { return "just now" }
+        if secs < 60 { return "\(secs)s ago" }
+        if secs < 3600 { return "\(secs / 60)m ago" }
+        return "\(secs / 3600)h ago"
+    }
+
+    var body: some View {
+        HStack(spacing: 10) {
+            // Colored accent strip
+            RoundedRectangle(cornerRadius: 2)
+                .fill(typeColor)
+                .frame(width: 2.5, height: 34)
+
+            // Icon badge
+            ZStack {
+                RoundedRectangle(cornerRadius: 7, style: .continuous)
+                    .fill(typeColor.opacity(0.12))
+                    .frame(width: 28, height: 28)
+                Image(systemName: event.type.icon)
+                    .font(.system(size: 11, weight: .semibold))
+                    .foregroundStyle(typeColor)
+            }
+
+            // Text content
+            VStack(alignment: .leading, spacing: 2) {
+                Text(event.title)
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundStyle(NotchDesign.textPrimary)
+                    .lineLimit(1)
+                if !event.detail.isEmpty {
+                    Text(event.detail)
+                        .font(.system(size: 10))
+                        .foregroundStyle(NotchDesign.textSecondary)
+                        .lineLimit(1)
+                }
+            }
+
+            Spacer(minLength: 4)
+
+            Text(timeAgo)
+                .font(.system(size: 10, weight: .medium))
+                .foregroundStyle(NotchDesign.textTertiary)
+                .monospacedDigit()
+        }
+        .padding(.horizontal, 4)
+        .padding(.vertical, 6)
+    }
+}
+
+// MARK: - Quick Capture Focused View
+
+struct QuickCaptureFocusedView: View {
+    @StateObject private var store = QuickCaptureStore.shared
+    @FocusState private var isTextFieldFocused: Bool
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text(NSLocalizedString("capture.title", comment: ""))
+                .font(.system(size: 13, weight: .semibold))
+                .foregroundStyle(NotchDesign.textSecondary)
+
+            // Input bar
+            HStack(spacing: 8) {
+                TextField("Capture a thought...", text: $store.draftText)
+                    .textFieldStyle(.plain)
+                    .font(.system(size: 13))
+                    .foregroundStyle(NotchDesign.textPrimary)
+                    .focused($isTextFieldFocused)
+                    .onSubmit { store.saveNote() }
+
+                let canSave = !store.draftText.trimmingCharacters(in: .whitespaces).isEmpty
+                Button(action: { store.saveNote() }) {
+                    Image(systemName: "arrow.up.circle.fill")
+                        .font(.system(size: 20))
+                        .foregroundStyle(canSave
+                            ? Color(hex: "2DD4BF")
+                            : Color(hex: "2DD4BF").opacity(0.3))
+                }
+                .buttonStyle(.plain)
+                .disabled(!canSave)
+            }
+            .padding(.horizontal, 12)
+            .padding(.vertical, 8)
+            .background(RoundedRectangle(cornerRadius: 10, style: .continuous).fill(NotchDesign.elevated))
+            .overlay(RoundedRectangle(cornerRadius: 10, style: .continuous)
+                .strokeBorder(isTextFieldFocused ? Color(hex: "2DD4BF").opacity(0.4) : Color.clear, lineWidth: 1))
+            .animation(.easeInOut(duration: 0.15), value: isTextFieldFocused)
+
+            // Notes list
+            if store.notes.isEmpty {
+                Spacer()
+                HStack {
+                    Spacer()
+                    VStack(spacing: 6) {
+                        Image(systemName: "pencil.and.list.clipboard")
+                            .font(.system(size: 24))
+                            .foregroundStyle(Color(hex: "2DD4BF").opacity(0.35))
+                        Text(NSLocalizedString("capture.notesAppear", comment: ""))
+                            .font(.system(size: 12))
+                            .foregroundStyle(NotchDesign.textTertiary)
+                    }
+                    Spacer()
+                }
+                Spacer()
+            } else {
+                ScrollView(.vertical, showsIndicators: false) {
+                    VStack(spacing: 6) {
+                        ForEach(store.notes) { note in
+                            CaptureNoteRow(note: note, store: store)
+                        }
+                    }
+                }
+            }
+        }
+        .padding(16)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+        .onAppear { isTextFieldFocused = true }
+    }
+}
+
+private struct CaptureNoteRow: View {
+    let note: CaptureNote
+    @ObservedObject var store: QuickCaptureStore
+    @State private var isCopied = false
+
+    var body: some View {
+        HStack(spacing: 10) {
+            Text(note.text)
+                .font(.system(size: 12))
+                .foregroundStyle(NotchDesign.textPrimary)
+                .lineLimit(2)
+                .frame(maxWidth: .infinity, alignment: .leading)
+
+            if isCopied {
+                Image(systemName: "checkmark.circle.fill")
+                    .font(.system(size: 14))
+                    .foregroundStyle(.green)
+                    .transition(.scale.combined(with: .opacity))
+            }
+
+            Button(action: {
+                store.copyNote(note)
+                withAnimation { isCopied = true }
+                DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+                    withAnimation { isCopied = false }
+                }
+            }) {
+                Image(systemName: "doc.on.doc")
+                    .font(.system(size: 12))
+                    .foregroundStyle(NotchDesign.textTertiary)
+            }
+            .buttonStyle(.plain)
+
+            Button(action: { store.deleteNote(note) }) {
+                Image(systemName: "xmark.circle.fill")
+                    .font(.system(size: 14))
+                    .foregroundStyle(NotchDesign.textTertiary.opacity(0.5))
+            }
+            .buttonStyle(.plain)
+        }
+        .padding(.horizontal, 10)
+        .padding(.vertical, 8)
+        .background(RoundedRectangle(cornerRadius: 10, style: .continuous).fill(NotchDesign.cardBg))
+        .animation(.easeInOut(duration: 0.15), value: isCopied)
     }
 }

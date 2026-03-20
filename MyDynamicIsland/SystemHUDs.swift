@@ -130,7 +130,7 @@ struct BrightnessHUDView: View {
 }
 
 // MARK: - Battery Charging Alert
-// Spec: battery-charging icon + "Charging" label (#8E8E93) + percentage (#32D583)
+// Spec: battery-charging icon + NSLocalizedString("battery.charging", comment: "") label (#8E8E93) + percentage (#32D583)
 
 struct BatteryChargingAlert: View {
     let level: Int
@@ -143,8 +143,8 @@ struct BatteryChargingAlert: View {
                 .font(.system(size: 20, weight: .semibold))
                 .foregroundStyle(NotchDesign.green)
 
-            // "Charging" text -- muted (#8E8E93)
-            Text("Charging")
+            // NSLocalizedString("battery.charging", comment: "") text -- muted (#8E8E93)
+            Text(NSLocalizedString("battery.charging", comment: ""))
                 .font(.system(size: 14, weight: .semibold))
                 .foregroundStyle(NotchDesign.textMuted)
 
@@ -176,8 +176,8 @@ struct YouTubeDetectedAlert: View {
                 .font(.system(size: 20, weight: .semibold))
                 .foregroundStyle(NotchDesign.red)
 
-            // "YouTube Link Detected" text
-            Text("YouTube Link Detected")
+            // NSLocalizedString("youtube.linkDetected", comment: "") text
+            Text(NSLocalizedString("youtube.linkDetected", comment: ""))
                 .font(.system(size: 13, weight: .semibold))
                 .foregroundStyle(NotchDesign.textPrimary)
                 .lineLimit(1)
@@ -186,7 +186,7 @@ struct YouTubeDetectedAlert: View {
 
             // Red "Play" pill button
             Button(action: onPlay) {
-                Text("Play")
+                Text(NSLocalizedString("youtube.play", comment: ""))
                     .font(.system(size: 13, weight: .bold))
                     .foregroundStyle(.white)
                     .padding(.horizontal, 16)
@@ -213,7 +213,7 @@ struct LockScreenIndicatorView: View {
                 .font(.system(size: 16, weight: .medium))
                 .foregroundStyle(NotchDesign.textMuted)
 
-            Text("Locked")
+            Text(NSLocalizedString("system.locked", comment: ""))
                 .font(.system(size: 13, weight: .medium))
                 .foregroundStyle(NotchDesign.textSecondary)
         }

@@ -1,0 +1,265 @@
+/* Menu Bar */
+"menu.settings" = "Nastavenia...";
+"menu.quit" = "Ukončiť Top Notch";
+"window.settings.title" = "Nastavenia Top Notch";
+
+/* Settings Sections */
+"settings.section.general" = "VŠEOBECNÉ";
+"settings.section.appearance" = "VZHĽAD";
+"settings.section.media" = "MÉDIÁ";
+"settings.section.hud" = "NAHRADENIE HUD";
+"settings.section.indicators" = "INDIKÁTORY A SPÄTNÁ VÄZBA";
+"settings.section.widgets" = "WIDGETY";
+"settings.section.intelligence" = "INTELIGENCIA";
+"settings.section.shortcuts" = "KLÁVESOVÉ SKRATKY";
+"settings.section.privacy" = "SÚKROMIE";
+
+/* General Settings */
+"settings.general.launchAtLogin" = "Spustiť pri prihlásení";
+"settings.general.hoverToExpand" = "Rozbaliť pri nabehnutí myšou";
+"settings.general.autoCollapseDelay" = "Oneskorenie automatického zbalenia";
+"settings.general.showInMenuBar" = "Zobraziť v lište menu";
+
+/* Appearance Settings */
+"settings.appearance.theme" = "Téma";
+"settings.appearance.theme.auto" = "Automaticky";
+"settings.appearance.theme.light" = "Svetlá";
+"settings.appearance.theme.dark" = "Tmavá";
+"settings.appearance.accentColor" = "Akcentová farba";
+"color.blue" = "Modrá";
+"color.orange" = "Oranžová";
+"color.green" = "Zelená";
+"color.red" = "Červená";
+"color.purple" = "Fialová";
+"color.cyan" = "Azúrová";
+
+/* Media Settings */
+"settings.media.nowPlaying" = "Ovládanie práve prehrávaného";
+"settings.media.albumArtwork" = "Zobraziť obal albumu";
+"settings.media.vinylSpin" = "Animácia otáčania platne";
+"settings.media.colorMatch" = "Prispôsobiť farbu aplikácii";
+
+/* HUD Settings */
+"settings.hud.replaceVolume" = "Nahradiť HUD hlasitosti";
+"settings.hud.replaceBrightness" = "Nahradiť HUD jasu";
+"settings.hud.style" = "Štýl HUD";
+"settings.hud.style.minimal" = "Minimálny";
+"settings.hud.style.bar" = "Lišta";
+"settings.hud.style.notched" = "S výrezom";
+
+/* Indicators Settings */
+"settings.indicators.battery" = "Indikátor batérie";
+"settings.indicators.lockUnlock" = "Indikátor zamknutia/odomknutia";
+"settings.indicators.chargingSound" = "Zvuk nabíjania";
+"settings.indicators.haptic" = "Haptická odozva";
+
+/* Widget Toggles */
+"widget.calendar" = "Kalendár";
+"widget.weather" = "Počasie";
+"widget.pomodoro" = "Časovač Pomodoro";
+"widget.clipboard" = "História schránky";
+"widget.youtube" = "Prehrávač YouTube";
+"widget.battery" = "Monitor batérie";
+"widget.shortcuts" = "Spúšťač skratiek";
+"widget.activityFeed" = "Prehľad aktivity";
+"widget.quickCapture" = "Rýchle zachytenie";
+"widget.lyrics" = "Synchronizované texty";
+
+/* Intelligence Settings */
+"settings.ai.onDevice" = "AI na zariadení";
+"settings.ai.available" = "Dostupné";
+"settings.ai.requiresMacOS26" = "Vyžaduje macOS 26";
+"settings.ai.summarization" = "AI Zhrnutie";
+"settings.ai.claudeApiKey" = "API kľúč Claude";
+
+/* Keyboard Shortcuts */
+"shortcut.playPause" = "Prehrať / Pozastaviť";
+"shortcut.previousTrack" = "Predchádzajúca skladba";
+"shortcut.nextTrack" = "Ďalšia skladba";
+"shortcut.volumeUpDown" = "Hlasitosť hore / dole";
+"shortcut.openYouTube" = "Otvoriť YouTube";
+
+/* Privacy Settings */
+"settings.privacy.clipboardMonitoring" = "Monitorovanie schránky";
+"settings.privacy.calendarAccess" = "Prístup ku Kalendáru";
+"settings.privacy.analytics" = "Analytika";
+"settings.privacy.showOnboarding" = "Znova zobraziť úvodnú obrazovku";
+"settings.privacy.clearAllData" = "Vymazať všetky dáta";
+
+/* Calendar Access Status */
+"access.granted" = "Udelené";
+"access.fullAccess" = "Plný prístup";
+"access.writeOnly" = "Len na zápis";
+"access.denied" = "Zamietnuté";
+"access.notGranted" = "Neudelené";
+"access.unknown" = "Neznáme";
+
+/* About Section */
+"about.appName" = "Top Notch";
+"about.version" = "Verzia %@ (Build %@)";
+"about.madeWith" = "Vyrobené s ❤️ pre Mac";
+"about.website" = "Webstránka";
+"about.support" = "Podpora";
+"about.privacy" = "Súkromie";
+
+/* Media Player */
+"media.noMediaPlaying" = "Neprehráva sa žiadne médium";
+"media.playMusicPrompt" = "Prehrajte hudbu alebo médium, aby ste tu videli ovládacie prvky";
+"media.notPlaying" = "Neprehráva sa";
+"media.unknownArtist" = "Neznámy interpret";
+"media.noMedia" = "Žiadne médium";
+"media.music" = "Hudba";
+"media.podcasts" = "Podcasty";
+"media.spotify" = "Spotify";
+"media.playingFrom" = "Prehráva sa z %@";
+
+/* YouTube Player */
+"youtube.title" = "YouTube";
+"youtube.pasteUrl" = "Vložiť URL...";
+"youtube.browse" = "Prehliadať";
+"youtube.play" = "Prehrať";
+"youtube.paste" = "Vložiť";
+"youtube.pasteAndPlay" = "Vložiť a prehrať";
+"youtube.playingInWindow" = "Prehráva sa v okne";
+"youtube.paused" = "Pozastavené";
+"youtube.show" = "Zobraziť";
+"youtube.pinned" = "Pripnuté";
+"youtube.recentlyPlayed" = "NEDÁVNO PREHRANÉ";
+"youtube.linkDetected" = "Zistený odkaz YouTube";
+"youtube.videoUnavailable" = "Video nedostupné";
+"youtube.tryAnother" = "Skúsiť iné";
+"youtube.openInSafari" = "Otvoriť v Safari";
+"youtube.closePlayer" = "Zavrieť prehrávač";
+"youtube.buffering" = "Načítava sa";
+"youtube.playing" = "Prehráva sa";
+"youtube.openVideo" = "Otvoriť video YouTube…  ⌘⇧Y";
+"youtube.playDetected" = "Prehrať zistené video";
+
+/* Weather */
+"weather.title" = "Počasie";
+"weather.high" = "H:";
+"weather.low" = "L:";
+"weather.enterCity" = "Zadajte mesto na načítanie počasia";
+"weather.invalidCity" = "Neplatný názov mesta";
+"weather.cityNotFound" = "Mesto nenájdené";
+"weather.unavailable" = "Počasie nedostupné";
+"weather.condition.clear" = "Jasno";
+"weather.condition.partlyCloudy" = "Čiastočne oblačno";
+"weather.condition.fog" = "Hmla";
+"weather.condition.drizzle" = "Mrholenie";
+"weather.condition.rain" = "Dážď";
+"weather.condition.snow" = "Sneh";
+"weather.condition.rainShowers" = "Dažďové prehánky";
+"weather.condition.snowShowers" = "Snehové prehánky";
+"weather.condition.thunderstorm" = "Búrka";
+"weather.condition.updating" = "Aktualizácia podmienok";
+
+/* Calendar */
+"calendar.todaysEvents" = "Dnešné udalosti";
+"calendar.noEvents" = "Žiadne udalosti dnes";
+"calendar.noUpcoming" = "Žiadne nadchádzajúce udalosti";
+"calendar.openCalendar" = "Otvoriť Kalendár";
+
+/* Pomodoro */
+"pomodoro.title" = "Časovač sústredenia";
+"pomodoro.focus" = "Sústredenie";
+"pomodoro.session" = "Séria %d z %d";
+"pomodoro.minutes" = "%d min";
+"pomodoro.readyToFocus" = "\U0001F3AF Pripravený na sústredenie";
+"pomodoro.takeABreak" = "\u2615 Urobte si prestávku";
+"pomodoro.deepFocus" = "\U0001F3AF Hlboké sústredenie";
+
+/* Clipboard */
+"clipboard.title" = "História schránky";
+"clipboard.items" = "%d položiek";
+"clipboard.nothingCopied" = "Zatiaľ nič skopírované";
+"clipboard.copyPrompt" = "Skopírujte text alebo URL, aby ste ich tu videli";
+"clipboard.copySomething" = "Skopírujte niečo, aby ste to tu videli";
+"clipboard.clearAll" = "Vymazať všetko";
+"clipboard.copied" = "Skopírované!";
+"clipboard.copy" = "Kopírovať";
+"clipboard.more" = "+%d ďalších";
+
+/* Battery */
+"battery.title" = "Batéria";
+"battery.noDevices" = "Nenašli sa žiadne zariadenia";
+"battery.charging" = "Nabíjanie";
+"battery.unplugged" = "Odpojené";
+"battery.remaining" = "• Zostáva %@";
+
+/* Shortcuts */
+"shortcuts.title" = "Skratky";
+"shortcuts.noShortcuts" = "Nenašli sa žiadne skratky";
+
+/* Quick Capture */
+"capture.title" = "Rýchle zachytenie";
+"capture.notesAppear" = "Poznámky sa zobrazia tu";
+
+/* Activity Feed */
+"activity.title" = "Aktivita";
+
+/* System States */
+"system.locked" = "Zamknuté";
+"system.macLocked" = "Mac zamknutý";
+"system.touchIdPrompt" = "Touch ID alebo zadajte heslo";
+"system.unlocked" = "Odomknuté";
+"system.welcomeBack" = "Vitajte späť!";
+"system.focus" = "Sústredenie";
+"system.active" = "Aktívne";
+
+/* Widget Navigation */
+"nav.home" = "Domov";
+"nav.weather" = "Počasie";
+"nav.youtube" = "YouTube";
+"nav.media" = "Médiá";
+"nav.focus" = "Sústredenie";
+"nav.clipboard" = "Schránka";
+"nav.calendar" = "Kalendár";
+"nav.battery" = "Batéria";
+"nav.shortcuts" = "Skratky";
+"nav.activity" = "Aktivita";
+"nav.capture" = "Zachytenie";
+
+
+/* Language Settings */
+"settings.appearance.language" = "Jazyk";
+"settings.language.restartTitle" = "Vyžaduje sa reštart";
+"settings.language.restartMessage" = "Top Notch sa musí reštartovať, aby sa použil nový jazyk.";
+"settings.language.restartNow" = "Reštartovať teraz";
+"settings.language.later" = "Neskôr";
+
+/* Additional Strings */
+"clipboard.edit" = "Upraviť";
+"media.controlsTooltip" = "Ovládacie prvky médií (globálne skratky)";
+"youtube.watchPageMode" = "Režim stránky sledovania";
+"youtube.playingFromYT" = "Prehráva sa z YouTube";
+"youtube.urlPlaceholder" = "Vložte URL YouTube alebo ID videa...";
+
+/* HUD */
+"hud.mute" = "Stlmiť";
+
+/* File Shelf */
+"fileShelf.title" = "Odkladací priestor súborov";
+"fileShelf.clear" = "Vyčistiť";
+"fileShelf.dropFilesHere" = "Presuňte súbory sem";
+"fileShelf.releaseToAdd" = "Uvoľnite pre pridanie";
+
+/* Calendar */
+"calendar.allDay" = "Celý deň";
+
+/* Clipboard */
+"clipboard.itemCount" = "%d položiek";
+"clipboard.moreItems" = "+%d ďalších";
+
+/* Tooltips */
+"tooltip.play" = "Prehrať";
+"tooltip.pause" = "Pozastaviť";
+"tooltip.mute" = "Stlmiť";
+"tooltip.unmute" = "Zrušiť stlmenie";
+"tooltip.close" = "Zavrieť";
+"tooltip.playbackSpeed" = "Rýchlosť prehrávania";
+
+/* Time Ago */
+"time.now" = "teraz";
+"time.minutesAgo" = "pred %d min";
+"time.hoursAgo" = "pred %d hod";

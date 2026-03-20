@@ -18,7 +18,7 @@ private let accentRedClip = Color(red: 0.91, green: 0.353, blue: 0.31)
 // MARK: - Clipboard History Card
 
 struct ClipboardDeckCard: View {
-    @ObservedObject private var clipboard = ClipboardHistoryStore.shared
+    @StateObject private var clipboard = ClipboardHistoryStore.shared
     @State private var contentAppeared = false
     @State private var copiedItemID: UUID?
 
@@ -29,11 +29,11 @@ struct ClipboardDeckCard: View {
                 Image(systemName: "clipboard")
                     .font(.system(size: 12, weight: .semibold))
                     .foregroundStyle(accentCyanClip)
-                Text("Clipboard")
+                Text(NSLocalizedString("nav.clipboard", comment: ""))
                     .font(.system(size: 14, weight: .bold))
                     .foregroundStyle(textPrimaryClip)
                 Spacer()
-                Text("\(clipboard.items.count) items")
+                Text(String(format: NSLocalizedString("clipboard.itemCount", comment: ""), clipboard.items.count))
                     .font(.system(size: 11, weight: .medium))
                     .foregroundStyle(textSecondaryClip)
             }
@@ -51,11 +51,11 @@ struct ClipboardDeckCard: View {
 
             Spacer(minLength: 0)
 
-            // Bottom row: "Clear All" + remaining count
+            // Bottom row: NSLocalizedString("clipboard.clearAll", comment: "") + remaining count
             if !clipboard.items.isEmpty {
                 HStack {
                     Button(action: { clipboard.clearAll() }) {
-                        Text("Clear All")
+                        Text(NSLocalizedString("clipboard.clearAll", comment: ""))
                             .font(.system(size: 11, weight: .medium))
                             .foregroundStyle(accentRedClip)
                     }
@@ -64,7 +64,7 @@ struct ClipboardDeckCard: View {
                     Spacer()
 
                     if clipboard.items.count > 3 {
-                        Text("+\(clipboard.items.count - 3) more")
+                        Text(String(format: NSLocalizedString("clipboard.moreItems", comment: ""), clipboard.items.count - 3))
                             .font(.system(size: 10, weight: .medium))
                             .foregroundStyle(textTertiaryClip)
                     }
@@ -98,7 +98,7 @@ struct ClipboardDeckCard: View {
                     Image(systemName: "checkmark")
                         .font(.system(size: 7, weight: .bold))
                         .foregroundStyle(accentGreenClip)
-                    Text("Copied")
+                    Text(NSLocalizedString("clipboard.copied", comment: ""))
                         .font(.system(size: 8, weight: .semibold))
                         .foregroundStyle(accentGreenClip)
                 }
@@ -156,7 +156,7 @@ struct ClipboardEmptyState: View {
                     .easeInOut(duration: 2.0).repeatForever(autoreverses: true),
                     value: breathing
                 )
-            Text("Copy something to see it here")
+            Text(NSLocalizedString("clipboard.copySomething", comment: ""))
                 .font(.system(size: 9, weight: .medium))
                 .foregroundStyle(.white.opacity(0.25))
                 .lineLimit(1)
@@ -246,7 +246,7 @@ struct ClipboardItemRow: View {
                         Image(systemName: "checkmark")
                             .font(.system(size: 7, weight: .bold))
                             .foregroundStyle(.green)
-                        Text("Copied")
+                        Text(NSLocalizedString("clipboard.copied", comment: ""))
                             .font(.system(size: 7, weight: .semibold))
                             .foregroundStyle(.green)
                     }
@@ -256,7 +256,7 @@ struct ClipboardItemRow: View {
                         Image(systemName: "doc.on.doc")
                             .font(.system(size: 7, weight: .bold))
                             .foregroundStyle(.cyan)
-                        Text("Copy")
+                        Text(NSLocalizedString("clipboard.copy", comment: ""))
                             .font(.system(size: 7, weight: .semibold))
                             .foregroundStyle(.cyan)
                     }
@@ -328,9 +328,9 @@ struct ClipboardItem: Identifiable, Codable {
 
     var timeAgo: String {
         let seconds = Int(Date().timeIntervalSince(timestamp))
-        if seconds < 60 { return "now" }
-        if seconds < 3600 { return "\(seconds / 60)m ago" }
-        return "\(seconds / 3600)h ago"
+        if seconds < 60 { return NSLocalizedString("time.now", comment: "") }
+        if seconds < 3600 { return String(format: NSLocalizedString("time.minutesAgo", comment: ""), seconds / 60) }
+        return String(format: NSLocalizedString("time.hoursAgo", comment: ""), seconds / 3600)
     }
 }
 
@@ -385,8 +385,11 @@ final class ClipboardHistoryStore: ObservableObject {
             return
         }
 
-        guard let string = NSPasteboard.general.string(forType: .string),
-              !string.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return }
+        guard let rawString = NSPasteboard.general.string(forType: .string),
+              !rawString.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return }
+
+        // Truncate extremely large clipboard content to prevent memory bloat
+        let string = rawString.count > 10_000 ? String(rawString.prefix(10_000)) : rawString
 
         // Don't add duplicates of the most recent item
         if let first = items.first, first.content == string { return }
@@ -404,6 +407,13 @@ final class ClipboardHistoryStore: ObservableObject {
         if items.count > Self.maxItems {
             items = Array(items.prefix(Self.maxItems))
         }
+
+        // Notify the Activity Feed
+        NotificationCenter.default.post(
+            name: NSNotification.Name("TopNotch.ClipboardChanged"),
+            object: nil,
+            userInfo: ["text": string]
+        )
     }
 
     /// Detect the type of clipboard content.
@@ -467,12 +477,12 @@ struct AppLauncherDeckCard: View {
                 Image(systemName: "square.grid.2x2.fill")
                     .font(.system(size: 11, weight: .semibold))
                     .foregroundStyle(.purple)
-                Text("Quick Launch")
+                Text(NSLocalizedString("shortcuts.title", comment: ""))
                     .font(.system(size: 12, weight: .bold))
                     .foregroundStyle(.white)
                     .lineLimit(1)
                 Spacer(minLength: 0)
-                Text("Edit")
+                Text(NSLocalizedString("clipboard.edit", comment: ""))
                     .font(.system(size: 8, weight: .medium))
                     .foregroundStyle(.white.opacity(0.3))
                     .lineLimit(1)
@@ -496,7 +506,7 @@ struct AppLauncherDeckCard: View {
                         .opacity(contentAppeared ? 1 : 0)
                         .offset(y: contentAppeared ? 0 : 8)
                         .animation(
-                            .spring(duration: 0.4, bounce: 0.3).delay(Double(index) * 0.05),
+                            .spring(duration: 0.4, bounce: 0.3).delay(min(Double(index) * 0.05, 0.30)),
                             value: contentAppeared
                         )
                 }
@@ -504,6 +514,9 @@ struct AppLauncherDeckCard: View {
         }
         .onAppear {
             withAnimation { contentAppeared = true }
+        }
+        .onDisappear {
+            contentAppeared = false
         }
     }
 }
@@ -594,7 +607,7 @@ struct AppGridItem: View {
 // MARK: - App Launcher Store
 
 struct LauncherApp: Identifiable {
-    let id = UUID()
+    var id: String { url.path }
     let name: String
     let url: URL
     let icon: NSImage?
@@ -673,7 +686,7 @@ final class AppLauncherStore: ObservableObject {
 // MARK: - File Shelf Store
 
 struct ShelfFile: Identifiable, Equatable {
-    let id = UUID()
+    var id: String { url.absoluteString }
     let url: URL
     let name: String
     let icon: NSImage
@@ -686,6 +699,9 @@ struct ShelfFile: Identifiable, Equatable {
 
 @MainActor
 final class FileShelfStore: ObservableObject {
+    static let shared = FileShelfStore()
+    private init() {}
+
     @Published var files: [ShelfFile] = []
 
     func addFile(url: URL) {
@@ -722,18 +738,18 @@ final class FileShelfStore: ObservableObject {
 // MARK: - File Shelf Card
 
 struct FileShelfDeckCard: View {
-    @StateObject private var store = FileShelfStore()
+    @StateObject private var store = FileShelfStore.shared
     @State private var isTargeted = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack {
-                Label("File Shelf", systemImage: "tray.and.arrow.down.fill")
+                Label(NSLocalizedString("fileShelf.title", comment: ""), systemImage: "tray.and.arrow.down.fill")
                     .font(.system(size: 13, weight: .bold))
                     .foregroundStyle(.orange)
                 Spacer()
                 if !store.files.isEmpty {
-                    Button("Clear") { store.clearAll() }
+                    Button(NSLocalizedString("fileShelf.clear", comment: "")) { store.clearAll() }
                         .buttonStyle(.plain)
                         .font(.system(size: 11))
                         .foregroundStyle(.white.opacity(0.4))
@@ -742,18 +758,29 @@ struct FileShelfDeckCard: View {
 
             if store.files.isEmpty {
                 VStack(spacing: 8) {
-                    Image(systemName: "plus.circle.dotted")
-                        .font(.system(size: 24))
-                        .foregroundStyle(.white.opacity(0.2))
-                    Text("Drop files here")
-                        .font(.system(size: 12))
-                        .foregroundStyle(.white.opacity(0.3))
+                    Image(systemName: isTargeted ? "arrow.down.circle.fill" : "plus.circle.dotted")
+                        .font(.system(size: isTargeted ? 32 : 24))
+                        .foregroundStyle(isTargeted ? Color.orange : .white.opacity(0.2))
+                        .scaleEffect(isTargeted ? 1.15 : 1.0)
+                        .animation(.spring(duration: 0.3, bounce: 0.5), value: isTargeted)
+                    Text(isTargeted ? NSLocalizedString("fileShelf.releaseToAdd", comment: "") : NSLocalizedString("fileShelf.dropFilesHere", comment: ""))
+                        .font(.system(size: 12, weight: isTargeted ? .semibold : .regular))
+                        .foregroundStyle(isTargeted ? Color.orange : .white.opacity(0.3))
+                        .animation(.easeInOut(duration: 0.2), value: isTargeted)
                 }
                 .frame(maxWidth: .infinity, minHeight: 120)
                 .background(
                     RoundedRectangle(cornerRadius: 16)
-                        .strokeBorder(style: StrokeStyle(lineWidth: 2, dash: [4, 4]))
-                        .foregroundStyle(isTargeted ? Color.orange : Color.white.opacity(0.1))
+                        .fill(isTargeted ? Color.orange.opacity(0.06) : Color.clear)
+                        .animation(.easeInOut(duration: 0.2), value: isTargeted)
+                )
+                .overlay(
+                    RoundedRectangle(cornerRadius: 16)
+                        .strokeBorder(
+                            style: StrokeStyle(lineWidth: isTargeted ? 2 : 1.5, dash: [4, 4])
+                        )
+                        .foregroundStyle(isTargeted ? Color.orange.opacity(0.8) : Color.white.opacity(0.1))
+                        .animation(.easeInOut(duration: 0.2), value: isTargeted)
                 )
             } else {
                 ScrollView(.vertical, showsIndicators: false) {

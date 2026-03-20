@@ -1,0 +1,265 @@
+/* Menu Bar */
+"menu.settings" = "Instellingen...";
+"menu.quit" = "Sluit Top Notch af";
+"window.settings.title" = "Top Notch Instellingen";
+
+/* Settings Sections */
+"settings.section.general" = "ALGEMEEN";
+"settings.section.appearance" = "WEERGAVE";
+"settings.section.media" = "MEDIA";
+"settings.section.hud" = "HUD VERVANGING";
+"settings.section.indicators" = "INDICATOREN & FEEDBACK";
+"settings.section.widgets" = "WIDGETS";
+"settings.section.intelligence" = "INTELLIGENTIE";
+"settings.section.shortcuts" = "TOETSENBORDSNELTOETSEN";
+"settings.section.privacy" = "PRIVACY";
+
+/* General Settings */
+"settings.general.launchAtLogin" = "Start bij inloggen";
+"settings.general.hoverToExpand" = "Zweven om uit te vouwen";
+"settings.general.autoCollapseDelay" = "Vertraging automatisch inklappen";
+"settings.general.showInMenuBar" = "Toon in menubalk";
+
+/* Appearance Settings */
+"settings.appearance.theme" = "Thema";
+"settings.appearance.theme.auto" = "Automatisch";
+"settings.appearance.theme.light" = "Licht";
+"settings.appearance.theme.dark" = "Donker";
+"settings.appearance.accentColor" = "Accentkleur";
+"color.blue" = "Blauw";
+"color.orange" = "Oranje";
+"color.green" = "Groen";
+"color.red" = "Rood";
+"color.purple" = "Paars";
+"color.cyan" = "Cyaan";
+
+/* Media Settings */
+"settings.media.nowPlaying" = "Bediening nu afspelen";
+"settings.media.albumArtwork" = "Toon albumillustraties";
+"settings.media.vinylSpin" = "Vinyl draai-animatie";
+"settings.media.colorMatch" = "Kleur afstemmen op app";
+
+/* HUD Settings */
+"settings.hud.replaceVolume" = "Vervang volume-HUD";
+"settings.hud.replaceBrightness" = "Vervang helderheid-HUD";
+"settings.hud.style" = "HUD-stijl";
+"settings.hud.style.minimal" = "Minimaal";
+"settings.hud.style.bar" = "Balk";
+"settings.hud.style.notched" = "Met inkeping";
+
+/* Indicators Settings */
+"settings.indicators.battery" = "Batterij-indicator";
+"settings.indicators.lockUnlock" = "Vergrendel/ontgrendel-indicator";
+"settings.indicators.chargingSound" = "Oplaadgeluid";
+"settings.indicators.haptic" = "Haptische feedback";
+
+/* Widget Toggles */
+"widget.calendar" = "Agenda";
+"widget.weather" = "Weer";
+"widget.pomodoro" = "Pomodoro-timer";
+"widget.clipboard" = "Klembordgeschiedenis";
+"widget.youtube" = "YouTube-speler";
+"widget.battery" = "Batterijmonitor";
+"widget.shortcuts" = "Opstarter sneltoetsen";
+"widget.activityFeed" = "Activiteitenoverzicht";
+"widget.quickCapture" = "Snelle opname";
+"widget.lyrics" = "Gesynchroniseerde songteksten";
+
+/* Intelligence Settings */
+"settings.ai.onDevice" = "AI op apparaat";
+"settings.ai.available" = "Beschikbaar";
+"settings.ai.requiresMacOS26" = "Vereist macOS 26";
+"settings.ai.summarization" = "AI-samenvatting";
+"settings.ai.claudeApiKey" = "Claude API-sleutel";
+
+/* Keyboard Shortcuts */
+"shortcut.playPause" = "Afspelen / Pauzeren";
+"shortcut.previousTrack" = "Vorig nummer";
+"shortcut.nextTrack" = "Volgend nummer";
+"shortcut.volumeUpDown" = "Volume omhoog / omlaag";
+"shortcut.openYouTube" = "Open YouTube";
+
+/* Privacy Settings */
+"settings.privacy.clipboardMonitoring" = "Klembordbewaking";
+"settings.privacy.calendarAccess" = "Agendatoegang";
+"settings.privacy.analytics" = "Analyse";
+"settings.privacy.showOnboarding" = "Onboarding opnieuw tonen";
+"settings.privacy.clearAllData" = "Alle gegevens wissen";
+
+/* Calendar Access Status */
+"access.granted" = "Verleend";
+"access.fullAccess" = "Volledige toegang";
+"access.writeOnly" = "Alleen schrijven";
+"access.denied" = "Geweigerd";
+"access.notGranted" = "Niet verleend";
+"access.unknown" = "Onbekend";
+
+/* About Section */
+"about.appName" = "Top Notch";
+"about.version" = "Versie %@ (Build %@)";
+"about.madeWith" = "Gemaakt met ❤️ voor Mac";
+"about.website" = "Website";
+"about.support" = "Ondersteuning";
+"about.privacy" = "Privacy";
+
+/* Media Player */
+"media.noMediaPlaying" = "Geen media wordt afgespeeld";
+"media.playMusicPrompt" = "Speel muziek of media af om hier bedieningselementen te zien";
+"media.notPlaying" = "Niet afgespeeld";
+"media.unknownArtist" = "Onbekende artiest";
+"media.noMedia" = "Geen media";
+"media.music" = "Muziek";
+"media.podcasts" = "Podcasts";
+"media.spotify" = "Spotify";
+"media.playingFrom" = "Afgespeeld vanaf %@";
+
+/* YouTube Player */
+"youtube.title" = "YouTube";
+"youtube.pasteUrl" = "Plak URL...";
+"youtube.browse" = "Bladeren";
+"youtube.play" = "Afspelen";
+"youtube.paste" = "Plakken";
+"youtube.pasteAndPlay" = "Plakken & Afspelen";
+"youtube.playingInWindow" = "Afspelen in venster";
+"youtube.paused" = "Gepauzeerd";
+"youtube.show" = "Toon";
+"youtube.pinned" = "Vastgezet";
+"youtube.recentlyPlayed" = "RECENT AFGESPEELD";
+"youtube.linkDetected" = "YouTube-link gedetecteerd";
+"youtube.videoUnavailable" = "Video niet beschikbaar";
+"youtube.tryAnother" = "Probeer een andere";
+"youtube.openInSafari" = "Openen in Safari";
+"youtube.closePlayer" = "Speler sluiten";
+"youtube.buffering" = "Buffering";
+"youtube.playing" = "Speelt af";
+"youtube.openVideo" = "Open YouTube-video… ⌘⇧Y";
+"youtube.playDetected" = "Gedetecteerde video afspelen";
+
+/* Weather */
+"weather.title" = "Weer";
+"weather.high" = "H:";
+"weather.low" = "L:";
+"weather.enterCity" = "Voer een stad in om weer te laden";
+"weather.invalidCity" = "Ongeldige stadsnaam";
+"weather.cityNotFound" = "Stad niet gevonden";
+"weather.unavailable" = "Weer niet beschikbaar";
+"weather.condition.clear" = "Heldere lucht";
+"weather.condition.partlyCloudy" = "Gedeeltelijk bewolkt";
+"weather.condition.fog" = "Mist";
+"weather.condition.drizzle" = "Motregen";
+"weather.condition.rain" = "Regen";
+"weather.condition.snow" = "Sneeuw";
+"weather.condition.rainShowers" = "Regenbuien";
+"weather.condition.snowShowers" = "Sneeuwbuien";
+"weather.condition.thunderstorm" = "Onweer";
+"weather.condition.updating" = "Condities worden bijgewerkt";
+
+/* Calendar */
+"calendar.todaysEvents" = "Evenementen van vandaag";
+"calendar.noEvents" = "Geen evenementen vandaag";
+"calendar.noUpcoming" = "Geen aankomende evenementen";
+"calendar.openCalendar" = "Agenda openen";
+
+/* Pomodoro */
+"pomodoro.title" = "Focustimer";
+"pomodoro.focus" = "Focus";
+"pomodoro.session" = "Sessie %d van %d";
+"pomodoro.minutes" = "%d min";
+"pomodoro.readyToFocus" = "\U0001F3AF Klaar om te focussen";
+"pomodoro.takeABreak" = "\u2615 Neem een pauze";
+"pomodoro.deepFocus" = "\U0001F3AF Diepe focus";
+
+/* Clipboard */
+"clipboard.title" = "Klembordgeschiedenis";
+"clipboard.items" = "%d items";
+"clipboard.nothingCopied" = "Nog niets gekopieerd";
+"clipboard.copyPrompt" = "Kopieer tekst of URL's om ze hier te zien";
+"clipboard.copySomething" = "Kopieer iets om het hier te zien";
+"clipboard.clearAll" = "Alles wissen";
+"clipboard.copied" = "Gekopieerd!";
+"clipboard.copy" = "Kopiëren";
+"clipboard.more" = "+%d meer";
+
+/* Battery */
+"battery.title" = "Batterij";
+"battery.noDevices" = "Geen apparaten gevonden";
+"battery.charging" = "Opladen";
+"battery.unplugged" = "Niet aangesloten";
+"battery.remaining" = "• %@ resterend";
+
+/* Shortcuts */
+"shortcuts.title" = "Snelkoppelingen";
+"shortcuts.noShortcuts" = "Geen snelkoppelingen gevonden";
+
+/* Quick Capture */
+"capture.title" = "Snelle notitie";
+"capture.notesAppear" = "Notities verschijnen hier";
+
+/* Activity Feed */
+"activity.title" = "Activiteit";
+
+/* System States */
+"system.locked" = "Vergrendeld";
+"system.macLocked" = "Mac vergrendeld";
+"system.touchIdPrompt" = "Touch ID of wachtwoord invoeren";
+"system.unlocked" = "Ontgrendeld";
+"system.welcomeBack" = "Welkom terug!";
+"system.focus" = "Focus";
+"system.active" = "Actief";
+
+/* Widget Navigation */
+"nav.home" = "Start";
+"nav.weather" = "Weer";
+"nav.youtube" = "YouTube";
+"nav.media" = "Media";
+"nav.focus" = "Focus";
+"nav.clipboard" = "Klembord";
+"nav.calendar" = "Agenda";
+"nav.battery" = "Batterij";
+"nav.shortcuts" = "Snelkoppelingen";
+"nav.activity" = "Activiteit";
+"nav.capture" = "Notitie";
+
+
+/* Language Settings */
+"settings.appearance.language" = "Taal";
+"settings.language.restartTitle" = "Herstart vereist";
+"settings.language.restartMessage" = "Top Notch moet opnieuw worden opgestart om de nieuwe taal toe te passen.";
+"settings.language.restartNow" = "Nu herstarten";
+"settings.language.later" = "Later";
+
+/* Additional Strings */
+"clipboard.edit" = "Bewerken";
+"media.controlsTooltip" = "Mediabediening (globale snelkoppelingen)";
+"youtube.watchPageMode" = "Kijkpagina-modus";
+"youtube.playingFromYT" = "Wordt afgespeeld via YouTube";
+"youtube.urlPlaceholder" = "Plak YouTube URL of video-ID...";
+
+/* HUD */
+"hud.mute" = "Dempen";
+
+/* File Shelf */
+"fileShelf.title" = "Bestandsplank";
+"fileShelf.clear" = "Wissen";
+"fileShelf.dropFilesHere" = "Sleep bestanden hierheen";
+"fileShelf.releaseToAdd" = "Loslaten om toe te voegen";
+
+/* Calendar */
+"calendar.allDay" = "Hele dag";
+
+/* Clipboard */
+"clipboard.itemCount" = "%d items";
+"clipboard.moreItems" = "+%d meer";
+
+/* Tooltips */
+"tooltip.play" = "Afspelen";
+"tooltip.pause" = "Pauze";
+"tooltip.mute" = "Dempen";
+"tooltip.unmute" = "Dempen opheffen";
+"tooltip.close" = "Sluiten";
+"tooltip.playbackSpeed" = "Afspeelsnelheid";
+
+/* Time Ago */
+"time.now" = "nu";
+"time.minutesAgo" = "%d m geleden";
+"time.hoursAgo" = "%d u geleden";

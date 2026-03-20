@@ -88,6 +88,9 @@ final class NotificationDigestStore: ObservableObject {
     private init() {}
 
     func startMonitoring() {
+        // Guard against duplicate observer registration
+        guard observers.isEmpty else { return }
+
         let distributed = DistributedNotificationCenter.default()
         let local = NotificationCenter.default
 
@@ -100,13 +103,15 @@ final class NotificationDigestStore: ObservableObject {
             let title = note.userInfo?["Name"] as? String ?? "Unknown"
             let artist = note.userInfo?["Artist"] as? String ?? ""
             if state == "Playing" || state == nil {
-                self?.addEvent(ActivityEvent(
-                    type: .music,
-                    title: title,
-                    detail: artist.isEmpty ? "Spotify" : "Spotify · \(artist)",
-                    timestamp: Date(),
-                    appIcon: "Spotify"
-                ))
+                Task { @MainActor [weak self] in
+                    self?.addEvent(ActivityEvent(
+                        type: .music,
+                        title: title,
+                        detail: artist.isEmpty ? "Spotify" : "Spotify · \(artist)",
+                        timestamp: Date(),
+                        appIcon: "Spotify"
+                    ))
+                }
             }
         })
 
@@ -120,13 +125,15 @@ final class NotificationDigestStore: ObservableObject {
                   state == "Playing",
                   let title = info["Name"] as? String else { return }
             let artist = info["Artist"] as? String ?? ""
-            self?.addEvent(ActivityEvent(
-                type: .music,
-                title: title,
-                detail: artist.isEmpty ? "Apple Music" : "Apple Music · \(artist)",
-                timestamp: Date(),
-                appIcon: "Music"
-            ))
+            Task { @MainActor [weak self] in
+                self?.addEvent(ActivityEvent(
+                    type: .music,
+                    title: title,
+                    detail: artist.isEmpty ? "Apple Music" : "Apple Music · \(artist)",
+                    timestamp: Date(),
+                    appIcon: "Music"
+                ))
+            }
         })
 
         // Clipboard changes
@@ -136,13 +143,15 @@ final class NotificationDigestStore: ObservableObject {
         ) { [weak self] note in
             let text = note.userInfo?["text"] as? String ?? ""
             let preview = text.count > 50 ? String(text.prefix(50)) + "…" : text
-            self?.addEvent(ActivityEvent(
-                type: .clipboard,
-                title: "Clipboard Updated",
-                detail: preview,
-                timestamp: Date(),
-                appIcon: "clipboard"
-            ))
+            Task { @MainActor [weak self] in
+                self?.addEvent(ActivityEvent(
+                    type: .clipboard,
+                    title: "Clipboard Updated",
+                    detail: preview,
+                    timestamp: Date(),
+                    appIcon: "clipboard"
+                ))
+            }
         })
 
         // Battery charging started
@@ -151,13 +160,15 @@ final class NotificationDigestStore: ObservableObject {
             object: nil, queue: .main
         ) { [weak self] note in
             let level = note.userInfo?["level"] as? Int ?? 0
-            self?.addEvent(ActivityEvent(
-                type: .charging,
-                title: "Charging Started",
-                detail: "\(level)% · Connected to power",
-                timestamp: Date(),
-                appIcon: "bolt.fill"
-            ))
+            Task { @MainActor [weak self] in
+                self?.addEvent(ActivityEvent(
+                    type: .charging,
+                    title: "Charging Started",
+                    detail: "\(level)% · Connected to power",
+                    timestamp: Date(),
+                    appIcon: "bolt.fill"
+                ))
+            }
         })
 
         // Battery disconnected
@@ -166,13 +177,15 @@ final class NotificationDigestStore: ObservableObject {
             object: nil, queue: .main
         ) { [weak self] note in
             let level = note.userInfo?["level"] as? Int ?? 0
-            self?.addEvent(ActivityEvent(
-                type: .battery,
-                title: "Power Disconnected",
-                detail: "\(level)% · Running on battery",
-                timestamp: Date(),
-                appIcon: "battery.75"
-            ))
+            Task { @MainActor [weak self] in
+                self?.addEvent(ActivityEvent(
+                    type: .battery,
+                    title: "Power Disconnected",
+                    detail: "\(level)% · Running on battery",
+                    timestamp: Date(),
+                    appIcon: "battery.75"
+                ))
+            }
         })
 
         // Focus/DND state changes
@@ -181,13 +194,15 @@ final class NotificationDigestStore: ObservableObject {
             object: nil, queue: .main
         ) { [weak self] _ in
             let isActive = UserDefaults(suiteName: "com.apple.ncprefs")?.bool(forKey: "dnd_prefs") ?? false
-            self?.addEvent(ActivityEvent(
-                type: .focus,
-                title: isActive ? "Focus Enabled" : "Focus Disabled",
-                detail: isActive ? "Do Not Disturb turned on" : "Do Not Disturb turned off",
-                timestamp: Date(),
-                appIcon: "moon.fill"
-            ))
+            Task { @MainActor [weak self] in
+                self?.addEvent(ActivityEvent(
+                    type: .focus,
+                    title: isActive ? "Focus Enabled" : "Focus Disabled",
+                    detail: isActive ? "Do Not Disturb turned on" : "Do Not Disturb turned off",
+                    timestamp: Date(),
+                    appIcon: "moon.fill"
+                ))
+            }
         })
     }
 

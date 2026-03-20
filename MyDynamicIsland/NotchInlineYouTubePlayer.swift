@@ -1,4 +1,5 @@
 import SwiftUI
+import WebKit
 
 struct NotchInlineYouTubePlayerView: View {
     @ObservedObject var notchState: NotchState
@@ -23,7 +24,7 @@ struct NotchInlineYouTubePlayerView: View {
                     Circle()
                         .fill(Color.red.opacity(0.95))
                         .frame(width: 8, height: 8)
-                    Text("YouTube")
+                    Text(NSLocalizedString("youtube.title", comment: ""))
                         .font(.system(size: 12, weight: .semibold))
                         .foregroundStyle(.white)
                     if let title = playerState.videoTitle, !title.isEmpty {
@@ -35,7 +36,7 @@ struct NotchInlineYouTubePlayerView: View {
                             .lineLimit(1)
                             .truncationMode(.tail)
                     } else {
-                        Text("Pinned")
+                        Text(NSLocalizedString("youtube.pinned", comment: ""))
                             .font(.system(size: 11, weight: .medium))
                             .foregroundStyle(.white.opacity(0.55))
                     }
@@ -88,7 +89,7 @@ struct NotchInlineYouTubePlayerView: View {
                 playerController: playerController,
                 onClose: closePlayer
             )
-            .frame(width: notchState.youtubePlayerWidth, height: notchState.youtubePlayerHeight)
+            .frame(width: notchState.youtube.playerWidth, height: notchState.youtube.playerHeight)
             .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
             .overlay(alignment: .bottomTrailing) {
                 ZStack(alignment: .bottomTrailing) {
@@ -206,10 +207,10 @@ struct NotchInlineYouTubePlayerView: View {
             playerState.loadVideo(id: newValue)
         }
         .onChange(of: playerState.isPlaying) { _, playing in
-            notchState.inlineYouTubeIsPlaying = playing
+            notchState.youtube.isPlaying = playing
         }
         .onChange(of: playerState.progress) { _, progress in
-            notchState.inlineYouTubeProgress = progress
+            notchState.youtube.progress = progress
         }
     }
 
@@ -217,15 +218,15 @@ struct NotchInlineYouTubePlayerView: View {
         DragGesture(minimumDistance: 0)
             .onChanged { value in
                 if resizeStartWidth == nil {
-                    resizeStartWidth = notchState.youtubePlayerWidth
+                    resizeStartWidth = notchState.youtube.playerWidth
                 }
 
-                let baseWidth = resizeStartWidth ?? notchState.youtubePlayerWidth
+                let baseWidth = resizeStartWidth ?? notchState.youtube.playerWidth
                 let widthDelta = max(value.translation.width, value.translation.height * aspectRatio)
                 let newWidth = min(max(baseWidth + widthDelta, minWidth), maxWidth)
 
-                notchState.youtubePlayerWidth = newWidth
-                notchState.youtubePlayerHeight = newWidth / aspectRatio
+                notchState.youtube.playerWidth = newWidth
+                notchState.youtube.playerHeight = newWidth / aspectRatio
             }
             .onEnded { _ in
                 resizeStartWidth = nil
@@ -236,9 +237,9 @@ struct NotchInlineYouTubePlayerView: View {
         playerController.pause()
         playerState.reset()
         withAnimation(.spring(duration: 0.4, bounce: 0.2)) {
-            notchState.isShowingInlineYouTubePlayer = false
-            notchState.inlineYouTubeVideoID = nil
-            notchState.inlineYouTubeMinimized = false
+            notchState.youtube.isShowingPlayer = false
+            notchState.youtube.videoID = nil
+            notchState.youtube.minimized = false
             notchState.activeDeckCard = .home
             if !notchState.isHovered {
                 notchState.isExpanded = false
@@ -248,7 +249,7 @@ struct NotchInlineYouTubePlayerView: View {
 
     private func minimizePlayer() {
         withAnimation(.spring(duration: 0.4, bounce: 0.2)) {
-            notchState.inlineYouTubeMinimized = true
+            notchState.youtube.minimized = true
             notchState.isExpanded = false
         }
     }
@@ -258,23 +259,24 @@ struct NotchInlineYouTubePlayerView: View {
         let savedVideoID = videoID
         let savedTime = Int(playerState.currentTime)
 
-        // Pause and tear down the inline player first so there's no
-        // concurrent YouTube embed when the floating panel loads.
-        playerController.pause()
+        // Immediately stop the inline player's webview to prevent concurrent
+        // YouTube embeds when the floating panel loads its own WKWebView.
+        playerController.webView?.stopLoading()
+        playerController.webView = nil
         playerState.reset()
         withAnimation(.spring(duration: 0.4, bounce: 0.2)) {
-            notchState.isShowingInlineYouTubePlayer = false
-            notchState.inlineYouTubeVideoID = nil
-            notchState.inlineYouTubeMinimized = false
+            notchState.youtube.isShowingPlayer = false
+            notchState.youtube.videoID = nil
+            notchState.youtube.minimized = false
             notchState.activeDeckCard = .youtube
             if !notchState.isHovered {
                 notchState.isExpanded = false
             }
         }
 
-        // Open the floating video panel AFTER the inline player's WKWebView is fully
-        // torn down, so we never have two concurrent YouTube WKWebViews.
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+        // Open the floating video panel after the animation completes
+        // and SwiftUI tears down the inline WKWebView.
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.45) {
             VideoWindowManager.shared.showVideo(videoID: savedVideoID, startTime: savedTime)
         }
     }
@@ -283,14 +285,18 @@ struct NotchInlineYouTubePlayerView: View {
 private extension NotchDeckCard {
     var title: String {
         switch self {
-        case .home: return "Home"
-        case .weather: return "Weather"
-        case .youtube: return "YouTube"
-        case .media: return "Media"
-        case .pomodoro: return "Focus"
-        case .clipboard: return "Clipboard"
-        case .calendar: return "Calendar"
-        case .fileShelf: return "File Shelf"
+        case .home: return NSLocalizedString("nav.home", comment: "")
+        case .weather: return NSLocalizedString("nav.weather", comment: "")
+        case .youtube: return NSLocalizedString("nav.youtube", comment: "")
+        case .media: return NSLocalizedString("nav.media", comment: "")
+        case .pomodoro: return NSLocalizedString("nav.focus", comment: "")
+        case .clipboard: return NSLocalizedString("nav.clipboard", comment: "")
+        case .calendar: return NSLocalizedString("nav.calendar", comment: "")
+        case .fileShelf: return NSLocalizedString("fileShelf.title", comment: "")
+        case .battery: return NSLocalizedString("nav.battery", comment: "")
+        case .shortcuts: return NSLocalizedString("nav.shortcuts", comment: "")
+        case .notifications: return NSLocalizedString("nav.activity", comment: "")
+        case .quickCapture: return NSLocalizedString("nav.capture", comment: "")
         }
     }
 
@@ -304,6 +310,10 @@ private extension NotchDeckCard {
         case .clipboard: return "doc.on.clipboard"
         case .calendar: return "calendar"
         case .fileShelf: return "tray.and.arrow.down.fill"
+        case .battery: return "battery.100percent"
+        case .shortcuts: return "wand.and.stars"
+        case .notifications: return "bell.badge"
+        case .quickCapture: return "pencil.and.list.clipboard"
         }
     }
 }

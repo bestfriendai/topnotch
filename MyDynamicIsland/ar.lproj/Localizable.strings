@@ -1,0 +1,265 @@
+/* Menu Bar */
+"menu.settings" = "إعدادات...";
+"menu.quit" = "قم بإنهاء Top Notch";
+"window.settings.title" = "Top Notch الإعدادات";
+
+/* Settings Sections */
+"settings.section.general" = "عام";
+"settings.section.appearance" = "مظهر";
+"settings.section.media" = "وسائط";
+"settings.section.hud" = "HUD الاستبدال";
+"settings.section.indicators" = "المؤشرات وردود الفعل";
+"settings.section.widgets" = "الحاجيات";
+"settings.section.intelligence" = "ذكاء";
+"settings.section.shortcuts" = "اختصارات لوحة المفاتيح";
+"settings.section.privacy" = "خصوصية";
+
+/* General Settings */
+"settings.general.launchAtLogin" = "إطلاق عند تسجيل الدخول";
+"settings.general.hoverToExpand" = "قم بالتمرير للتوسيع";
+"settings.general.autoCollapseDelay" = "تأخير الانهيار التلقائي";
+"settings.general.showInMenuBar" = "إظهار في شريط القوائم";
+
+/* Appearance Settings */
+"settings.appearance.theme" = "سمة";
+"settings.appearance.theme.auto" = "آلي";
+"settings.appearance.theme.light" = "ضوء";
+"settings.appearance.theme.dark" = "مظلم";
+"settings.appearance.accentColor" = "لون مميز";
+"color.blue" = "أزرق";
+"color.orange" = "Orange";
+"color.green" = "أخضر";
+"color.red" = "أحمر";
+"color.purple" = "أرجواني";
+"color.cyan" = "Cyan";
+
+/* Media Settings */
+"settings.media.nowPlaying" = "عناصر التحكم في التشغيل الآن";
+"settings.media.albumArtwork" = "عرض العمل الفني للألبوم";
+"settings.media.vinylSpin" = "الرسوم المتحركة الفينيل سبين";
+"settings.media.colorMatch" = "تطبيق مطابقة الألوان";
+
+/* HUD Settings */
+"settings.hud.replaceVolume" = "استبدال المجلد HUD";
+"settings.hud.replaceBrightness" = "استبدال السطوع HUD";
+"settings.hud.style" = "HUD النمط";
+"settings.hud.style.minimal" = "الحد الأدنى";
+"settings.hud.style.bar" = "حاجِز";
+"settings.hud.style.notched" = "حقق";
+
+/* Indicators Settings */
+"settings.indicators.battery" = "مؤشر البطارية";
+"settings.indicators.lockUnlock" = "مؤشر القفل/الفتح";
+"settings.indicators.chargingSound" = "صوت الشحن";
+"settings.indicators.haptic" = "ردود الفعل اللمسية";
+
+/* Widget Toggles */
+"widget.calendar" = "تقويم";
+"widget.weather" = "طقس";
+"widget.pomodoro" = "Pomodoro الموقت";
+"widget.clipboard" = "تاريخ الحافظة";
+"widget.youtube" = "YouTube اللاعب";
+"widget.battery" = "مراقب البطارية";
+"widget.shortcuts" = "مشغل الاختصارات";
+"widget.activityFeed" = "خلاصة النشاط";
+"widget.quickCapture" = "التقاط سريع";
+"widget.lyrics" = "كلمات متزامنة";
+
+/* Intelligence Settings */
+"settings.ai.onDevice" = "الذكاء الاصطناعي على الجهاز";
+"settings.ai.available" = "متاح";
+"settings.ai.requiresMacOS26" = "يتطلب نظام التشغيل ماك 26";
+"settings.ai.summarization" = "تلخيص الذكاء الاصطناعي";
+"settings.ai.claudeApiKey" = "Claude مفتاح واجهة برمجة التطبيقات";
+
+/* Keyboard Shortcuts */
+"shortcut.playPause" = "تشغيل / إيقاف مؤقت";
+"shortcut.previousTrack" = "المسار السابق";
+"shortcut.nextTrack" = "المسار التالي";
+"shortcut.volumeUpDown" = "رفع مستوى الصوت / خفض الصوت";
+"shortcut.openYouTube" = "افتح YouTube";
+
+/* Privacy Settings */
+"settings.privacy.clipboardMonitoring" = "مراقبة الحافظة";
+"settings.privacy.calendarAccess" = "الوصول إلى التقويم";
+"settings.privacy.analytics" = "التحليلات";
+"settings.privacy.showOnboarding" = "عرض الإعداد مرة أخرى";
+"settings.privacy.clearAllData" = "مسح كافة البيانات";
+
+/* Calendar Access Status */
+"access.granted" = "ممنوح";
+"access.fullAccess" = "الوصول الكامل";
+"access.writeOnly" = "اكتب فقط";
+"access.denied" = "رفض";
+"access.notGranted" = "غير ممنوحة";
+"access.unknown" = "مجهول";
+
+/* About Section */
+"about.appName" = "Top Notch";
+"about.version" = "الإصدار %@ (النسخة %@ )";
+"about.madeWith" = "صنعت بـ ❤️ لـ Mac";
+"about.website" = "موقع إلكتروني";
+"about.support" = "يدعم";
+"about.privacy" = "خصوصية";
+
+/* Media Player */
+"media.noMediaPlaying" = "لا يوجد تشغيل للوسائط";
+"media.playMusicPrompt" = "قم بتشغيل الموسيقى أو الوسائط لرؤية عناصر التحكم هنا";
+"media.notPlaying" = "لا يلعب";
+"media.unknownArtist" = "فنان غير معروف";
+"media.noMedia" = "لا وسائل الإعلام";
+"media.music" = "موسيقى";
+"media.podcasts" = "Podcasts";
+"media.spotify" = "Spotify";
+"media.playingFrom" = "التشغيل من %@";
+
+/* YouTube Player */
+"youtube.title" = "YouTube";
+"youtube.pasteUrl" = "لصق عنوان URL...";
+"youtube.browse" = "تصفح";
+"youtube.play" = "يلعب";
+"youtube.paste" = "لصق";
+"youtube.pasteAndPlay" = "لصق والتشغيل";
+"youtube.playingInWindow" = "اللعب في النافذة";
+"youtube.paused" = "متوقف مؤقتًا";
+"youtube.show" = "يعرض";
+"youtube.pinned" = "مثبت";
+"youtube.recentlyPlayed" = "لعبت مؤخرا";
+"youtube.linkDetected" = "YouTube تم اكتشاف الرابط";
+"youtube.videoUnavailable" = "الفيديو غير متاح";
+"youtube.tryAnother" = "حاول آخر";
+"youtube.openInSafari" = "مفتوح في Safari";
+"youtube.closePlayer" = "إغلاق المشغل";
+"youtube.buffering" = "التخزين المؤقت";
+"youtube.playing" = "اللعب";
+"youtube.openVideo" = "افتح الفيديو YouTube… ⌘⇧Y";
+"youtube.playDetected" = "تشغيل الفيديو الذي تم اكتشافه";
+
+/* Weather */
+"weather.title" = "طقس";
+"weather.high" = "__ص13__";
+"weather.low" = "__ص14__";
+"weather.enterCity" = "أدخل مدينة لتحميل الطقس";
+"weather.invalidCity" = "اسم مدينة غير صالح";
+"weather.cityNotFound" = "المدينة غير موجودة";
+"weather.unavailable" = "الطقس غير متاح";
+"weather.condition.clear" = "سماء صافية";
+"weather.condition.partlyCloudy" = "غائم جزئياً";
+"weather.condition.fog" = "ضباب";
+"weather.condition.drizzle" = "رذاذ";
+"weather.condition.rain" = "مطر";
+"weather.condition.snow" = "ثلج";
+"weather.condition.rainShowers" = "زخات مطر";
+"weather.condition.snowShowers" = "زخات ثلج";
+"weather.condition.thunderstorm" = "عاصفة رعدية";
+"weather.condition.updating" = "تحديث الظروف";
+
+/* Calendar */
+"calendar.todaysEvents" = "أحداث اليوم";
+"calendar.noEvents" = "لا توجد أحداث اليوم";
+"calendar.noUpcoming" = "لا توجد أحداث قادمة";
+"calendar.openCalendar" = "افتح التقويم";
+
+/* Pomodoro */
+"pomodoro.title" = "مؤقت التركيز";
+"pomodoro.focus" = "ركز";
+"pomodoro.session" = "الجلسة %d من %d";
+"pomodoro.minutes" = "%d دقيقة";
+"pomodoro.readyToFocus" = "\U0001F3AF جاهز للتركيز";
+"pomodoro.takeABreak" = "\u2615 خذ استراحة";
+"pomodoro.deepFocus" = "\U0001F3AF تركيز عميق";
+
+/* Clipboard */
+"clipboard.title" = "تاريخ الحافظة";
+"clipboard.items" = "%d عنصر";
+"clipboard.nothingCopied" = "لم يتم نسخ أي شيء حتى الآن";
+"clipboard.copyPrompt" = "انسخ النص أو عناوين URL لرؤيتها هنا";
+"clipboard.copySomething" = "انسخ شيئًا لرؤيته هنا";
+"clipboard.clearAll" = "مسح الكل";
+"clipboard.copied" = "منسوخ!";
+"clipboard.copy" = "ينسخ";
+"clipboard.more" = "+%d المزيد";
+
+/* Battery */
+"battery.title" = "بطارية";
+"battery.noDevices" = "لم يتم العثور على أي أجهزة";
+"battery.charging" = "الشحن";
+"battery.unplugged" = "موصول";
+"battery.remaining" = "• %@ المتبقي";
+
+/* Shortcuts */
+"shortcuts.title" = "الاختصارات";
+"shortcuts.noShortcuts" = "لم يتم العثور على اختصارات";
+
+/* Quick Capture */
+"capture.title" = "التقاط سريع";
+"capture.notesAppear" = "تظهر الملاحظات هنا";
+
+/* Activity Feed */
+"activity.title" = "نشاط";
+
+/* System States */
+"system.locked" = "مغلق";
+"system.macLocked" = "Mac مغلق";
+"system.touchIdPrompt" = "Touch ID أو أدخل كلمة المرور";
+"system.unlocked" = "مفتوح";
+"system.welcomeBack" = "مرحبًا بعودتك!";
+"system.focus" = "ركز";
+"system.active" = "نشيط";
+
+/* Widget Navigation */
+"nav.home" = "بيت";
+"nav.weather" = "طقس";
+"nav.youtube" = "YouTube";
+"nav.media" = "وسائط";
+"nav.focus" = "ركز";
+"nav.clipboard" = "الحافظة";
+"nav.calendar" = "تقويم";
+"nav.battery" = "بطارية";
+"nav.shortcuts" = "الاختصارات";
+"nav.activity" = "نشاط";
+"nav.capture" = "يأسر";
+
+
+/* Language Settings */
+"settings.appearance.language" = "لغة";
+"settings.language.restartTitle" = "إعادة التشغيل مطلوبة";
+"settings.language.restartMessage" = "يحتاج Top Notch إلى إعادة التشغيل لتطبيق اللغة الجديدة.";
+"settings.language.restartNow" = "أعد التشغيل الآن";
+"settings.language.later" = "لاحقاً";
+
+/* Additional Strings */
+"clipboard.edit" = "يحرر";
+"media.controlsTooltip" = "عناصر التحكم في الوسائط (الاختصارات العامة)";
+"youtube.watchPageMode" = "وضع صفحة المشاهدة";
+"youtube.playingFromYT" = "اللعب من YouTube";
+"youtube.urlPlaceholder" = "الصق رابط YouTube أو معرّف الفيديو...";
+
+/* HUD */
+"hud.mute" = "كتم الصوت";
+
+/* File Shelf */
+"fileShelf.title" = "رف الملفات";
+"fileShelf.clear" = "مسح";
+"fileShelf.dropFilesHere" = "أسقط الملفات هنا";
+"fileShelf.releaseToAdd" = "حرر للإضافة";
+
+/* Calendar */
+"calendar.allDay" = "طوال اليوم";
+
+/* Clipboard */
+"clipboard.itemCount" = "%d عناصر";
+"clipboard.moreItems" = "+%d أخرى";
+
+/* Tooltips */
+"tooltip.play" = "تشغيل";
+"tooltip.pause" = "إيقاف مؤقت";
+"tooltip.mute" = "كتم الصوت";
+"tooltip.unmute" = "إلغاء كتم الصوت";
+"tooltip.close" = "إغلاق";
+"tooltip.playbackSpeed" = "سرعة التشغيل";
+
+/* Time Ago */
+"time.now" = "الآن";
+"time.minutesAgo" = "قبل %d دقيقة";
+"time.hoursAgo" = "قبل %d ساعة";

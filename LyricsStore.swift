@@ -15,7 +15,7 @@ final class LyricsStore: ObservableObject {
     @Published var currentLineIndex: Int = 0
     @Published var isLoading = false
     @Published var hasLyrics = false
-    @Published var isEnabled: Bool = UserDefaults.standard.bool(forKey: "lyricsEnabled") {
+    @Published var isEnabled: Bool = (UserDefaults.standard.object(forKey: "lyricsEnabled") as? Bool) ?? true {
         didSet { UserDefaults.standard.set(isEnabled, forKey: "lyricsEnabled") }
     }
     
@@ -39,27 +39,16 @@ final class LyricsStore: ObservableObject {
         
         isLoading = true
         defer { isLoading = false }
-        
-        // Build URL with percent encoding
-        var components = URLComponents(string: "https://lrclib.net/api/get")!
-        components.queryItems = [
-            URLQueryItem(name: "artist_name", value: artist),
-            URLQueryItem(name: "track_name", value: title),
-            URLQueryItem(name: "album_name", value: album)
-        ]
-        guard let url = components.url else { return }
-        
-        guard let (data, response) = try? await URLSession.shared.data(from: url),
-              let httpResponse = response as? HTTPURLResponse,
-              httpResponse.statusCode == 200 else {
-            lines = []
-            hasLyrics = false
-            return
+
+        // Try with album first; if no match, retry without album (broader search)
+        let syncedLyrics: String?
+        if let found = await fetchSyncedLyrics(artist: artist, title: title, album: album) {
+            syncedLyrics = found
+        } else {
+            syncedLyrics = await fetchSyncedLyrics(artist: artist, title: title, album: nil)
         }
-        
-        guard let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
-              let syncedLyrics = json["syncedLyrics"] as? String,
-              !syncedLyrics.isEmpty else {
+
+        guard let syncedLyrics else {
             lines = []
             hasLyrics = false
             return
@@ -69,7 +58,10 @@ final class LyricsStore: ObservableObject {
         cache[key] = parsed
         // Keep cache under 20 entries
         if cache.count > 20 {
-            cache.removeValue(forKey: cache.keys.first!)
+            // Evict a random entry since Dictionary is unordered
+            if let keyToRemove = cache.keys.randomElement() {
+                cache.removeValue(forKey: keyToRemove)
+            }
         }
         lines = parsed
         hasLyrics = !parsed.isEmpty
@@ -92,6 +84,27 @@ final class LyricsStore: ObservableObject {
         }
     }
     
+    private func fetchSyncedLyrics(artist: String, title: String, album: String?) async -> String? {
+        var components = URLComponents(string: "https://lrclib.net/api/get")!
+        var queryItems = [
+            URLQueryItem(name: "artist_name", value: artist),
+            URLQueryItem(name: "track_name", value: title)
+        ]
+        if let album, !album.isEmpty {
+            queryItems.append(URLQueryItem(name: "album_name", value: album))
+        }
+        components.queryItems = queryItems
+        guard let url = components.url else { return nil }
+
+        guard let (data, response) = try? await URLSession.shared.data(from: url),
+              let httpResponse = response as? HTTPURLResponse,
+              httpResponse.statusCode == 200,
+              let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+              let synced = json["syncedLyrics"] as? String,
+              !synced.isEmpty else { return nil }
+        return synced
+    }
+
     func clearLyrics() {
         lines = []
         hasLyrics = false

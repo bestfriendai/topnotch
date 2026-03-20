@@ -1,0 +1,265 @@
+/* Menu Bar */
+"menu.settings" = "Ρυθμίσεις...";
+"menu.quit" = "Έξοδος Top Notch";
+"window.settings.title" = "Top Notch Ρυθμίσεις";
+
+/* Settings Sections */
+"settings.section.general" = "ΓΕΝΙΚΟΣ";
+"settings.section.appearance" = "ΕΜΦΑΝΙΣΗ";
+"settings.section.media" = "ΜΕΣΑ ΕΝΗΜΕΡΩΣΗΣ";
+"settings.section.hud" = "HUD ΑΝΤΙΚΑΤΑΣΤΑΣΗ";
+"settings.section.indicators" = "ΔΕΙΚΤΕΣ & ΑΝΑΔΡΟΜΗ";
+"settings.section.widgets" = "WIDGETS";
+"settings.section.intelligence" = "ΝΟΗΜΟΣΥΝΗ";
+"settings.section.shortcuts" = "ΣΥΝΤΟΜΟΓΡΑΦΕΣ ΠΛΗΚΤΡΟΛΟΓΙΟΥ";
+"settings.section.privacy" = "ΜΥΣΤΙΚΟΤΗΤΑ";
+
+/* General Settings */
+"settings.general.launchAtLogin" = "Εκκίνηση στο Login";
+"settings.general.hoverToExpand" = "Τοποθετήστε το δείκτη του ποντικιού για επέκταση";
+"settings.general.autoCollapseDelay" = "Καθυστέρηση αυτόματης σύμπτυξης";
+"settings.general.showInMenuBar" = "Εμφάνιση στη γραμμή μενού";
+
+/* Appearance Settings */
+"settings.appearance.theme" = "Θέμα";
+"settings.appearance.theme.auto" = "Αυτο";
+"settings.appearance.theme.light" = "Φως";
+"settings.appearance.theme.dark" = "Σκοτάδι";
+"settings.appearance.accentColor" = "Χρώμα έμφασης";
+"color.blue" = "Μπλε";
+"color.orange" = "Orange";
+"color.green" = "Πράσινος";
+"color.red" = "Κόκκινος";
+"color.purple" = "Μωβ";
+"color.cyan" = "Cyan";
+
+/* Media Settings */
+"settings.media.nowPlaying" = "Αναπαραγωγή χειριστηρίων τώρα";
+"settings.media.albumArtwork" = "Εμφάνιση καλλιτεχνικού άλμπουμ";
+"settings.media.vinylSpin" = "Vinyl Spin Animation";
+"settings.media.colorMatch" = "Εφαρμογή Color Match";
+
+/* HUD Settings */
+"settings.hud.replaceVolume" = "Αντικατάσταση τόμου HUD";
+"settings.hud.replaceBrightness" = "Αντικατάσταση φωτεινότητας HUD";
+"settings.hud.style" = "HUD Στυλ";
+"settings.hud.style.minimal" = "Ελάχιστος";
+"settings.hud.style.bar" = "Μπαρ";
+"settings.hud.style.notched" = "Οδοντωτός";
+
+/* Indicators Settings */
+"settings.indicators.battery" = "Ένδειξη μπαταρίας";
+"settings.indicators.lockUnlock" = "Ένδειξη κλειδώματος/ξεκλειδώματος";
+"settings.indicators.chargingSound" = "Ήχος φόρτισης";
+"settings.indicators.haptic" = "Απτική Ανάδραση";
+
+/* Widget Toggles */
+"widget.calendar" = "Ημερολόγιο";
+"widget.weather" = "Καιρός";
+"widget.pomodoro" = "Pomodoro Χρονόμετρο";
+"widget.clipboard" = "Ιστορικό πρόχειρου";
+"widget.youtube" = "YouTube Παίκτης";
+"widget.battery" = "Οθόνη μπαταρίας";
+"widget.shortcuts" = "Πρόγραμμα εκκίνησης συντομεύσεων";
+"widget.activityFeed" = "Ροή δραστηριότητας";
+"widget.quickCapture" = "Γρήγορη λήψη";
+"widget.lyrics" = "Συγχρονισμένοι στίχοι";
+
+/* Intelligence Settings */
+"settings.ai.onDevice" = "AI στη συσκευή";
+"settings.ai.available" = "Διαθέσιμος";
+"settings.ai.requiresMacOS26" = "Απαιτεί macOS 26";
+"settings.ai.summarization" = "AI Σύνοψη";
+"settings.ai.claudeApiKey" = "Claude Κλειδί API";
+
+/* Keyboard Shortcuts */
+"shortcut.playPause" = "Αναπαραγωγή / Παύση";
+"shortcut.previousTrack" = "Προηγούμενο κομμάτι";
+"shortcut.nextTrack" = "Επόμενο κομμάτι";
+"shortcut.volumeUpDown" = "Αύξηση/Μείωση έντασης";
+"shortcut.openYouTube" = "Άνοιγμα YouTube";
+
+/* Privacy Settings */
+"settings.privacy.clipboardMonitoring" = "Παρακολούθηση πρόχειρου";
+"settings.privacy.calendarAccess" = "Πρόσβαση στο Ημερολόγιο";
+"settings.privacy.analytics" = "Analytics";
+"settings.privacy.showOnboarding" = "Εμφάνιση Ενσωμάτωσης ξανά";
+"settings.privacy.clearAllData" = "Εκκαθάριση όλων των δεδομένων";
+
+/* Calendar Access Status */
+"access.granted" = "Χορηγείται";
+"access.fullAccess" = "Πλήρης πρόσβαση";
+"access.writeOnly" = "Γράψτε μόνο";
+"access.denied" = "Αρνήθηκε";
+"access.notGranted" = "Δεν Χορηγείται";
+"access.unknown" = "Αγνωστος";
+
+/* About Section */
+"about.appName" = "Top Notch";
+"about.version" = "Έκδοση %@ (Δημιουργία %@)";
+"about.madeWith" = "Φτιαγμένο με ❤️ για Mac";
+"about.website" = "Δικτυακός τόπος";
+"about.support" = "Υποστήριξη";
+"about.privacy" = "Μυστικότητα";
+
+/* Media Player */
+"media.noMediaPlaying" = "Χωρίς αναπαραγωγή πολυμέσων";
+"media.playMusicPrompt" = "Παίξτε μουσική ή πολυμέσα για να δείτε τα στοιχεία ελέγχου εδώ";
+"media.notPlaying" = "Δεν Παίζει";
+"media.unknownArtist" = "Άγνωστος καλλιτέχνης";
+"media.noMedia" = "Όχι μέσα";
+"media.music" = "Μουσική";
+"media.podcasts" = "Podcasts";
+"media.spotify" = "Spotify";
+"media.playingFrom" = "Παίζει από %@";
+
+/* YouTube Player */
+"youtube.title" = "YouTube";
+"youtube.pasteUrl" = "Επικόλληση διεύθυνσης URL...";
+"youtube.browse" = "Ξεφυλλίζω";
+"youtube.play" = "Παιχνίδι";
+"youtube.paste" = "Πάστα";
+"youtube.pasteAndPlay" = "Επικόλληση & αναπαραγωγή";
+"youtube.playingInWindow" = "Παίζει στο παράθυρο";
+"youtube.paused" = "Σε παύση";
+"youtube.show" = "Επίδειξη";
+"youtube.pinned" = "Καρφιτσωμένο";
+"youtube.recentlyPlayed" = "ΠΑΙΧΘΗΚΕ ΠΡΟΣΦΑΤΑ";
+"youtube.linkDetected" = "YouTube Εντοπίστηκε σύνδεσμος";
+"youtube.videoUnavailable" = "Το βίντεο δεν είναι διαθέσιμο";
+"youtube.tryAnother" = "Δοκιμάστε άλλο";
+"youtube.openInSafari" = "Άνοιγμα σε Safari";
+"youtube.closePlayer" = "Κλείσιμο προγράμματος αναπαραγωγής";
+"youtube.buffering" = "Προσωρινή αποθήκευση";
+"youtube.playing" = "Παιχνίδι";
+"youtube.openVideo" = "Άνοιγμα YouTube βίντεο… ⌘⇧Y";
+"youtube.playDetected" = "Αναπαραγωγή βίντεο που εντοπίστηκε";
+
+/* Weather */
+"weather.title" = "Καιρός";
+"weather.high" = "H:";
+"weather.low" = "L:";
+"weather.enterCity" = "Εισαγάγετε μια πόλη για φόρτωση καιρού";
+"weather.invalidCity" = "Μη έγκυρο όνομα πόλης";
+"weather.cityNotFound" = "Η πόλη δεν βρέθηκε";
+"weather.unavailable" = "Ο καιρός μη διαθέσιμος";
+"weather.condition.clear" = "Καθαρός ουρανός";
+"weather.condition.partlyCloudy" = "Μερικώς συννεφιασμένος";
+"weather.condition.fog" = "Ομίχλη";
+"weather.condition.drizzle" = "Ψιχάλα";
+"weather.condition.rain" = "Βροχή";
+"weather.condition.snow" = "Χιόνι";
+"weather.condition.rainShowers" = "Βροχοπτώσεις";
+"weather.condition.snowShowers" = "Χιονοπτώσεις";
+"weather.condition.thunderstorm" = "Καταιγίδα";
+"weather.condition.updating" = "Οι συνθήκες ενημερώνονται";
+
+/* Calendar */
+"calendar.todaysEvents" = "Οι σημερινές εκδηλώσεις";
+"calendar.noEvents" = "Δεν υπάρχουν εκδηλώσεις σήμερα";
+"calendar.noUpcoming" = "Δεν υπάρχουν επερχόμενες εκδηλώσεις";
+"calendar.openCalendar" = "Ανοίξτε το Ημερολόγιο";
+
+/* Pomodoro */
+"pomodoro.title" = "Χρονοδιακόπτης εστίασης";
+"pomodoro.focus" = "Εστία";
+"pomodoro.session" = "Συνεδρία %d από %d";
+"pomodoro.minutes" = "%d min";
+"pomodoro.readyToFocus" = "\U0001F3AF Έτοιμος για συγκέντρωση";
+"pomodoro.takeABreak" = "\u2615 Κάντε ένα διάλειμμα";
+"pomodoro.deepFocus" = "\U0001F3AF Βαθιά συγκέντρωση";
+
+/* Clipboard */
+"clipboard.title" = "Ιστορικό πρόχειρου";
+"clipboard.items" = "%d είδη";
+"clipboard.nothingCopied" = "Δεν έχει αντιγραφεί τίποτα ακόμα";
+"clipboard.copyPrompt" = "Αντιγράψτε κείμενο ή διευθύνσεις URL για να τα δείτε εδώ";
+"clipboard.copySomething" = "Αντιγράψτε κάτι για να το δείτε εδώ";
+"clipboard.clearAll" = "Εκκαθάριση όλων";
+"clipboard.copied" = "Αντιγράφηκε!";
+"clipboard.copy" = "Αντίγραφο";
+"clipboard.more" = "+ %d περισσότερα";
+
+/* Battery */
+"battery.title" = "Μπαταρία";
+"battery.noDevices" = "Δεν βρέθηκαν συσκευές";
+"battery.charging" = "Φόρτιση";
+"battery.unplugged" = "Αποσυνδεδεμένο";
+"battery.remaining" = "• Απομένουν %@";
+
+/* Shortcuts */
+"shortcuts.title" = "Συντομεύσεις";
+"shortcuts.noShortcuts" = "Δεν βρέθηκαν συντομεύσεις";
+
+/* Quick Capture */
+"capture.title" = "Γρήγορη λήψη";
+"capture.notesAppear" = "Οι σημειώσεις εμφανίζονται εδώ";
+
+/* Activity Feed */
+"activity.title" = "Δραστηριότητα";
+
+/* System States */
+"system.locked" = "Κλειδωμένο";
+"system.macLocked" = "Mac Κλειδωμένο";
+"system.touchIdPrompt" = "Touch ID ή πληκτρολογήστε κωδικό πρόσβασης";
+"system.unlocked" = "Ακλείδωτος";
+"system.welcomeBack" = "Καλώς ήρθατε πίσω!";
+"system.focus" = "Εστία";
+"system.active" = "Ενεργός";
+
+/* Widget Navigation */
+"nav.home" = "Σπίτι";
+"nav.weather" = "Καιρός";
+"nav.youtube" = "YouTube";
+"nav.media" = "Μέσα ενημέρωσης";
+"nav.focus" = "Εστία";
+"nav.clipboard" = "Πρόχειρο";
+"nav.calendar" = "Ημερολόγιο";
+"nav.battery" = "Μπαταρία";
+"nav.shortcuts" = "Συντομεύσεις";
+"nav.activity" = "Δραστηριότητα";
+"nav.capture" = "Σύλληψη";
+
+
+/* Language Settings */
+"settings.appearance.language" = "Γλώσσα";
+"settings.language.restartTitle" = "Απαιτείται επανεκκίνηση";
+"settings.language.restartMessage" = "Το Top Notch πρέπει να κάνει επανεκκίνηση για να εφαρμόσει τη νέα γλώσσα.";
+"settings.language.restartNow" = "Κάντε επανεκκίνηση τώρα";
+"settings.language.later" = "Αργότερα";
+
+/* Additional Strings */
+"clipboard.edit" = "Εκδίδω";
+"media.controlsTooltip" = "Στοιχεία ελέγχου πολυμέσων (καθολικές συντομεύσεις)";
+"youtube.watchPageMode" = "Λειτουργία σελίδας παρακολούθησης";
+"youtube.playingFromYT" = "Παίζει από YouTube";
+"youtube.urlPlaceholder" = "Επικολλήστε URL YouTube ή αναγνωριστικό βίντεο...";
+
+/* HUD */
+"hud.mute" = "Σίγαση";
+
+/* File Shelf */
+"fileShelf.title" = "Ράφι αρχείων";
+"fileShelf.clear" = "Εκκαθάριση";
+"fileShelf.dropFilesHere" = "Σύρετε αρχεία εδώ";
+"fileShelf.releaseToAdd" = "Αφήστε για προσθήκη";
+
+/* Calendar */
+"calendar.allDay" = "Ολοήμερο";
+
+/* Clipboard */
+"clipboard.itemCount" = "%d αντικείμενα";
+"clipboard.moreItems" = "+%d ακόμα";
+
+/* Tooltips */
+"tooltip.play" = "Αναπαραγωγή";
+"tooltip.pause" = "Παύση";
+"tooltip.mute" = "Σίγαση";
+"tooltip.unmute" = "Κατάργηση σίγασης";
+"tooltip.close" = "Κλείσιμο";
+"tooltip.playbackSpeed" = "Ταχύτητα αναπαραγωγής";
+
+/* Time Ago */
+"time.now" = "τώρα";
+"time.minutesAgo" = "%dλ πριν";
+"time.hoursAgo" = "%dω πριν";

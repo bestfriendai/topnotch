@@ -1,0 +1,265 @@
+/* Menu Bar */
+"menu.settings" = "設定...";
+"menu.quit" = "Top Notchを終了";
+"window.settings.title" = "Top Notch 設定";
+
+/* Settings Sections */
+"settings.section.general" = "一般";
+"settings.section.appearance" = "外観";
+"settings.section.media" = "メディア";
+"settings.section.hud" = "HUDの置き換え";
+"settings.section.indicators" = "インジケーターとフィードバック";
+"settings.section.widgets" = "ウィジェット";
+"settings.section.intelligence" = "インテリジェンス";
+"settings.section.shortcuts" = "キーボードショートカット";
+"settings.section.privacy" = "プライバシー";
+
+/* General Settings */
+"settings.general.launchAtLogin" = "ログイン時に起動";
+"settings.general.hoverToExpand" = "ホバーで展開";
+"settings.general.autoCollapseDelay" = "自動折りたたみ遅延";
+"settings.general.showInMenuBar" = "メニューバーに表示";
+
+/* Appearance Settings */
+"settings.appearance.theme" = "テーマ";
+"settings.appearance.theme.auto" = "自動";
+"settings.appearance.theme.light" = "ライト";
+"settings.appearance.theme.dark" = "ダーク";
+"settings.appearance.accentColor" = "アクセントカラー";
+"color.blue" = "ブルー";
+"color.orange" = "オレンジ";
+"color.green" = "グリーン";
+"color.red" = "レッド";
+"color.purple" = "パープル";
+"color.cyan" = "シアン";
+
+/* Media Settings */
+"settings.media.nowPlaying" = "再生中のコントロール";
+"settings.media.albumArtwork" = "アルバムアートワークを表示";
+"settings.media.vinylSpin" = "レコード回転アニメーション";
+"settings.media.colorMatch" = "アプリの色に合わせる";
+
+/* HUD Settings */
+"settings.hud.replaceVolume" = "音量HUDを置き換え";
+"settings.hud.replaceBrightness" = "輝度HUDを置き換え";
+"settings.hud.style" = "HUDスタイル";
+"settings.hud.style.minimal" = "ミニマル";
+"settings.hud.style.bar" = "バー";
+"settings.hud.style.notched" = "ノッチ付き";
+
+/* Indicators Settings */
+"settings.indicators.battery" = "バッテリーインジケーター";
+"settings.indicators.lockUnlock" = "ロック/ロック解除インジケーター";
+"settings.indicators.chargingSound" = "充電音";
+"settings.indicators.haptic" = "触覚フィードバック";
+
+/* Widget Toggles */
+"widget.calendar" = "カレンダー";
+"widget.weather" = "天気";
+"widget.pomodoro" = "Pomodoroタイマー";
+"widget.clipboard" = "クリップボード履歴";
+"widget.youtube" = "YouTubeプレイヤー";
+"widget.battery" = "バッテリーモニター";
+"widget.shortcuts" = "ショートカットランチャー";
+"widget.activityFeed" = "アクティビティフィード";
+"widget.quickCapture" = "クイックキャプチャ";
+"widget.lyrics" = "同期歌詞";
+
+/* Intelligence Settings */
+"settings.ai.onDevice" = "オンデバイスAI";
+"settings.ai.available" = "利用可能";
+"settings.ai.requiresMacOS26" = "macOS 26が必要";
+"settings.ai.summarization" = "AI要約";
+"settings.ai.claudeApiKey" = "Claude APIキー";
+
+/* Keyboard Shortcuts */
+"shortcut.playPause" = "再生 / 一時停止";
+"shortcut.previousTrack" = "前のトラック";
+"shortcut.nextTrack" = "次のトラック";
+"shortcut.volumeUpDown" = "音量アップ / ダウン";
+"shortcut.openYouTube" = "YouTubeを開く";
+
+/* Privacy Settings */
+"settings.privacy.clipboardMonitoring" = "クリップボードの監視";
+"settings.privacy.calendarAccess" = "カレンダーへのアクセス";
+"settings.privacy.analytics" = "分析";
+"settings.privacy.showOnboarding" = "オンボーディングを再度表示";
+"settings.privacy.clearAllData" = "すべてのデータを消去";
+
+/* Calendar Access Status */
+"access.granted" = "許可済み";
+"access.fullAccess" = "フルアクセス";
+"access.writeOnly" = "書き込みのみ";
+"access.denied" = "拒否済み";
+"access.notGranted" = "未許可";
+"access.unknown" = "不明";
+
+/* About Section */
+"about.appName" = "Top Notch";
+"about.version" = "バージョン %@ (ビルド %@)";
+"about.madeWith" = "Macのために❤️を込めて作られました";
+"about.website" = "ウェブサイト";
+"about.support" = "サポート";
+"about.privacy" = "プライバシー";
+
+/* Media Player */
+"media.noMediaPlaying" = "メディアは再生されていません";
+"media.playMusicPrompt" = "音楽またはメディアを再生すると、ここにコントロールが表示されます";
+"media.notPlaying" = "再生されていません";
+"media.unknownArtist" = "不明なアーティスト";
+"media.noMedia" = "メディアなし";
+"media.music" = "ミュージック";
+"media.podcasts" = "ポッドキャスト";
+"media.spotify" = "Spotify";
+"media.playingFrom" = "%@から再生中";
+
+/* YouTube Player */
+"youtube.title" = "YouTube";
+"youtube.pasteUrl" = "URLをペースト...";
+"youtube.browse" = "ブラウズ";
+"youtube.play" = "再生";
+"youtube.paste" = "ペースト";
+"youtube.pasteAndPlay" = "ペーストして再生";
+"youtube.playingInWindow" = "ウィンドウで再生中";
+"youtube.paused" = "一時停止中";
+"youtube.show" = "表示";
+"youtube.pinned" = "ピン留め済み";
+"youtube.recentlyPlayed" = "最近再生した項目";
+"youtube.linkDetected" = "YouTubeリンクを検出";
+"youtube.videoUnavailable" = "動画は利用できません";
+"youtube.tryAnother" = "別のものを試す";
+"youtube.openInSafari" = "Safariで開く";
+"youtube.closePlayer" = "プレーヤーを閉じる";
+"youtube.buffering" = "バッファリング中";
+"youtube.playing" = "再生中";
+"youtube.openVideo" = "YouTube動画を開く… ⌘⇧Y";
+"youtube.playDetected" = "検出された動画を再生";
+
+/* Weather */
+"weather.title" = "天気";
+"weather.high" = "最高:";
+"weather.low" = "最低:";
+"weather.enterCity" = "都市を入力";
+"weather.invalidCity" = "無効な都市名";
+"weather.cityNotFound" = "都市が見つかりません";
+"weather.unavailable" = "天気情報が利用できません";
+"weather.condition.clear" = "晴れ";
+"weather.condition.partlyCloudy" = "一部曇り";
+"weather.condition.fog" = "霧";
+"weather.condition.drizzle" = "霧雨";
+"weather.condition.rain" = "雨";
+"weather.condition.snow" = "雪";
+"weather.condition.rainShowers" = "にわか雨";
+"weather.condition.snowShowers" = "にわか雪";
+"weather.condition.thunderstorm" = "雷雨";
+"weather.condition.updating" = "状況を更新中";
+
+/* Calendar */
+"calendar.todaysEvents" = "今日のイベント";
+"calendar.noEvents" = "今日のイベントはありません";
+"calendar.noUpcoming" = "今後のイベントはありません";
+"calendar.openCalendar" = "カレンダーを開く";
+
+/* Pomodoro */
+"pomodoro.title" = "集中タイマー";
+"pomodoro.focus" = "集中";
+"pomodoro.session" = "%d/%d セッション";
+"pomodoro.minutes" = "%d分";
+"pomodoro.readyToFocus" = "\U0001F3AF 集中準備完了";
+"pomodoro.takeABreak" = "\u2615 休憩する";
+"pomodoro.deepFocus" = "\U0001F3AF 集中モード";
+
+/* Clipboard */
+"clipboard.title" = "クリップボード履歴";
+"clipboard.items" = "%d項目";
+"clipboard.nothingCopied" = "まだ何もコピーされていません";
+"clipboard.copyPrompt" = "テキストやURLをコピーするとここに表示されます";
+"clipboard.copySomething" = "何かコピーするとここに表示されます";
+"clipboard.clearAll" = "すべてクリア";
+"clipboard.copied" = "コピーしました！";
+"clipboard.copy" = "コピー";
+"clipboard.more" = "その他+%d件";
+
+/* Battery */
+"battery.title" = "バッテリー";
+"battery.noDevices" = "デバイスが見つかりません";
+"battery.charging" = "充電中";
+"battery.unplugged" = "未接続";
+"battery.remaining" = "• 残り%@";
+
+/* Shortcuts */
+"shortcuts.title" = "ショートカット";
+"shortcuts.noShortcuts" = "ショートカットが見つかりません";
+
+/* Quick Capture */
+"capture.title" = "クイックキャプチャ";
+"capture.notesAppear" = "メモはここに表示されます";
+
+/* Activity Feed */
+"activity.title" = "アクティビティ";
+
+/* System States */
+"system.locked" = "ロック済み";
+"system.macLocked" = "Macはロックされています";
+"system.touchIdPrompt" = "Touch IDまたはパスワードを入力";
+"system.unlocked" = "ロック解除済み";
+"system.welcomeBack" = "おかえりなさい！";
+"system.focus" = "集中";
+"system.active" = "アクティブ";
+
+/* Widget Navigation */
+"nav.home" = "ホーム";
+"nav.weather" = "天気";
+"nav.youtube" = "YouTube";
+"nav.media" = "メディア";
+"nav.focus" = "集中";
+"nav.clipboard" = "クリップボード";
+"nav.calendar" = "カレンダー";
+"nav.battery" = "バッテリー";
+"nav.shortcuts" = "ショートカット";
+"nav.activity" = "アクティビティ";
+"nav.capture" = "キャプチャ";
+
+
+/* Language Settings */
+"settings.appearance.language" = "言語";
+"settings.language.restartTitle" = "再起動が必要です";
+"settings.language.restartMessage" = "新しい言語を適用するには、Top Notchを再起動する必要があります。";
+"settings.language.restartNow" = "今すぐ再起動";
+"settings.language.later" = "後で";
+
+/* Additional Strings */
+"clipboard.edit" = "編集";
+"media.controlsTooltip" = "メディアコントロール (グローバルショートカット)";
+"youtube.watchPageMode" = "視聴ページモード";
+"youtube.playingFromYT" = "YouTubeから再生中";
+"youtube.urlPlaceholder" = "YouTubeのURLまたは動画IDを貼り付け...";
+
+/* HUD */
+"hud.mute" = "ミュート";
+
+/* File Shelf */
+"fileShelf.title" = "ファイルシェルフ";
+"fileShelf.clear" = "クリア";
+"fileShelf.dropFilesHere" = "ファイルをここにドロップ";
+"fileShelf.releaseToAdd" = "放して追加";
+
+/* Calendar */
+"calendar.allDay" = "終日";
+
+/* Clipboard */
+"clipboard.itemCount" = "%d項目";
+"clipboard.moreItems" = "+%d件";
+
+/* Tooltips */
+"tooltip.play" = "再生";
+"tooltip.pause" = "一時停止";
+"tooltip.mute" = "ミュート";
+"tooltip.unmute" = "ミュート解除";
+"tooltip.close" = "閉じる";
+"tooltip.playbackSpeed" = "再生速度";
+
+/* Time Ago */
+"time.now" = "今";
+"time.minutesAgo" = "%d分前";
+"time.hoursAgo" = "%d時間前";

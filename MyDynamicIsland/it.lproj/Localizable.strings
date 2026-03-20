@@ -1,0 +1,265 @@
+/* Menu Bar */
+"menu.settings" = "Impostazioni...";
+"menu.quit" = "Esci da Top Notch";
+"window.settings.title" = "Impostazioni di Top Notch";
+
+/* Settings Sections */
+"settings.section.general" = "GENERALI";
+"settings.section.appearance" = "ASPETTO";
+"settings.section.media" = "MEDIA";
+"settings.section.hud" = "SOSTITUZIONE HUD";
+"settings.section.indicators" = "INDICATORI E FEEDBACK";
+"settings.section.widgets" = "WIDGET";
+"settings.section.intelligence" = "INTELLIGENZA";
+"settings.section.shortcuts" = "SCORCIATOIE DA TASTIERA";
+"settings.section.privacy" = "PRIVACY";
+
+/* General Settings */
+"settings.general.launchAtLogin" = "Avvia all'accesso";
+"settings.general.hoverToExpand" = "Passa il mouse per espandere";
+"settings.general.autoCollapseDelay" = "Ritardo di compressione automatica";
+"settings.general.showInMenuBar" = "Mostra nella barra dei menu";
+
+/* Appearance Settings */
+"settings.appearance.theme" = "Tema";
+"settings.appearance.theme.auto" = "Automatico";
+"settings.appearance.theme.light" = "Chiaro";
+"settings.appearance.theme.dark" = "Scuro";
+"settings.appearance.accentColor" = "Colore accento";
+"color.blue" = "Blu";
+"color.orange" = "Arancione";
+"color.green" = "Verde";
+"color.red" = "Rosso";
+"color.purple" = "Viola";
+"color.cyan" = "Ciano";
+
+/* Media Settings */
+"settings.media.nowPlaying" = "Controlli Riproduzione in corso";
+"settings.media.albumArtwork" = "Mostra copertina album";
+"settings.media.vinylSpin" = "Animazione rotazione vinile";
+"settings.media.colorMatch" = "Abbina colore app";
+
+/* HUD Settings */
+"settings.hud.replaceVolume" = "Sostituisci HUD volume";
+"settings.hud.replaceBrightness" = "Sostituisci HUD luminosità";
+"settings.hud.style" = "Stile HUD";
+"settings.hud.style.minimal" = "Minimale";
+"settings.hud.style.bar" = "Barra";
+"settings.hud.style.notched" = "Con tacca";
+
+/* Indicators Settings */
+"settings.indicators.battery" = "Indicatore batteria";
+"settings.indicators.lockUnlock" = "Indicatore blocco/sblocco";
+"settings.indicators.chargingSound" = "Suono di ricarica";
+"settings.indicators.haptic" = "Feedback aptico";
+
+/* Widget Toggles */
+"widget.calendar" = "Calendario";
+"widget.weather" = "Meteo";
+"widget.pomodoro" = "Timer Pomodoro";
+"widget.clipboard" = "Cronologia appunti";
+"widget.youtube" = "Lettore YouTube";
+"widget.battery" = "Monitor batteria";
+"widget.shortcuts" = "Avvio scorciatoie";
+"widget.activityFeed" = "Feed attività";
+"widget.quickCapture" = "Acquisizione rapida";
+"widget.lyrics" = "Testi sincronizzati";
+
+/* Intelligence Settings */
+"settings.ai.onDevice" = "AI su dispositivo";
+"settings.ai.available" = "Disponibile";
+"settings.ai.requiresMacOS26" = "Richiede macOS 26";
+"settings.ai.summarization" = "Riepilogo AI";
+"settings.ai.claudeApiKey" = "Chiave API Claude";
+
+/* Keyboard Shortcuts */
+"shortcut.playPause" = "Riproduci / Pausa";
+"shortcut.previousTrack" = "Traccia precedente";
+"shortcut.nextTrack" = "Traccia successiva";
+"shortcut.volumeUpDown" = "Volume su / giù";
+"shortcut.openYouTube" = "Apri YouTube";
+
+/* Privacy Settings */
+"settings.privacy.clipboardMonitoring" = "Monitoraggio Appunti";
+"settings.privacy.calendarAccess" = "Accesso Calendario";
+"settings.privacy.analytics" = "Analisi";
+"settings.privacy.showOnboarding" = "Mostra Onboarding di Nuovo";
+"settings.privacy.clearAllData" = "Cancella Tutti i Dati";
+
+/* Calendar Access Status */
+"access.granted" = "Concesso";
+"access.fullAccess" = "Accesso Completo";
+"access.writeOnly" = "Solo Scrittura";
+"access.denied" = "Negato";
+"access.notGranted" = "Non Concesso";
+"access.unknown" = "Sconosciuto";
+
+/* About Section */
+"about.appName" = "Top Notch";
+"about.version" = "Versione %@ (Build %@)";
+"about.madeWith" = "Realizzato con ❤️ per Mac";
+"about.website" = "Sito Web";
+"about.support" = "Supporto";
+"about.privacy" = "Privacy";
+
+/* Media Player */
+"media.noMediaPlaying" = "Nessun Contenuto Multimediale in Riproduzione";
+"media.playMusicPrompt" = "Riproduci musica o contenuti multimediali per vedere i controlli qui";
+"media.notPlaying" = "Non in Riproduzione";
+"media.unknownArtist" = "Artista Sconosciuto";
+"media.noMedia" = "Nessun contenuto multimediale";
+"media.music" = "Musica";
+"media.podcasts" = "Podcast";
+"media.spotify" = "Spotify";
+"media.playingFrom" = "In riproduzione da %@";
+
+/* YouTube Player */
+"youtube.title" = "YouTube";
+"youtube.pasteUrl" = "Incolla URL...";
+"youtube.browse" = "Sfoglia";
+"youtube.play" = "Riproduci";
+"youtube.paste" = "Incolla";
+"youtube.pasteAndPlay" = "Incolla e Riproduci";
+"youtube.playingInWindow" = "In riproduzione nella finestra";
+"youtube.paused" = "In Pausa";
+"youtube.show" = "Mostra";
+"youtube.pinned" = "Fissato";
+"youtube.recentlyPlayed" = "RIPRODOTTI DI RECENTE";
+"youtube.linkDetected" = "Link YouTube Rilevato";
+"youtube.videoUnavailable" = "Video Non Disponibile";
+"youtube.tryAnother" = "Prova un Altro";
+"youtube.openInSafari" = "Apri in Safari";
+"youtube.closePlayer" = "Chiudi Lettore";
+"youtube.buffering" = "Caricamento in Corso";
+"youtube.playing" = "In Riproduzione";
+"youtube.openVideo" = "Apri Video YouTube… ⌘⇧Y";
+"youtube.playDetected" = "Riproduci Video Rilevato";
+
+/* Weather */
+"weather.title" = "Meteo";
+"weather.high" = "H:";
+"weather.low" = "L:";
+"weather.enterCity" = "Inserisci una città per caricare il meteo";
+"weather.invalidCity" = "Città non valida";
+"weather.cityNotFound" = "Città non trovata";
+"weather.unavailable" = "Meteo non disponibile";
+"weather.condition.clear" = "Cielo sereno";
+"weather.condition.partlyCloudy" = "Parzialmente nuvoloso";
+"weather.condition.fog" = "Nebbia";
+"weather.condition.drizzle" = "Pioviggine";
+"weather.condition.rain" = "Pioggia";
+"weather.condition.snow" = "Neve";
+"weather.condition.rainShowers" = "Rovesci di pioggia";
+"weather.condition.snowShowers" = "Rovesci di neve";
+"weather.condition.thunderstorm" = "Temporale";
+"weather.condition.updating" = "Condizioni in aggiornamento";
+
+/* Calendar */
+"calendar.todaysEvents" = "Eventi di Oggi";
+"calendar.noEvents" = "Nessun evento oggi";
+"calendar.noUpcoming" = "Nessun evento imminente";
+"calendar.openCalendar" = "Apri Calendario";
+
+/* Pomodoro */
+"pomodoro.title" = "Timer di Concentrazione";
+"pomodoro.focus" = "Concentrazione";
+"pomodoro.session" = "Sessione %d di %d";
+"pomodoro.minutes" = "%d min";
+"pomodoro.readyToFocus" = "\U0001F3AF Pronto a concentrarti";
+"pomodoro.takeABreak" = "\u2615 Fai una pausa";
+"pomodoro.deepFocus" = "\U0001F3AF Concentrazione profonda";
+
+/* Clipboard */
+"clipboard.title" = "Cronologia Appunti";
+"clipboard.items" = "%d elementi";
+"clipboard.nothingCopied" = "Niente ancora copiato";
+"clipboard.copyPrompt" = "Copia testo o URL per vederli qui";
+"clipboard.copySomething" = "Copia qualcosa per vederlo qui";
+"clipboard.clearAll" = "Cancella tutto";
+"clipboard.copied" = "Copiato!";
+"clipboard.copy" = "Copia";
+"clipboard.more" = "+%d altro";
+
+/* Battery */
+"battery.title" = "Batteria";
+"battery.noDevices" = "Nessun dispositivo trovato";
+"battery.charging" = "In carica";
+"battery.unplugged" = "Scollegato";
+"battery.remaining" = "• %@ rimanente";
+
+/* Shortcuts */
+"shortcuts.title" = "Scorciatoie";
+"shortcuts.noShortcuts" = "Nessuna scorciatoia trovata";
+
+/* Quick Capture */
+"capture.title" = "Acquisizione rapida";
+"capture.notesAppear" = "Le note appaiono qui";
+
+/* Activity Feed */
+"activity.title" = "Attività";
+
+/* System States */
+"system.locked" = "Bloccato";
+"system.macLocked" = "Mac bloccato";
+"system.touchIdPrompt" = "Touch ID o inserisci password";
+"system.unlocked" = "Sbloccato";
+"system.welcomeBack" = "Bentornato!";
+"system.focus" = "Concentrazione";
+"system.active" = "Attivo";
+
+/* Widget Navigation */
+"nav.home" = "Home";
+"nav.weather" = "Meteo";
+"nav.youtube" = "YouTube";
+"nav.media" = "Media";
+"nav.focus" = "Concentrazione";
+"nav.clipboard" = "Appunti";
+"nav.calendar" = "Calendario";
+"nav.battery" = "Batteria";
+"nav.shortcuts" = "Scorciatoie";
+"nav.activity" = "Attività";
+"nav.capture" = "Acquisizione";
+
+
+/* Language Settings */
+"settings.appearance.language" = "Lingua";
+"settings.language.restartTitle" = "Riavvio richiesto";
+"settings.language.restartMessage" = "Top Notch deve riavviarsi per applicare la nuova lingua.";
+"settings.language.restartNow" = "Riavvia ora";
+"settings.language.later" = "Più tardi";
+
+/* Additional Strings */
+"clipboard.edit" = "Modifica";
+"media.controlsTooltip" = "Controlli multimediali (scorciatoie globali)";
+"youtube.watchPageMode" = "Modalità pagina di visualizzazione";
+"youtube.playingFromYT" = "In riproduzione da YouTube";
+"youtube.urlPlaceholder" = "Incolla URL o ID video di YouTube...";
+
+/* HUD */
+"hud.mute" = "Muto";
+
+/* File Shelf */
+"fileShelf.title" = "Scaffale file";
+"fileShelf.clear" = "Svuota";
+"fileShelf.dropFilesHere" = "Trascina i file qui";
+"fileShelf.releaseToAdd" = "Rilascia per aggiungere";
+
+/* Calendar */
+"calendar.allDay" = "Tutto il giorno";
+
+/* Clipboard */
+"clipboard.itemCount" = "%d elementi";
+"clipboard.moreItems" = "+%d altri";
+
+/* Tooltips */
+"tooltip.play" = "Riproduci";
+"tooltip.pause" = "Pausa";
+"tooltip.mute" = "Muto";
+"tooltip.unmute" = "Attiva audio";
+"tooltip.close" = "Chiudi";
+"tooltip.playbackSpeed" = "Velocità di riproduzione";
+
+/* Time Ago */
+"time.now" = "ora";
+"time.minutesAgo" = "%d m fa";
+"time.hoursAgo" = "%d h fa";

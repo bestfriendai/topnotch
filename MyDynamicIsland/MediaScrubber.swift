@@ -1,3 +1,4 @@
+import Combine
 import SwiftUI
 
 /// Custom progress/scrubber view for media playback
@@ -93,17 +94,21 @@ struct MediaScrubber: View {
             }
             .frame(height: 14)
 
-            // Time labels — 11px, textMuted
+            // Time labels — animated numeric transitions
             HStack {
                 Text(elapsedTime)
                     .font(.system(size: 11, weight: .medium, design: .monospaced))
                     .foregroundStyle(NotchDesign.textMuted)
+                    .contentTransition(.numericText())
+                    .animation(.easeInOut(duration: 0.25), value: elapsedTime)
 
                 Spacer()
 
                 Text(remainingTime)
                     .font(.system(size: 11, weight: .medium, design: .monospaced))
                     .foregroundStyle(NotchDesign.textMuted)
+                    .contentTransition(.numericText(countsDown: true))
+                    .animation(.easeInOut(duration: 0.25), value: remainingTime)
             }
         }
     }
@@ -178,17 +183,19 @@ struct WaveformProgress: View {
     let progress: Double
     let isPlaying: Bool
     let accentColor: Color
-    
+
     @State private var waveAmplitudes: [CGFloat] = Array(repeating: 0.5, count: 20)
-    @State private var animationTimer: Timer?
-    
+    @State private var isAnimating = false
+
+    private let timer = Timer.publish(every: 0.1, on: .main, in: .common).autoconnect()
+
     var body: some View {
         GeometryReader { geometry in
             HStack(spacing: 2) {
                 ForEach(0..<20, id: \.self) { index in
                     let indexProgress = Double(index) / 20.0
                     let isPast = indexProgress < progress
-                    
+
                     RoundedRectangle(cornerRadius: 1)
                         .fill(isPast ? accentColor : Color.white.opacity(0.2))
                         .frame(width: 3, height: isPast && isPlaying ? 4 + waveAmplitudes[index] * 12 : 4)
@@ -198,30 +205,26 @@ struct WaveformProgress: View {
         }
         .frame(height: 16)
         .onAppear {
-            if isPlaying { startAnimation() }
+            if isPlaying { isAnimating = true }
         }
         .onChange(of: isPlaying) { _, playing in
-            if playing { startAnimation() } else { stopAnimation() }
-        }
-        .onDisappear { stopAnimation() }
-    }
-    
-    private func startAnimation() {
-        guard animationTimer == nil else { return }
-        animationTimer = Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { [self] _ in
-            Task { @MainActor in
-                withAnimation(.easeInOut(duration: 0.1)) {
-                    waveAmplitudes = waveAmplitudes.map { _ in CGFloat.random(in: 0.3...1.0) }
+            if playing {
+                isAnimating = true
+            } else {
+                isAnimating = false
+                withAnimation(.easeOut(duration: 0.3)) {
+                    waveAmplitudes = Array(repeating: 0.5, count: 20)
                 }
             }
         }
-    }
-
-    private func stopAnimation() {
-        animationTimer?.invalidate()
-        animationTimer = nil
-        withAnimation(.easeOut(duration: 0.3)) {
-            waveAmplitudes = Array(repeating: 0.5, count: 20)
+        .onDisappear {
+            isAnimating = false
+        }
+        .onReceive(timer) { _ in
+            guard isAnimating else { return }
+            withAnimation(.easeInOut(duration: 0.1)) {
+                waveAmplitudes = waveAmplitudes.map { _ in CGFloat.random(in: 0.3...1.0) }
+            }
         }
     }
 }
@@ -235,7 +238,7 @@ struct WaveformProgress: View {
             isPlaying: true,
             accentColor: .green
         ) { progress in
-            print("Seek to: \(progress)")
+            _ = progress
         }
         
         CompactMediaScrubber(progress: 0.6, accentColor: .green)

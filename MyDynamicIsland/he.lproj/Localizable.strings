@@ -1,0 +1,265 @@
+/* Menu Bar */
+"menu.settings" = "הגדרות...";
+"menu.quit" = "צא מ-Top Notch";
+"window.settings.title" = "הגדרות Top Notch";
+
+/* Settings Sections */
+"settings.section.general" = "כללי";
+"settings.section.appearance" = "מראה";
+"settings.section.media" = "מדיה";
+"settings.section.hud" = "החלפת HUD";
+"settings.section.indicators" = "מחוונים ומשוב";
+"settings.section.widgets" = "ווידג'טים";
+"settings.section.intelligence" = "בינה";
+"settings.section.shortcuts" = "קיצורי מקלדת";
+"settings.section.privacy" = "פרטיות";
+
+/* General Settings */
+"settings.general.launchAtLogin" = "הפעל עם ההתחברות";
+"settings.general.hoverToExpand" = "רחף להרחבה";
+"settings.general.autoCollapseDelay" = "השהיית כיווץ אוטומטי";
+"settings.general.showInMenuBar" = "הצג בשורת התפריטים";
+
+/* Appearance Settings */
+"settings.appearance.theme" = "ערכת נושא";
+"settings.appearance.theme.auto" = "אוטומטי";
+"settings.appearance.theme.light" = "בהיר";
+"settings.appearance.theme.dark" = "כהה";
+"settings.appearance.accentColor" = "צבע הדגשה";
+"color.blue" = "כחול";
+"color.orange" = "כתום";
+"color.green" = "ירוק";
+"color.red" = "אדום";
+"color.purple" = "סגול";
+"color.cyan" = "ציאן";
+
+/* Media Settings */
+"settings.media.nowPlaying" = "פקדי 'מתנגן כעת'";
+"settings.media.albumArtwork" = "הצג עטיפת אלבום";
+"settings.media.vinylSpin" = "אנימציית סיבוב תקליט";
+"settings.media.colorMatch" = "התאמת צבע לאפליקציה";
+
+/* HUD Settings */
+"settings.hud.replaceVolume" = "החלף HUD עוצמת קול";
+"settings.hud.replaceBrightness" = "החלף HUD בהירות";
+"settings.hud.style" = "סגנון HUD";
+"settings.hud.style.minimal" = "מינימלי";
+"settings.hud.style.bar" = "פס";
+"settings.hud.style.notched" = "מחורץ";
+
+/* Indicators Settings */
+"settings.indicators.battery" = "מחוון סוללה";
+"settings.indicators.lockUnlock" = "מחוון נעילה/פתיחה";
+"settings.indicators.chargingSound" = "צליל טעינה";
+"settings.indicators.haptic" = "משוב הפטי";
+
+/* Widget Toggles */
+"widget.calendar" = "יומן";
+"widget.weather" = "מזג אוויר";
+"widget.pomodoro" = "טיימר Pomodoro";
+"widget.clipboard" = "היסטוריית לוח גזירים";
+"widget.youtube" = "נגן YouTube";
+"widget.battery" = "ניטור סוללה";
+"widget.shortcuts" = "מפעיל קיצורי דרך";
+"widget.activityFeed" = "פיד פעילות";
+"widget.quickCapture" = "לכידה מהירה";
+"widget.lyrics" = "מילים מסונכרנות";
+
+/* Intelligence Settings */
+"settings.ai.onDevice" = "בינה מלאכותית במכשיר";
+"settings.ai.available" = "זמין";
+"settings.ai.requiresMacOS26" = "דורש macOS 26";
+"settings.ai.summarization" = "סיכום בינה מלאכותית";
+"settings.ai.claudeApiKey" = "מפתח API של Claude";
+
+/* Keyboard Shortcuts */
+"shortcut.playPause" = "הפעל / השהה";
+"shortcut.previousTrack" = "רצועה קודמת";
+"shortcut.nextTrack" = "רצועה הבאה";
+"shortcut.volumeUpDown" = "הגברת / הנמכת עוצמת קול";
+"shortcut.openYouTube" = "פתח YouTube";
+
+/* Privacy Settings */
+"settings.privacy.clipboardMonitoring" = "ניטור לוח הדבק";
+"settings.privacy.calendarAccess" = "גישה ליומן";
+"settings.privacy.analytics" = "ניתוח נתונים";
+"settings.privacy.showOnboarding" = "הצג הדרכה שוב";
+"settings.privacy.clearAllData" = "נקה את כל הנתונים";
+
+/* Calendar Access Status */
+"access.granted" = "אושרה";
+"access.fullAccess" = "גישה מלאה";
+"access.writeOnly" = "כתיבה בלבד";
+"access.denied" = "נדחתה";
+"access.notGranted" = "לא אושרה";
+"access.unknown" = "לא ידוע";
+
+/* About Section */
+"about.appName" = "Top Notch";
+"about.version" = "גרסה %@ (בנייה %@)";
+"about.madeWith" = "נוצר עם ❤️ עבור Mac";
+"about.website" = "אתר אינטרנט";
+"about.support" = "תמיכה";
+"about.privacy" = "פרטיות";
+
+/* Media Player */
+"media.noMediaPlaying" = "לא מתנגן מדיה";
+"media.playMusicPrompt" = "הפעל מוזיקה או מדיה כדי לראות פקדים כאן";
+"media.notPlaying" = "לא מתנגן";
+"media.unknownArtist" = "אמן לא ידוע";
+"media.noMedia" = "אין מדיה";
+"media.music" = "מוזיקה";
+"media.podcasts" = "פודקאסטים";
+"media.spotify" = "Spotify";
+"media.playingFrom" = "מתנגן מתוך %@";
+
+/* YouTube Player */
+"youtube.title" = "YouTube";
+"youtube.pasteUrl" = "הדבק כתובת אתר...";
+"youtube.browse" = "עיון";
+"youtube.play" = "נגן";
+"youtube.paste" = "הדבק";
+"youtube.pasteAndPlay" = "הדבק ונגן";
+"youtube.playingInWindow" = "מתנגן בחלון";
+"youtube.paused" = "מושהה";
+"youtube.show" = "הצג";
+"youtube.pinned" = "נעוץ";
+"youtube.recentlyPlayed" = "נוגן לאחרונה";
+"youtube.linkDetected" = "זוהה קישור YouTube";
+"youtube.videoUnavailable" = "הסרטון אינו זמין";
+"youtube.tryAnother" = "נסה אחר";
+"youtube.openInSafari" = "פתח ב-Safari";
+"youtube.closePlayer" = "סגור נגן";
+"youtube.buffering" = "טוען";
+"youtube.playing" = "מתנגן";
+"youtube.openVideo" = "פתח סרטון YouTube… ⌘⇧Y";
+"youtube.playDetected" = "נגן סרטון שזוהה";
+
+/* Weather */
+"weather.title" = "מזג אוויר";
+"weather.high" = "ג:";
+"weather.low" = "נ:";
+"weather.enterCity" = "הזן עיר לטעינת מזג אוויר";
+"weather.invalidCity" = "שם עיר לא חוקי";
+"weather.cityNotFound" = "העיר לא נמצאה";
+"weather.unavailable" = "מזג האוויר אינו זמין";
+"weather.condition.clear" = "שמיים בהירים";
+"weather.condition.partlyCloudy" = "מעונן חלקית";
+"weather.condition.fog" = "ערפל";
+"weather.condition.drizzle" = "טפטוף";
+"weather.condition.rain" = "גשם";
+"weather.condition.snow" = "שלג";
+"weather.condition.rainShowers" = "ממטרים";
+"weather.condition.snowShowers" = "ממטרי שלג";
+"weather.condition.thunderstorm" = "סופת רעמים";
+"weather.condition.updating" = "מתעדכן";
+
+/* Calendar */
+"calendar.todaysEvents" = "אירועי היום";
+"calendar.noEvents" = "אין אירועים היום";
+"calendar.noUpcoming" = "אין אירועים קרובים";
+"calendar.openCalendar" = "פתח יומן";
+
+/* Pomodoro */
+"pomodoro.title" = "טיימר מיקוד";
+"pomodoro.focus" = "מיקוד";
+"pomodoro.session" = "סשן %d מתוך %d";
+"pomodoro.minutes" = "%d דק'";
+"pomodoro.readyToFocus" = "\U0001F3AF מוכן למיקוד";
+"pomodoro.takeABreak" = "\u2615 קח הפסקה";
+"pomodoro.deepFocus" = "\U0001F3AF מיקוד עמוק";
+
+/* Clipboard */
+"clipboard.title" = "היסטוריית לוח הדבק";
+"clipboard.items" = "%d פריטים";
+"clipboard.nothingCopied" = "עדיין לא הועתק דבר";
+"clipboard.copyPrompt" = "העתק טקסט או כתובות אתר כדי לראות אותם כאן";
+"clipboard.copySomething" = "העתק משהו כדי לראות אותו כאן";
+"clipboard.clearAll" = "נקה הכל";
+"clipboard.copied" = "הועתק!";
+"clipboard.copy" = "העתק";
+"clipboard.more" = "+%d נוספים";
+
+/* Battery */
+"battery.title" = "סוללה";
+"battery.noDevices" = "לא נמצאו מכשירים";
+"battery.charging" = "בטעינה";
+"battery.unplugged" = "מנותק";
+"battery.remaining" = "• נותרו %@";
+
+/* Shortcuts */
+"shortcuts.title" = "קיצורי דרך";
+"shortcuts.noShortcuts" = "לא נמצאו קיצורי דרך";
+
+/* Quick Capture */
+"capture.title" = "לכידה מהירה";
+"capture.notesAppear" = "הערות יופיעו כאן";
+
+/* Activity Feed */
+"activity.title" = "פעילות";
+
+/* System States */
+"system.locked" = "נעול";
+"system.macLocked" = "Mac נעול";
+"system.touchIdPrompt" = "Touch ID או הזן סיסמה";
+"system.unlocked" = "לא נעול";
+"system.welcomeBack" = "ברוך שובך!";
+"system.focus" = "מיקוד";
+"system.active" = "פעיל";
+
+/* Widget Navigation */
+"nav.home" = "בית";
+"nav.weather" = "מזג אוויר";
+"nav.youtube" = "YouTube";
+"nav.media" = "מדיה";
+"nav.focus" = "מיקוד";
+"nav.clipboard" = "לוח עריכה";
+"nav.calendar" = "יומן";
+"nav.battery" = "סוללה";
+"nav.shortcuts" = "קיצורי דרך";
+"nav.activity" = "פעילות";
+"nav.capture" = "לכידה";
+
+
+/* Language Settings */
+"settings.appearance.language" = "שפה";
+"settings.language.restartTitle" = "נדרשת הפעלה מחדש";
+"settings.language.restartMessage" = "Top Notch צריכה להפעיל מחדש כדי להחיל את השפה החדשה.";
+"settings.language.restartNow" = "הפעל מחדש עכשיו";
+"settings.language.later" = "מאוחר יותר";
+
+/* Additional Strings */
+"clipboard.edit" = "ערוך";
+"media.controlsTooltip" = "פקדי מדיה (קיצורי דרך גלובליים)";
+"youtube.watchPageMode" = "מצב דף צפייה";
+"youtube.playingFromYT" = "מתנגן מ-YouTube";
+"youtube.urlPlaceholder" = "הדבק כתובת URL או מזהה סרטון של YouTube...";
+
+/* HUD */
+"hud.mute" = "השתק";
+
+/* File Shelf */
+"fileShelf.title" = "מדף קבצים";
+"fileShelf.clear" = "נקה";
+"fileShelf.dropFilesHere" = "גרור קבצים לכאן";
+"fileShelf.releaseToAdd" = "שחרר כדי להוסיף";
+
+/* Calendar */
+"calendar.allDay" = "כל היום";
+
+/* Clipboard */
+"clipboard.itemCount" = "%d פריטים";
+"clipboard.moreItems" = "+%d נוספים";
+
+/* Tooltips */
+"tooltip.play" = "נגן";
+"tooltip.pause" = "השהה";
+"tooltip.mute" = "השתק";
+"tooltip.unmute" = "בטל השתקה";
+"tooltip.close" = "סגור";
+"tooltip.playbackSpeed" = "מהירות השמעה";
+
+/* Time Ago */
+"time.now" = "עכשיו";
+"time.minutesAgo" = "לפני %d דק'";
+"time.hoursAgo" = "לפני %d שעות";

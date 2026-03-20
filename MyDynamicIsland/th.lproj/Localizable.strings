@@ -1,0 +1,265 @@
+/* Menu Bar */
+"menu.settings" = "การตั้งค่า...";
+"menu.quit" = "ออกจาก Top Notch";
+"window.settings.title" = "Top Notch การตั้งค่า";
+
+/* Settings Sections */
+"settings.section.general" = "ทั่วไป";
+"settings.section.appearance" = "รูปร่าง";
+"settings.section.media" = "สื่อ";
+"settings.section.hud" = "HUD การเปลี่ยน";
+"settings.section.indicators" = "ตัวชี้วัดและการตอบรับ";
+"settings.section.widgets" = "วิดเจ็ต";
+"settings.section.intelligence" = "ปัญญา";
+"settings.section.shortcuts" = "แป้นพิมพ์ลัด";
+"settings.section.privacy" = "ความเป็นส่วนตัว";
+
+/* General Settings */
+"settings.general.launchAtLogin" = "เปิดตัวเมื่อเข้าสู่ระบบ";
+"settings.general.hoverToExpand" = "วางเมาส์เหนือเพื่อขยาย";
+"settings.general.autoCollapseDelay" = "ความล่าช้าในการยุบอัตโนมัติ";
+"settings.general.showInMenuBar" = "แสดงในแถบเมนู";
+
+/* Appearance Settings */
+"settings.appearance.theme" = "ธีม";
+"settings.appearance.theme.auto" = "อัตโนมัติ";
+"settings.appearance.theme.light" = "แสงสว่าง";
+"settings.appearance.theme.dark" = "มืด";
+"settings.appearance.accentColor" = "สีเน้น";
+"color.blue" = "สีฟ้า";
+"color.orange" = "Orange";
+"color.green" = "สีเขียว";
+"color.red" = "สีแดง";
+"color.purple" = "สีม่วง";
+"color.cyan" = "Cyan";
+
+/* Media Settings */
+"settings.media.nowPlaying" = "กำลังเล่นส่วนควบคุม";
+"settings.media.albumArtwork" = "แสดงอาร์ตเวิร์คอัลบั้ม";
+"settings.media.vinylSpin" = "ภาพเคลื่อนไหวไวนิล Spin";
+"settings.media.colorMatch" = "แอพจับคู่สี";
+
+/* HUD Settings */
+"settings.hud.replaceVolume" = "เปลี่ยนระดับเสียง HUD";
+"settings.hud.replaceBrightness" = "แทนที่ความสว่าง HUD";
+"settings.hud.style" = "HUD สไตล์";
+"settings.hud.style.minimal" = "น้อยที่สุด";
+"settings.hud.style.bar" = "บาร์";
+"settings.hud.style.notched" = "มีรอยบาก";
+
+/* Indicators Settings */
+"settings.indicators.battery" = "ตัวบ่งชี้แบตเตอรี่";
+"settings.indicators.lockUnlock" = "ตัวแสดงการล็อค/ปลดล็อค";
+"settings.indicators.chargingSound" = "เสียงการชาร์จ";
+"settings.indicators.haptic" = "การตอบสนองแบบสัมผัส";
+
+/* Widget Toggles */
+"widget.calendar" = "ปฏิทิน";
+"widget.weather" = "สภาพอากาศ";
+"widget.pomodoro" = "Pomodoro ตัวจับเวลา";
+"widget.clipboard" = "ประวัติคลิปบอร์ด";
+"widget.youtube" = "YouTube ผู้เล่น";
+"widget.battery" = "การตรวจสอบแบตเตอรี่";
+"widget.shortcuts" = "ตัวเรียกใช้ทางลัด";
+"widget.activityFeed" = "ฟีดกิจกรรม";
+"widget.quickCapture" = "จับภาพด่วน";
+"widget.lyrics" = "เนื้อเพลงที่ซิงค์";
+
+/* Intelligence Settings */
+"settings.ai.onDevice" = "AI บนอุปกรณ์";
+"settings.ai.available" = "มีอยู่";
+"settings.ai.requiresMacOS26" = "ต้องใช้ macOS 26";
+"settings.ai.summarization" = "การสรุป AI";
+"settings.ai.claudeApiKey" = "Claude คีย์ API";
+
+/* Keyboard Shortcuts */
+"shortcut.playPause" = "เล่น / หยุดชั่วคราว";
+"shortcut.previousTrack" = "แทร็กก่อนหน้า";
+"shortcut.nextTrack" = "แทร็กถัดไป";
+"shortcut.volumeUpDown" = "เพิ่มระดับเสียง / ลดระดับเสียง";
+"shortcut.openYouTube" = "เปิด YouTube";
+
+/* Privacy Settings */
+"settings.privacy.clipboardMonitoring" = "การตรวจสอบคลิปบอร์ด";
+"settings.privacy.calendarAccess" = "การเข้าถึงปฏิทิน";
+"settings.privacy.analytics" = "การวิเคราะห์";
+"settings.privacy.showOnboarding" = "แสดงการเริ่มต้นใช้งานอีกครั้ง";
+"settings.privacy.clearAllData" = "ล้างข้อมูลทั้งหมด";
+
+/* Calendar Access Status */
+"access.granted" = "ได้รับ";
+"access.fullAccess" = "การเข้าถึงแบบเต็ม";
+"access.writeOnly" = "เขียนเท่านั้น";
+"access.denied" = "ถูกปฏิเสธ";
+"access.notGranted" = "ไม่ได้รับ";
+"access.unknown" = "ไม่ทราบ";
+
+/* About Section */
+"about.appName" = "Top Notch";
+"about.version" = "เวอร์ชัน %@ (รุ่น %@ )";
+"about.madeWith" = "ทำด้วย ❤️ สำหรับ Mac";
+"about.website" = "เว็บไซต์";
+"about.support" = "สนับสนุน";
+"about.privacy" = "ความเป็นส่วนตัว";
+
+/* Media Player */
+"media.noMediaPlaying" = "ไม่มีการเล่นสื่อ";
+"media.playMusicPrompt" = "เล่นเพลงหรือสื่อเพื่อดูการควบคุมที่นี่";
+"media.notPlaying" = "ไม่เล่น";
+"media.unknownArtist" = "ศิลปินที่ไม่รู้จัก";
+"media.noMedia" = "ไม่มีสื่อ";
+"media.music" = "ดนตรี";
+"media.podcasts" = "Podcasts";
+"media.spotify" = "Spotify";
+"media.playingFrom" = "กำลังเล่นตั้งแต่ %@";
+
+/* YouTube Player */
+"youtube.title" = "YouTube";
+"youtube.pasteUrl" = "วาง URL...";
+"youtube.browse" = "เรียกดู";
+"youtube.play" = "เล่น";
+"youtube.paste" = "แปะ";
+"youtube.pasteAndPlay" = "วางและเล่น";
+"youtube.playingInWindow" = "กำลังเล่นในหน้าต่าง";
+"youtube.paused" = "หยุดชั่วคราว";
+"youtube.show" = "แสดง";
+"youtube.pinned" = "ปักหมุดแล้ว";
+"youtube.recentlyPlayed" = "เพิ่งเล่น";
+"youtube.linkDetected" = "YouTube ตรวจพบลิงก์";
+"youtube.videoUnavailable" = "วิดีโอไม่พร้อมใช้งาน";
+"youtube.tryAnother" = "ลองอันอื่น";
+"youtube.openInSafari" = "เปิดใน Safari";
+"youtube.closePlayer" = "ปิดเครื่องเล่น";
+"youtube.buffering" = "การบัฟเฟอร์";
+"youtube.playing" = "กำลังเล่น";
+"youtube.openVideo" = "เปิด YouTube วิดีโอ… ⌘⇧Y";
+"youtube.playDetected" = "เล่นวิดีโอที่ตรวจพบ";
+
+/* Weather */
+"weather.title" = "สภาพอากาศ";
+"weather.high" = "H:";
+"weather.low" = "L:";
+"weather.enterCity" = "ป้อนชื่อเมืองเพื่อโหลดสภาพอากาศ";
+"weather.invalidCity" = "ชื่อเมืองไม่ถูกต้อง";
+"weather.cityNotFound" = "ไม่พบเมือง";
+"weather.unavailable" = "ไม่สามารถดูสภาพอากาศได้";
+"weather.condition.clear" = "ท้องฟ้าโปร่ง";
+"weather.condition.partlyCloudy" = "มีเมฆบางส่วน";
+"weather.condition.fog" = "หมอก";
+"weather.condition.drizzle" = "ฝนปรอย";
+"weather.condition.rain" = "ฝนตก";
+"weather.condition.snow" = "หิมะตก";
+"weather.condition.rainShowers" = "ฝนโปรยปราย";
+"weather.condition.snowShowers" = "หิมะโปรยปราย";
+"weather.condition.thunderstorm" = "พายุฝนฟ้าคะนอง";
+"weather.condition.updating" = "กำลังอัปเดตสภาพอากาศ";
+
+/* Calendar */
+"calendar.todaysEvents" = "เหตุการณ์วันนี้";
+"calendar.noEvents" = "ไม่มีกิจกรรมในวันนี้";
+"calendar.noUpcoming" = "ไม่มีกิจกรรมที่กำลังจะเกิดขึ้น";
+"calendar.openCalendar" = "เปิดปฏิทิน";
+
+/* Pomodoro */
+"pomodoro.title" = "โฟกัสจับเวลา";
+"pomodoro.focus" = "จุดสนใจ";
+"pomodoro.session" = "เซสชัน %d จาก %d";
+"pomodoro.minutes" = "%d นาที";
+"pomodoro.readyToFocus" = "\U0001F3AF พร้อมที่จะโฟกัส";
+"pomodoro.takeABreak" = "\u2615 พักสักครู่";
+"pomodoro.deepFocus" = "\U0001F3AF โฟกัสอย่างลึกซึ้ง";
+
+/* Clipboard */
+"clipboard.title" = "ประวัติคลิปบอร์ด";
+"clipboard.items" = "%d รายการ";
+"clipboard.nothingCopied" = "ยังไม่ได้คัดลอกอะไรเลย";
+"clipboard.copyPrompt" = "คัดลอกข้อความหรือ URL เพื่อดูที่นี่";
+"clipboard.copySomething" = "คัดลอกบางอย่างเพื่อดูที่นี่";
+"clipboard.clearAll" = "ล้างทั้งหมด";
+"clipboard.copied" = "คัดลอก!";
+"clipboard.copy" = "สำเนา";
+"clipboard.more" = "+ %d เพิ่มเติม";
+
+/* Battery */
+"battery.title" = "แบตเตอรี่";
+"battery.noDevices" = "ไม่พบอุปกรณ์";
+"battery.charging" = "กำลังชาร์จ";
+"battery.unplugged" = "ถอดปลั๊กแล้ว";
+"battery.remaining" = "• %@ เหลืออยู่";
+
+/* Shortcuts */
+"shortcuts.title" = "ทางลัด";
+"shortcuts.noShortcuts" = "ไม่พบทางลัด";
+
+/* Quick Capture */
+"capture.title" = "จับภาพด่วน";
+"capture.notesAppear" = "หมายเหตุปรากฏที่นี่";
+
+/* Activity Feed */
+"activity.title" = "กิจกรรม";
+
+/* System States */
+"system.locked" = "ล็อคแล้ว";
+"system.macLocked" = "Mac ล็อคแล้ว";
+"system.touchIdPrompt" = "Touch ID หรือป้อนรหัสผ่าน";
+"system.unlocked" = "ปลดล็อคแล้ว";
+"system.welcomeBack" = "ยินดีต้อนรับกลับมา!";
+"system.focus" = "จุดสนใจ";
+"system.active" = "คล่องแคล่ว";
+
+/* Widget Navigation */
+"nav.home" = "บ้าน";
+"nav.weather" = "สภาพอากาศ";
+"nav.youtube" = "YouTube";
+"nav.media" = "สื่อ";
+"nav.focus" = "จุดสนใจ";
+"nav.clipboard" = "คลิปบอร์ด";
+"nav.calendar" = "ปฏิทิน";
+"nav.battery" = "แบตเตอรี่";
+"nav.shortcuts" = "ทางลัด";
+"nav.activity" = "กิจกรรม";
+"nav.capture" = "การจับกุม";
+
+
+/* Language Settings */
+"settings.appearance.language" = "ภาษา";
+"settings.language.restartTitle" = "จำเป็นต้องรีสตาร์ท";
+"settings.language.restartMessage" = "Top Notch ต้องรีสตาร์ทเพื่อใช้ภาษาใหม่";
+"settings.language.restartNow" = "รีสตาร์ททันที";
+"settings.language.later" = "ภายหลัง";
+
+/* Additional Strings */
+"clipboard.edit" = "แก้ไข";
+"media.controlsTooltip" = "การควบคุมสื่อ (ทางลัดส่วนกลาง)";
+"youtube.watchPageMode" = "โหมดหน้าดู";
+"youtube.playingFromYT" = "กำลังเล่นจาก YouTube";
+"youtube.urlPlaceholder" = "วาง URL ของ YouTube หรือรหัสวิดีโอ...";
+
+/* HUD */
+"hud.mute" = "ปิดเสียง";
+
+/* File Shelf */
+"fileShelf.title" = "ชั้นวางไฟล์";
+"fileShelf.clear" = "ล้าง";
+"fileShelf.dropFilesHere" = "วางไฟล์ที่นี่";
+"fileShelf.releaseToAdd" = "ปล่อยเพื่อเพิ่ม";
+
+/* Calendar */
+"calendar.allDay" = "ตลอดวัน";
+
+/* Clipboard */
+"clipboard.itemCount" = "%d รายการ";
+"clipboard.moreItems" = "+%d เพิ่มเติม";
+
+/* Tooltips */
+"tooltip.play" = "เล่น";
+"tooltip.pause" = "หยุดชั่วคราว";
+"tooltip.mute" = "ปิดเสียง";
+"tooltip.unmute" = "เปิดเสียง";
+"tooltip.close" = "ปิด";
+"tooltip.playbackSpeed" = "ความเร็วในการเล่น";
+
+/* Time Ago */
+"time.now" = "ตอนนี้";
+"time.minutesAgo" = "%d นาทีที่แล้ว";
+"time.hoursAgo" = "%d ชั่วโมงที่แล้ว";

@@ -1,0 +1,265 @@
+/* Menu Bar */
+"menu.settings" = "Налаштування...";
+"menu.quit" = "Вийти з Top Notch";
+"window.settings.title" = "Top Notch Налаштування";
+
+/* Settings Sections */
+"settings.section.general" = "ЗАГАЛЬНІ";
+"settings.section.appearance" = "ЗОВНІШНИЙ ВИГЛЯД";
+"settings.section.media" = "ЗМІ";
+"settings.section.hud" = "HUD ЗАМІНА";
+"settings.section.indicators" = "ПОКАЗНИКИ ТА ЗВОРОТНИЙ ЗВ'ЯЗОК";
+"settings.section.widgets" = "ВІДЖЕТИ";
+"settings.section.intelligence" = "ІНТЕЛЕКТ";
+"settings.section.shortcuts" = "СПОЛУЧЕННЯ КЛАВІШ";
+"settings.section.privacy" = "КОНФІДЕНЦІЙНІСТЬ";
+
+/* General Settings */
+"settings.general.launchAtLogin" = "Запустити під час входу";
+"settings.general.hoverToExpand" = "Наведіть курсор, щоб розгорнути";
+"settings.general.autoCollapseDelay" = "Затримка автоматичного згортання";
+"settings.general.showInMenuBar" = "Показати в рядку меню";
+
+/* Appearance Settings */
+"settings.appearance.theme" = "Тема";
+"settings.appearance.theme.auto" = "Авто";
+"settings.appearance.theme.light" = "світло";
+"settings.appearance.theme.dark" = "Темний";
+"settings.appearance.accentColor" = "Колір акценту";
+"color.blue" = "Синій";
+"color.orange" = "Orange";
+"color.green" = "Зелений";
+"color.red" = "Червоний";
+"color.purple" = "Фіолетовий";
+"color.cyan" = "Cyan";
+
+/* Media Settings */
+"settings.media.nowPlaying" = "Елементи керування «Зараз грає».";
+"settings.media.albumArtwork" = "Показати обкладинку альбому";
+"settings.media.vinylSpin" = "Вінілова обертова анімація";
+"settings.media.colorMatch" = "Додаток Color Match";
+
+/* HUD Settings */
+"settings.hud.replaceVolume" = "Замінити том HUD";
+"settings.hud.replaceBrightness" = "Замінити яскравість HUD";
+"settings.hud.style" = "Стиль HUD";
+"settings.hud.style.minimal" = "Мінімальний";
+"settings.hud.style.bar" = "Бар";
+"settings.hud.style.notched" = "Виїмчастий";
+
+/* Indicators Settings */
+"settings.indicators.battery" = "Індикатор батареї";
+"settings.indicators.lockUnlock" = "Індикатор блокування/розблокування";
+"settings.indicators.chargingSound" = "Звук зарядки";
+"settings.indicators.haptic" = "Тактильний зворотний зв'язок";
+
+/* Widget Toggles */
+"widget.calendar" = "Календар";
+"widget.weather" = "Погода";
+"widget.pomodoro" = "Pomodoro Таймер";
+"widget.clipboard" = "Історія буфера обміну";
+"widget.youtube" = "YouTube Гравець";
+"widget.battery" = "Монітор батареї";
+"widget.shortcuts" = "Панель запуску ярликів";
+"widget.activityFeed" = "Стрічка активності";
+"widget.quickCapture" = "Швидке захоплення";
+"widget.lyrics" = "Синхронізовані тексти пісень";
+
+/* Intelligence Settings */
+"settings.ai.onDevice" = "ШІ на пристрої";
+"settings.ai.available" = "в наявності";
+"settings.ai.requiresMacOS26" = "Потрібна macOS 26";
+"settings.ai.summarization" = "А. І. Підведення підсумків";
+"settings.ai.claudeApiKey" = "Ключ API Claude";
+
+/* Keyboard Shortcuts */
+"shortcut.playPause" = "Відтворення / Пауза";
+"shortcut.previousTrack" = "Попередній трек";
+"shortcut.nextTrack" = "Наступний трек";
+"shortcut.volumeUpDown" = "Збільшення/зниження гучності";
+"shortcut.openYouTube" = "Відкрити YouTube";
+
+/* Privacy Settings */
+"settings.privacy.clipboardMonitoring" = "Моніторинг буфера обміну";
+"settings.privacy.calendarAccess" = "Доступ до календаря";
+"settings.privacy.analytics" = "Аналітика";
+"settings.privacy.showOnboarding" = "Знову показати підключення";
+"settings.privacy.clearAllData" = "Очистити всі дані";
+
+/* Calendar Access Status */
+"access.granted" = "Зрозуміло";
+"access.fullAccess" = "Повний доступ";
+"access.writeOnly" = "Тільки писати";
+"access.denied" = "Відмовлено";
+"access.notGranted" = "Не надано";
+"access.unknown" = "Невідомий";
+
+/* About Section */
+"about.appName" = "Top Notch";
+"about.version" = "Версія %@ (збірка %@)";
+"about.madeWith" = "Зроблено за допомогою ❤️ для Mac";
+"about.website" = "Веб-сайт";
+"about.support" = "Підтримка";
+"about.privacy" = "Конфіденційність";
+
+/* Media Player */
+"media.noMediaPlaying" = "Медіафайли не відтворюються";
+"media.playMusicPrompt" = "Увімкніть музику або медіа, щоб побачити тут елементи керування";
+"media.notPlaying" = "Не грає";
+"media.unknownArtist" = "Невідомий художник";
+"media.noMedia" = "Немає медіа";
+"media.music" = "музика";
+"media.podcasts" = "Podcasts";
+"media.spotify" = "Spotify";
+"media.playingFrom" = "Відтворення з %@";
+
+/* YouTube Player */
+"youtube.title" = "YouTube";
+"youtube.pasteUrl" = "Вставити URL...";
+"youtube.browse" = "переглядати";
+"youtube.play" = "грати";
+"youtube.paste" = "Вставити";
+"youtube.pasteAndPlay" = "Вставити та відтворити";
+"youtube.playingInWindow" = "Гра у вікні";
+"youtube.paused" = "Призупинено";
+"youtube.show" = "Показати";
+"youtube.pinned" = "Закріплено";
+"youtube.recentlyPlayed" = "НЕЩОДАВНО ЗІГРАНО";
+"youtube.linkDetected" = "YouTube Посилання виявлено";
+"youtube.videoUnavailable" = "Відео недоступне";
+"youtube.tryAnother" = "Спробуйте інший";
+"youtube.openInSafari" = "Відкрити в Safari";
+"youtube.closePlayer" = "Закрити плеєр";
+"youtube.buffering" = "Буферизація";
+"youtube.playing" = "Граючи";
+"youtube.openVideo" = "Відкрити YouTube відео… ⌘⇧Y";
+"youtube.playDetected" = "Відтворити виявлене відео";
+
+/* Weather */
+"weather.title" = "Погода";
+"weather.high" = "H:";
+"weather.low" = "L:";
+"weather.enterCity" = "Введіть місто, щоб завантажити погоду";
+"weather.invalidCity" = "Недійсна назва міста";
+"weather.cityNotFound" = "Місто не знайдено";
+"weather.unavailable" = "Погода недоступна";
+"weather.condition.clear" = "Безхмарно";
+"weather.condition.partlyCloudy" = "Мінлива хмарність";
+"weather.condition.fog" = "Туман";
+"weather.condition.drizzle" = "Мряка";
+"weather.condition.rain" = "Дощ";
+"weather.condition.snow" = "Сніг";
+"weather.condition.rainShowers" = "Зливовий дощ";
+"weather.condition.snowShowers" = "Зливовий сніг";
+"weather.condition.thunderstorm" = "Гроза";
+"weather.condition.updating" = "Умови оновлюються";
+
+/* Calendar */
+"calendar.todaysEvents" = "Сьогоднішні події";
+"calendar.noEvents" = "Сьогодні немає подій";
+"calendar.noUpcoming" = "Немає майбутніх подій";
+"calendar.openCalendar" = "Відкрийте календар";
+
+/* Pomodoro */
+"pomodoro.title" = "Таймер фокусування";
+"pomodoro.focus" = "Фокус";
+"pomodoro.session" = "Сеанс %d з %d";
+"pomodoro.minutes" = "%d хв";
+"pomodoro.readyToFocus" = "\U0001F3AF Готові зосередитись";
+"pomodoro.takeABreak" = "\u2615 Зробіть перерву";
+"pomodoro.deepFocus" = "\U0001F3AF Глибоке зосередження";
+
+/* Clipboard */
+"clipboard.title" = "Історія буфера обміну";
+"clipboard.items" = "%d предметів";
+"clipboard.nothingCopied" = "Ще нічого не скопійовано";
+"clipboard.copyPrompt" = "Скопіюйте текст або URL-адреси, щоб побачити їх тут";
+"clipboard.copySomething" = "Скопіюйте щось, щоб побачити це тут";
+"clipboard.clearAll" = "Очистити все";
+"clipboard.copied" = "Скопійовано!";
+"clipboard.copy" = "Копія";
+"clipboard.more" = "+ ще %d";
+
+/* Battery */
+"battery.title" = "Акумулятор";
+"battery.noDevices" = "Пристроїв не знайдено";
+"battery.charging" = "Зарядка";
+"battery.unplugged" = "Вимкнено";
+"battery.remaining" = "• Залишилося %@";
+
+/* Shortcuts */
+"shortcuts.title" = "Ярлики";
+"shortcuts.noShortcuts" = "Ярликів не знайдено";
+
+/* Quick Capture */
+"capture.title" = "Швидке захоплення";
+"capture.notesAppear" = "Тут з’являються примітки";
+
+/* Activity Feed */
+"activity.title" = "діяльність";
+
+/* System States */
+"system.locked" = "Заблоковано";
+"system.macLocked" = "Mac Заблоковано";
+"system.touchIdPrompt" = "Touch ID або введіть пароль";
+"system.unlocked" = "Розблоковано";
+"system.welcomeBack" = "Ласкаво просимо назад!";
+"system.focus" = "Фокус";
+"system.active" = "Активний";
+
+/* Widget Navigation */
+"nav.home" = "додому";
+"nav.weather" = "Погода";
+"nav.youtube" = "YouTube";
+"nav.media" = "ЗМІ";
+"nav.focus" = "Фокус";
+"nav.clipboard" = "Буфер обміну";
+"nav.calendar" = "Календар";
+"nav.battery" = "Акумулятор";
+"nav.shortcuts" = "Ярлики";
+"nav.activity" = "діяльність";
+"nav.capture" = "захоплення";
+
+
+/* Language Settings */
+"settings.appearance.language" = "Мова";
+"settings.language.restartTitle" = "Потрібен перезапуск";
+"settings.language.restartMessage" = "Top Notch потрібно перезапустити, щоб застосувати нову мову.";
+"settings.language.restartNow" = "Перезапустіть зараз";
+"settings.language.later" = "Пізніше";
+
+/* Additional Strings */
+"clipboard.edit" = "Редагувати";
+"media.controlsTooltip" = "Елементи керування медіа (глобальні ярлики)";
+"youtube.watchPageMode" = "Режим сторінки перегляду";
+"youtube.playingFromYT" = "Відтворення з YouTube";
+"youtube.urlPlaceholder" = "Вставте URL-адресу YouTube або ідентифікатор відео...";
+
+/* HUD */
+"hud.mute" = "Без звуку";
+
+/* File Shelf */
+"fileShelf.title" = "Файлова полиця";
+"fileShelf.clear" = "Очистити";
+"fileShelf.dropFilesHere" = "Перетягніть файли сюди";
+"fileShelf.releaseToAdd" = "Відпустіть, щоб додати";
+
+/* Calendar */
+"calendar.allDay" = "Весь день";
+
+/* Clipboard */
+"clipboard.itemCount" = "%d елементів";
+"clipboard.moreItems" = "+%d більше";
+
+/* Tooltips */
+"tooltip.play" = "Відтворити";
+"tooltip.pause" = "Пауза";
+"tooltip.mute" = "Вимкнути звук";
+"tooltip.unmute" = "Увімкнути звук";
+"tooltip.close" = "Закрити";
+"tooltip.playbackSpeed" = "Швидкість відтворення";
+
+/* Time Ago */
+"time.now" = "зараз";
+"time.minutesAgo" = "%d хв тому";
+"time.hoursAgo" = "%d год тому";

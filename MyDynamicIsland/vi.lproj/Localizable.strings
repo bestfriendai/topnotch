@@ -1,0 +1,265 @@
+/* Menu Bar */
+"menu.settings" = "Cài đặt...";
+"menu.quit" = "Thoát Top Notch";
+"window.settings.title" = "Top Notch Cài đặt";
+
+/* Settings Sections */
+"settings.section.general" = "TỔNG QUAN";
+"settings.section.appearance" = "VẺ BỀ NGOÀI";
+"settings.section.media" = "PHƯƠNG TIỆN TRUYỀN THÔNG";
+"settings.section.hud" = "HUD THAY THẾ";
+"settings.section.indicators" = "CHỈ SỐ & PHẢN HỒI";
+"settings.section.widgets" = "TIỆN ÍCH";
+"settings.section.intelligence" = "TRÍ TUỆ";
+"settings.section.shortcuts" = "PHÍM TẮT BÀN PHÍM";
+"settings.section.privacy" = "SỰ RIÊNG TƯ";
+
+/* General Settings */
+"settings.general.launchAtLogin" = "Khởi chạy lúc đăng nhập";
+"settings.general.hoverToExpand" = "Di chuột để mở rộng";
+"settings.general.autoCollapseDelay" = "Độ trễ tự động thu gọn";
+"settings.general.showInMenuBar" = "Hiển thị trong thanh menu";
+
+/* Appearance Settings */
+"settings.appearance.theme" = "chủ đề";
+"settings.appearance.theme.auto" = "Tự động";
+"settings.appearance.theme.light" = "Ánh sáng";
+"settings.appearance.theme.dark" = "Tối tăm";
+"settings.appearance.accentColor" = "Màu nhấn";
+"color.blue" = "Màu xanh da trời";
+"color.orange" = "Orange";
+"color.green" = "Màu xanh lá";
+"color.red" = "Màu đỏ";
+"color.purple" = "Màu tím";
+"color.cyan" = "Cyan";
+
+/* Media Settings */
+"settings.media.nowPlaying" = "Điều khiển hiện đang phát";
+"settings.media.albumArtwork" = "Hiển thị ảnh minh họa album";
+"settings.media.vinylSpin" = "Hoạt hình quay Vinyl";
+"settings.media.colorMatch" = "Ứng dụng kết hợp màu";
+
+/* HUD Settings */
+"settings.hud.replaceVolume" = "Thay thế Tập HUD";
+"settings.hud.replaceBrightness" = "Thay thế độ sáng HUD";
+"settings.hud.style" = "HUD Phong Cách";
+"settings.hud.style.minimal" = "Tối thiểu";
+"settings.hud.style.bar" = "Thanh";
+"settings.hud.style.notched" = "Có khía";
+
+/* Indicators Settings */
+"settings.indicators.battery" = "Chỉ báo pin";
+"settings.indicators.lockUnlock" = "Chỉ báo khóa/mở khóa";
+"settings.indicators.chargingSound" = "Âm thanh sạc";
+"settings.indicators.haptic" = "Phản hồi xúc giác";
+
+/* Widget Toggles */
+"widget.calendar" = "Lịch";
+"widget.weather" = "Thời tiết";
+"widget.pomodoro" = "Pomodoro Hẹn giờ";
+"widget.clipboard" = "Lịch sử bảng nhớ tạm";
+"widget.youtube" = "YouTube Người chơi";
+"widget.battery" = "Màn hình pin";
+"widget.shortcuts" = "Trình khởi chạy phím tắt";
+"widget.activityFeed" = "Nguồn cấp dữ liệu hoạt động";
+"widget.quickCapture" = "Chụp nhanh";
+"widget.lyrics" = "Lời bài hát được đồng bộ hóa";
+
+/* Intelligence Settings */
+"settings.ai.onDevice" = "AI trên thiết bị";
+"settings.ai.available" = "Có sẵn";
+"settings.ai.requiresMacOS26" = "Yêu cầu macOS 26";
+"settings.ai.summarization" = "Tóm tắt AI";
+"settings.ai.claudeApiKey" = "Claude Khóa API";
+
+/* Keyboard Shortcuts */
+"shortcut.playPause" = "Phát / Tạm dừng";
+"shortcut.previousTrack" = "Bản nhạc trước";
+"shortcut.nextTrack" = "Bài hát tiếp theo";
+"shortcut.volumeUpDown" = "Tăng/Giảm âm lượng";
+"shortcut.openYouTube" = "Mở YouTube";
+
+/* Privacy Settings */
+"settings.privacy.clipboardMonitoring" = "Giám sát bảng nhớ tạm";
+"settings.privacy.calendarAccess" = "Truy cập lịch";
+"settings.privacy.analytics" = "Phân tích";
+"settings.privacy.showOnboarding" = "Hiển thị lại quá trình giới thiệu";
+"settings.privacy.clearAllData" = "Xóa tất cả dữ liệu";
+
+/* Calendar Access Status */
+"access.granted" = "Giả dụ như vậy";
+"access.fullAccess" = "Toàn quyền truy cập";
+"access.writeOnly" = "Chỉ viết";
+"access.denied" = "Từ chối";
+"access.notGranted" = "Không được cấp";
+"access.unknown" = "Không xác định";
+
+/* About Section */
+"about.appName" = "Top Notch";
+"about.version" = "Phiên bản %@ (Bản dựng %@ )";
+"about.madeWith" = "Được làm bằng ❤️ cho Mac";
+"about.website" = "Trang web";
+"about.support" = "Ủng hộ";
+"about.privacy" = "Sự riêng tư";
+
+/* Media Player */
+"media.noMediaPlaying" = "Không phát phương tiện";
+"media.playMusicPrompt" = "Phát nhạc hoặc phương tiện để xem các điều khiển tại đây";
+"media.notPlaying" = "Không chơi";
+"media.unknownArtist" = "Nghệ sĩ vô danh";
+"media.noMedia" = "Không có phương tiện truyền thông";
+"media.music" = "Âm nhạc";
+"media.podcasts" = "Podcasts";
+"media.spotify" = "Spotify";
+"media.playingFrom" = "Đang phát từ %@";
+
+/* YouTube Player */
+"youtube.title" = "YouTube";
+"youtube.pasteUrl" = "Dán URL...";
+"youtube.browse" = "Duyệt qua";
+"youtube.play" = "Chơi";
+"youtube.paste" = "Dán";
+"youtube.pasteAndPlay" = "Dán & Chơi";
+"youtube.playingInWindow" = "Chơi trong cửa sổ";
+"youtube.paused" = "Đã tạm dừng";
+"youtube.show" = "Trình diễn";
+"youtube.pinned" = "Đã ghim";
+"youtube.recentlyPlayed" = "ĐÃ CHƠI GẦN ĐÂY";
+"youtube.linkDetected" = "YouTube Đã phát hiện liên kết";
+"youtube.videoUnavailable" = "Video không có sẵn";
+"youtube.tryAnother" = "Hãy thử cái khác";
+"youtube.openInSafari" = "Mở trong Safari";
+"youtube.closePlayer" = "Đóng trình phát";
+"youtube.buffering" = "Đang đệm";
+"youtube.playing" = "Đang chơi";
+"youtube.openVideo" = "Mở YouTube Video… ⌘⇧Y";
+"youtube.playDetected" = "Phát video được phát hiện";
+
+/* Weather */
+"weather.title" = "Thời tiết";
+"weather.high" = "H:";
+"weather.low" = "L:";
+"weather.enterCity" = "Nhập tên thành phố để tải thời tiết";
+"weather.invalidCity" = "Tên thành phố không hợp lệ";
+"weather.cityNotFound" = "Không tìm thấy thành phố";
+"weather.unavailable" = "Thời tiết không khả dụng";
+"weather.condition.clear" = "Trời quang";
+"weather.condition.partlyCloudy" = "Mây rải rác";
+"weather.condition.fog" = "Sương mù";
+"weather.condition.drizzle" = "Mưa phùn";
+"weather.condition.rain" = "Mưa";
+"weather.condition.snow" = "Tuyết";
+"weather.condition.rainShowers" = "Mưa rào";
+"weather.condition.snowShowers" = "Tuyết rào";
+"weather.condition.thunderstorm" = "Dông bão";
+"weather.condition.updating" = "Đang cập nhật tình trạng";
+
+/* Calendar */
+"calendar.todaysEvents" = "Sự kiện hôm nay";
+"calendar.noEvents" = "Không có sự kiện nào hôm nay";
+"calendar.noUpcoming" = "Không có sự kiện sắp tới";
+"calendar.openCalendar" = "Mở Lịch";
+
+/* Pomodoro */
+"pomodoro.title" = "Hẹn giờ lấy nét";
+"pomodoro.focus" = "Tập trung";
+"pomodoro.session" = "Phiên %d của %d";
+"pomodoro.minutes" = "%d phút";
+"pomodoro.readyToFocus" = "\U0001F3AF Sẵn sàng tập trung";
+"pomodoro.takeABreak" = "\u2615 Nghỉ giải lao";
+"pomodoro.deepFocus" = "\U0001F3AF Tập trung sâu";
+
+/* Clipboard */
+"clipboard.title" = "Lịch sử bảng nhớ tạm";
+"clipboard.items" = "%d mục";
+"clipboard.nothingCopied" = "Chưa có gì được sao chép";
+"clipboard.copyPrompt" = "Sao chép văn bản hoặc URL để xem chúng ở đây";
+"clipboard.copySomething" = "Sao chép một cái gì đó để xem nó ở đây";
+"clipboard.clearAll" = "Xóa tất cả";
+"clipboard.copied" = "Đã sao chép!";
+"clipboard.copy" = "Sao chép";
+"clipboard.more" = "+ %d thêm";
+
+/* Battery */
+"battery.title" = "Ắc quy";
+"battery.noDevices" = "Không tìm thấy thiết bị nào";
+"battery.charging" = "Sạc";
+"battery.unplugged" = "Đã rút phích cắm";
+"battery.remaining" = "• Còn lại %@";
+
+/* Shortcuts */
+"shortcuts.title" = "Phím tắt";
+"shortcuts.noShortcuts" = "Không tìm thấy phím tắt";
+
+/* Quick Capture */
+"capture.title" = "Chụp nhanh";
+"capture.notesAppear" = "Ghi chú xuất hiện ở đây";
+
+/* Activity Feed */
+"activity.title" = "Hoạt động";
+
+/* System States */
+"system.locked" = "Đã khóa";
+"system.macLocked" = "Mac Đã khóa";
+"system.touchIdPrompt" = "Touch ID hoặc nhập mật khẩu";
+"system.unlocked" = "Đã mở khóa";
+"system.welcomeBack" = "Chào mừng trở lại!";
+"system.focus" = "Tập trung";
+"system.active" = "Tích cực";
+
+/* Widget Navigation */
+"nav.home" = "Trang chủ";
+"nav.weather" = "Thời tiết";
+"nav.youtube" = "YouTube";
+"nav.media" = "Phương tiện truyền thông";
+"nav.focus" = "Tập trung";
+"nav.clipboard" = "Bảng nhớ tạm";
+"nav.calendar" = "Lịch";
+"nav.battery" = "Ắc quy";
+"nav.shortcuts" = "Phím tắt";
+"nav.activity" = "Hoạt động";
+"nav.capture" = "Chiếm lấy";
+
+
+/* Language Settings */
+"settings.appearance.language" = "Ngôn ngữ";
+"settings.language.restartTitle" = "Yêu cầu khởi động lại";
+"settings.language.restartMessage" = "Top Notch cần khởi động lại để áp dụng ngôn ngữ mới.";
+"settings.language.restartNow" = "Khởi động lại ngay bây giờ";
+"settings.language.later" = "Sau đó";
+
+/* Additional Strings */
+"clipboard.edit" = "Biên tập";
+"media.controlsTooltip" = "Điều khiển phương tiện (phím tắt chung)";
+"youtube.watchPageMode" = "Chế độ xem trang";
+"youtube.playingFromYT" = "Đang phát từ YouTube";
+"youtube.urlPlaceholder" = "Dán URL YouTube hoặc ID video...";
+
+/* HUD */
+"hud.mute" = "Tắt tiếng";
+
+/* File Shelf */
+"fileShelf.title" = "Ngăn tệp";
+"fileShelf.clear" = "Xóa";
+"fileShelf.dropFilesHere" = "Thả tệp vào đây";
+"fileShelf.releaseToAdd" = "Thả để thêm";
+
+/* Calendar */
+"calendar.allDay" = "Cả ngày";
+
+/* Clipboard */
+"clipboard.itemCount" = "%d mục";
+"clipboard.moreItems" = "+%d mục khác";
+
+/* Tooltips */
+"tooltip.play" = "Phát";
+"tooltip.pause" = "Tạm dừng";
+"tooltip.mute" = "Tắt tiếng";
+"tooltip.unmute" = "Bật tiếng";
+"tooltip.close" = "Đóng";
+"tooltip.playbackSpeed" = "Tốc độ phát";
+
+/* Time Ago */
+"time.now" = "bây giờ";
+"time.minutesAgo" = "%d phút trước";
+"time.hoursAgo" = "%d giờ trước";

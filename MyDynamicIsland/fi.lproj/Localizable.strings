@@ -1,0 +1,265 @@
+/* Menu Bar */
+"menu.settings" = "Asetukset...";
+"menu.quit" = "Lopeta Top Notch";
+"window.settings.title" = "Top Notch Asetukset";
+
+/* Settings Sections */
+"settings.section.general" = "YLEISTÄ";
+"settings.section.appearance" = "ULKOPUOLINEN";
+"settings.section.media" = "MEDIA";
+"settings.section.hud" = "HUD VAIHTO";
+"settings.section.indicators" = "INDIKAATTORIT JA PALAUTE";
+"settings.section.widgets" = "vekottimet";
+"settings.section.intelligence" = "ÄLYKÄYTTÖ";
+"settings.section.shortcuts" = "NÄPPÄIMISTÖN PIKAPAINIKKEET";
+"settings.section.privacy" = "YKSITYISYYDEN SUOJA";
+
+/* General Settings */
+"settings.general.launchAtLogin" = "Käynnistä kirjautumalla";
+"settings.general.hoverToExpand" = "Laajenna viemällä hiiri";
+"settings.general.autoCollapseDelay" = "Automaattisen tiivistyksen viive";
+"settings.general.showInMenuBar" = "Näytä valikkopalkissa";
+
+/* Appearance Settings */
+"settings.appearance.theme" = "Teema";
+"settings.appearance.theme.auto" = "Auto";
+"settings.appearance.theme.light" = "Kevyt";
+"settings.appearance.theme.dark" = "Tumma";
+"settings.appearance.accentColor" = "Aksenttiväri";
+"color.blue" = "Sininen";
+"color.orange" = "Orange";
+"color.green" = "Vihreä";
+"color.red" = "Punainen";
+"color.purple" = "Violetti";
+"color.cyan" = "Cyan";
+
+/* Media Settings */
+"settings.media.nowPlaying" = "Nyt toistetaan säätimet";
+"settings.media.albumArtwork" = "Näytä albumin kuvitus";
+"settings.media.vinylSpin" = "Vinyyli Spin Animaatio";
+"settings.media.colorMatch" = "Color Match -sovellus";
+
+/* HUD Settings */
+"settings.hud.replaceVolume" = "Korvaa volyymi HUD";
+"settings.hud.replaceBrightness" = "Vaihda kirkkaus HUD";
+"settings.hud.style" = "HUD Tyyli";
+"settings.hud.style.minimal" = "Minimaalinen";
+"settings.hud.style.bar" = "Baari";
+"settings.hud.style.notched" = "Lovitettu";
+
+/* Indicators Settings */
+"settings.indicators.battery" = "Pariston ilmaisin";
+"settings.indicators.lockUnlock" = "Lukituksen/vapautuksen ilmaisin";
+"settings.indicators.chargingSound" = "Latausääni";
+"settings.indicators.haptic" = "Haptinen palaute";
+
+/* Widget Toggles */
+"widget.calendar" = "Kalenteri";
+"widget.weather" = "Sää";
+"widget.pomodoro" = "Pomodoro Ajastin";
+"widget.clipboard" = "Leikepöydän historia";
+"widget.youtube" = "YouTube Soitin";
+"widget.battery" = "Akun näyttö";
+"widget.shortcuts" = "Pikakuvakkeiden käynnistysohjelma";
+"widget.activityFeed" = "Toimintasyöte";
+"widget.quickCapture" = "Pikakaappaus";
+"widget.lyrics" = "Synkronoidut sanat";
+
+/* Intelligence Settings */
+"settings.ai.onDevice" = "Laitteen AI";
+"settings.ai.available" = "Saatavilla";
+"settings.ai.requiresMacOS26" = "Vaatii macOS 26:n";
+"settings.ai.summarization" = "AI yhteenveto";
+"settings.ai.claudeApiKey" = "Claude API-avain";
+
+/* Keyboard Shortcuts */
+"shortcut.playPause" = "Toista/Tauko";
+"shortcut.previousTrack" = "Edellinen kappale";
+"shortcut.nextTrack" = "Seuraava kappale";
+"shortcut.volumeUpDown" = "Äänenvoimakkuus ylös/alas";
+"shortcut.openYouTube" = "Avaa YouTube";
+
+/* Privacy Settings */
+"settings.privacy.clipboardMonitoring" = "Leikepöydän valvonta";
+"settings.privacy.calendarAccess" = "Kalenterin käyttöoikeus";
+"settings.privacy.analytics" = "Analytics";
+"settings.privacy.showOnboarding" = "Näytä perehdytys uudelleen";
+"settings.privacy.clearAllData" = "Tyhjennä kaikki tiedot";
+
+/* Calendar Access Status */
+"access.granted" = "Myönnetty";
+"access.fullAccess" = "Täysi pääsy";
+"access.writeOnly" = "Vain kirjoittaa";
+"access.denied" = "Kielletty";
+"access.notGranted" = "Ei myönnetty";
+"access.unknown" = "Tuntematon";
+
+/* About Section */
+"about.appName" = "Top Notch";
+"about.version" = "Versio %@ (koontiversio %@)";
+"about.madeWith" = "Valmistettu ❤️: Mac";
+"about.website" = "Verkkosivusto";
+"about.support" = "Tukea";
+"about.privacy" = "Yksityisyys";
+
+/* Media Player */
+"media.noMediaPlaying" = "Ei median toistoa";
+"media.playMusicPrompt" = "Toista musiikkia tai mediaa nähdäksesi säätimet täällä";
+"media.notPlaying" = "Ei pelaa";
+"media.unknownArtist" = "Tuntematon Artisti";
+"media.noMedia" = "Ei mediaa";
+"media.music" = "Musiikki";
+"media.podcasts" = "Podcasts";
+"media.spotify" = "Spotify";
+"media.playingFrom" = "Toistetaan kohteesta %@";
+
+/* YouTube Player */
+"youtube.title" = "YouTube";
+"youtube.pasteUrl" = "Liitä URL-osoite...";
+"youtube.browse" = "Selaa";
+"youtube.play" = "Pelata";
+"youtube.paste" = "Liitä";
+"youtube.pasteAndPlay" = "Liitä ja pelaa";
+"youtube.playingInWindow" = "Pelaa ikkunassa";
+"youtube.paused" = "Keskeytetty";
+"youtube.show" = "Show";
+"youtube.pinned" = "Kiinnitetty";
+"youtube.recentlyPlayed" = "Äskettäin pelattu";
+"youtube.linkDetected" = "YouTube Linkki havaittu";
+"youtube.videoUnavailable" = "Video ei saatavilla";
+"youtube.tryAnother" = "Kokeile toista";
+"youtube.openInSafari" = "Avaa Safari";
+"youtube.closePlayer" = "Sulje Player";
+"youtube.buffering" = "Puskurointi";
+"youtube.playing" = "Pelaaminen";
+"youtube.openVideo" = "Avaa YouTube Video… ⌘⇧Y";
+"youtube.playDetected" = "Toista havaittu video";
+
+/* Weather */
+"weather.title" = "Sää";
+"weather.high" = "H:";
+"weather.low" = "L:";
+"weather.enterCity" = "Syötä kaupunki sään hakemiseksi";
+"weather.invalidCity" = "Virheellinen kaupungin nimi";
+"weather.cityNotFound" = "Kaupunkia ei löytynyt";
+"weather.unavailable" = "Sää ei saatavilla";
+"weather.condition.clear" = "Selkeää";
+"weather.condition.partlyCloudy" = "Puolipilvistä";
+"weather.condition.fog" = "Sumua";
+"weather.condition.drizzle" = "Tihkusadetta";
+"weather.condition.rain" = "Sadetta";
+"weather.condition.snow" = "Lunta";
+"weather.condition.rainShowers" = "Sadekuuroja";
+"weather.condition.snowShowers" = "Lumikuuroja";
+"weather.condition.thunderstorm" = "Ukkosta";
+"weather.condition.updating" = "Tiedot päivittyvät";
+
+/* Calendar */
+"calendar.todaysEvents" = "Tämän päivän tapahtumat";
+"calendar.noEvents" = "Ei tapahtumia tänään";
+"calendar.noUpcoming" = "Ei tulevia tapahtumia";
+"calendar.openCalendar" = "Avaa Kalenteri";
+
+/* Pomodoro */
+"pomodoro.title" = "Tarkennusajastin";
+"pomodoro.focus" = "Keskity";
+"pomodoro.session" = "Istunto %d / %d";
+"pomodoro.minutes" = "%d min";
+"pomodoro.readyToFocus" = "\U0001F3AF Valmiina keskittymään";
+"pomodoro.takeABreak" = "\u2615 Pidä tauko";
+"pomodoro.deepFocus" = "\U0001F3AF Syvä keskittyminen";
+
+/* Clipboard */
+"clipboard.title" = "Leikepöydän historia";
+"clipboard.items" = "%d kohteita";
+"clipboard.nothingCopied" = "Mitään ei ole vielä kopioitu";
+"clipboard.copyPrompt" = "Kopioi teksti tai URL-osoitteet nähdäksesi ne täällä";
+"clipboard.copySomething" = "Kopioi jotain nähdäksesi sen täällä";
+"clipboard.clearAll" = "Tyhjennä kaikki";
+"clipboard.copied" = "Kopioitu!";
+"clipboard.copy" = "Kopioida";
+"clipboard.more" = "+ %d lisää";
+
+/* Battery */
+"battery.title" = "Akku";
+"battery.noDevices" = "Laitteita ei löytynyt";
+"battery.charging" = "Lataus";
+"battery.unplugged" = "Kytketty irti";
+"battery.remaining" = "• %@ jäljellä";
+
+/* Shortcuts */
+"shortcuts.title" = "Pikanäppäimet";
+"shortcuts.noShortcuts" = "Pikanäppäimiä ei löytynyt";
+
+/* Quick Capture */
+"capture.title" = "Pikakaappaus";
+"capture.notesAppear" = "Muistiinpanot näkyvät täällä";
+
+/* Activity Feed */
+"activity.title" = "Toiminta";
+
+/* System States */
+"system.locked" = "Lukittu";
+"system.macLocked" = "Mac Lukittu";
+"system.touchIdPrompt" = "Touch ID tai kirjoita salasana";
+"system.unlocked" = "Avattu";
+"system.welcomeBack" = "Tervetuloa takaisin!";
+"system.focus" = "Keskity";
+"system.active" = "Aktiivinen";
+
+/* Widget Navigation */
+"nav.home" = "Kotiin";
+"nav.weather" = "Sää";
+"nav.youtube" = "YouTube";
+"nav.media" = "Media";
+"nav.focus" = "Keskity";
+"nav.clipboard" = "Leikepöytä";
+"nav.calendar" = "Kalenteri";
+"nav.battery" = "Akku";
+"nav.shortcuts" = "Pikanäppäimet";
+"nav.activity" = "Toiminta";
+"nav.capture" = "Kaapata";
+
+
+/* Language Settings */
+"settings.appearance.language" = "Kieli";
+"settings.language.restartTitle" = "Uudelleenkäynnistys vaaditaan";
+"settings.language.restartMessage" = "Top Notch on käynnistettävä uudelleen, jotta uusi kieli voidaan ottaa käyttöön.";
+"settings.language.restartNow" = "Käynnistä nyt uudelleen";
+"settings.language.later" = "Myöhemmin";
+
+/* Additional Strings */
+"clipboard.edit" = "Muokata";
+"media.controlsTooltip" = "Mediaohjaimet (yleiset pikanäppäimet)";
+"youtube.watchPageMode" = "Katselusivun tila";
+"youtube.playingFromYT" = "Toistetaan kohteesta YouTube";
+"youtube.urlPlaceholder" = "Liitä YouTube-URL tai videon tunnus...";
+
+/* HUD */
+"hud.mute" = "Mykistä";
+
+/* File Shelf */
+"fileShelf.title" = "Tiedostohylly";
+"fileShelf.clear" = "Tyhjennä";
+"fileShelf.dropFilesHere" = "Pudota tiedostot tähän";
+"fileShelf.releaseToAdd" = "Vapauta lisätäksesi";
+
+/* Calendar */
+"calendar.allDay" = "Koko päivä";
+
+/* Clipboard */
+"clipboard.itemCount" = "%d kohdetta";
+"clipboard.moreItems" = "+%d lisää";
+
+/* Tooltips */
+"tooltip.play" = "Toista";
+"tooltip.pause" = "Keskeytä";
+"tooltip.mute" = "Mykistä";
+"tooltip.unmute" = "Poista mykistys";
+"tooltip.close" = "Sulje";
+"tooltip.playbackSpeed" = "Toistonopeus";
+
+/* Time Ago */
+"time.now" = "nyt";
+"time.minutesAgo" = "%d min sitten";
+"time.hoursAgo" = "%d t sitten";

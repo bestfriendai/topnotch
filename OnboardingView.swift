@@ -144,6 +144,7 @@ struct OnboardingView: View {
             cardOpacity = 0
         }
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+            guard currentStep < steps.count - 1 else { return }
             currentStep += 1
             cardOffset = 15
             withAnimation(.spring(duration: 0.45, bounce: 0.3)) {

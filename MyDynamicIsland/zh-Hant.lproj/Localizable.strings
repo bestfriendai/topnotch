@@ -1,0 +1,265 @@
+/* Menu Bar */
+"menu.settings" = "設定...";
+"menu.quit" = "結束 Top Notch";
+"window.settings.title" = "Top Notch 設定";
+
+/* Settings Sections */
+"settings.section.general" = "一般";
+"settings.section.appearance" = "外觀";
+"settings.section.media" = "媒體";
+"settings.section.hud" = "HUD 替換";
+"settings.section.indicators" = "指示器與回饋";
+"settings.section.widgets" = "小工具";
+"settings.section.intelligence" = "智慧";
+"settings.section.shortcuts" = "鍵盤快速鍵";
+"settings.section.privacy" = "隱私權";
+
+/* General Settings */
+"settings.general.launchAtLogin" = "登入時啟動";
+"settings.general.hoverToExpand" = "懸停以展開";
+"settings.general.autoCollapseDelay" = "自動收合延遲";
+"settings.general.showInMenuBar" = "在選單列中顯示";
+
+/* Appearance Settings */
+"settings.appearance.theme" = "主題";
+"settings.appearance.theme.auto" = "自動";
+"settings.appearance.theme.light" = "淺色";
+"settings.appearance.theme.dark" = "深色";
+"settings.appearance.accentColor" = "強調色";
+"color.blue" = "藍色";
+"color.orange" = "橙色";
+"color.green" = "綠色";
+"color.red" = "紅色";
+"color.purple" = "紫色";
+"color.cyan" = "青色";
+
+/* Media Settings */
+"settings.media.nowPlaying" = "播放中控制項";
+"settings.media.albumArtwork" = "顯示專輯封面";
+"settings.media.vinylSpin" = "黑膠唱片旋轉動畫";
+"settings.media.colorMatch" = "顏色匹配應用程式";
+
+/* HUD Settings */
+"settings.hud.replaceVolume" = "替換音量 HUD";
+"settings.hud.replaceBrightness" = "替換亮度 HUD";
+"settings.hud.style" = "HUD 樣式";
+"settings.hud.style.minimal" = "極簡";
+"settings.hud.style.bar" = "長條";
+"settings.hud.style.notched" = "瀏海";
+
+/* Indicators Settings */
+"settings.indicators.battery" = "電池指示器";
+"settings.indicators.lockUnlock" = "鎖定/解鎖指示器";
+"settings.indicators.chargingSound" = "充電音效";
+"settings.indicators.haptic" = "觸覺回饋";
+
+/* Widget Toggles */
+"widget.calendar" = "日曆";
+"widget.weather" = "天氣";
+"widget.pomodoro" = "Pomodoro 計時器";
+"widget.clipboard" = "剪貼簿記錄";
+"widget.youtube" = "YouTube 播放器";
+"widget.battery" = "電池監測器";
+"widget.shortcuts" = "快速鍵啟動器";
+"widget.activityFeed" = "活動摘要";
+"widget.quickCapture" = "快速擷取";
+"widget.lyrics" = "同步歌詞";
+
+/* Intelligence Settings */
+"settings.ai.onDevice" = "裝置端 AI";
+"settings.ai.available" = "可用";
+"settings.ai.requiresMacOS26" = "需要 macOS 26";
+"settings.ai.summarization" = "AI 摘要";
+"settings.ai.claudeApiKey" = "Claude API 金鑰";
+
+/* Keyboard Shortcuts */
+"shortcut.playPause" = "播放 / 暫停";
+"shortcut.previousTrack" = "上一首";
+"shortcut.nextTrack" = "下一首";
+"shortcut.volumeUpDown" = "音量調高 / 調低";
+"shortcut.openYouTube" = "開啟 YouTube";
+
+/* Privacy Settings */
+"settings.privacy.clipboardMonitoring" = "剪貼簿監控";
+"settings.privacy.calendarAccess" = "行事曆存取";
+"settings.privacy.analytics" = "分析";
+"settings.privacy.showOnboarding" = "再次顯示引導頁";
+"settings.privacy.clearAllData" = "清除所有資料";
+
+/* Calendar Access Status */
+"access.granted" = "已授權";
+"access.fullAccess" = "完整存取";
+"access.writeOnly" = "僅寫入";
+"access.denied" = "已拒絕";
+"access.notGranted" = "未授權";
+"access.unknown" = "未知";
+
+/* About Section */
+"about.appName" = "Top Notch";
+"about.version" = "版本 %@ (建置 %@)";
+"about.madeWith" = "為 Mac 傾心打造 ❤️";
+"about.website" = "網站";
+"about.support" = "支援";
+"about.privacy" = "隱私權";
+
+/* Media Player */
+"media.noMediaPlaying" = "沒有媒體正在播放";
+"media.playMusicPrompt" = "播放音樂或媒體以在此處查看控制項";
+"media.notPlaying" = "未播放";
+"media.unknownArtist" = "未知藝人";
+"media.noMedia" = "沒有媒體";
+"media.music" = "音樂";
+"media.podcasts" = "Podcast";
+"media.spotify" = "Spotify";
+"media.playingFrom" = "正在從 %@ 播放";
+
+/* YouTube Player */
+"youtube.title" = "YouTube";
+"youtube.pasteUrl" = "貼上 URL...";
+"youtube.browse" = "瀏覽";
+"youtube.play" = "播放";
+"youtube.paste" = "貼上";
+"youtube.pasteAndPlay" = "貼上並播放";
+"youtube.playingInWindow" = "在視窗中播放";
+"youtube.paused" = "已暫停";
+"youtube.show" = "顯示";
+"youtube.pinned" = "已釘選";
+"youtube.recentlyPlayed" = "最近播放";
+"youtube.linkDetected" = "偵測到 YouTube 連結";
+"youtube.videoUnavailable" = "影片無法播放";
+"youtube.tryAnother" = "嘗試其他";
+"youtube.openInSafari" = "在 Safari 中開啟";
+"youtube.closePlayer" = "關閉播放器";
+"youtube.buffering" = "正在緩衝";
+"youtube.playing" = "正在播放";
+"youtube.openVideo" = "開啟 YouTube 影片… ⌘⇧Y";
+"youtube.playDetected" = "播放偵測到的影片";
+
+/* Weather */
+"weather.title" = "天氣";
+"weather.high" = "高:";
+"weather.low" = "低:";
+"weather.enterCity" = "輸入城市以載入天氣";
+"weather.invalidCity" = "城市名稱無效";
+"weather.cityNotFound" = "找不到城市";
+"weather.unavailable" = "天氣資訊無法使用";
+"weather.condition.clear" = "晴朗";
+"weather.condition.partlyCloudy" = "局部多雲";
+"weather.condition.fog" = "霧";
+"weather.condition.drizzle" = "毛毛雨";
+"weather.condition.rain" = "雨";
+"weather.condition.snow" = "雪";
+"weather.condition.rainShowers" = "陣雨";
+"weather.condition.snowShowers" = "陣雪";
+"weather.condition.thunderstorm" = "雷暴";
+"weather.condition.updating" = "狀況更新中";
+
+/* Calendar */
+"calendar.todaysEvents" = "今日活動";
+"calendar.noEvents" = "今日沒有活動";
+"calendar.noUpcoming" = "沒有即將到來的活動";
+"calendar.openCalendar" = "開啟行事曆";
+
+/* Pomodoro */
+"pomodoro.title" = "專注計時器";
+"pomodoro.focus" = "專注";
+"pomodoro.session" = "第 %d 個工作階段，共 %d 個";
+"pomodoro.minutes" = "%d 分鐘";
+"pomodoro.readyToFocus" = "🎯 準備專注";
+"pomodoro.takeABreak" = "☕ 休息一下";
+"pomodoro.deepFocus" = "🎯 深度專注";
+
+/* Clipboard */
+"clipboard.title" = "剪貼簿歷史記錄";
+"clipboard.items" = "%d 個項目";
+"clipboard.nothingCopied" = "尚未複製任何內容";
+"clipboard.copyPrompt" = "複製文字或網址即可在此處查看";
+"clipboard.copySomething" = "複製一些內容即可在此處查看";
+"clipboard.clearAll" = "清除全部";
+"clipboard.copied" = "已複製！";
+"clipboard.copy" = "複製";
+"clipboard.more" = "另有 %d 個";
+
+/* Battery */
+"battery.title" = "電池";
+"battery.noDevices" = "未找到裝置";
+"battery.charging" = "充電中";
+"battery.unplugged" = "未連接電源";
+"battery.remaining" = "• 剩餘 %@";
+
+/* Shortcuts */
+"shortcuts.title" = "捷徑";
+"shortcuts.noShortcuts" = "未找到捷徑";
+
+/* Quick Capture */
+"capture.title" = "快速擷取";
+"capture.notesAppear" = "筆記會顯示在此處";
+
+/* Activity Feed */
+"activity.title" = "活動";
+
+/* System States */
+"system.locked" = "已鎖定";
+"system.macLocked" = "Mac 已鎖定";
+"system.touchIdPrompt" = "使用 Touch ID 或輸入密碼";
+"system.unlocked" = "已解鎖";
+"system.welcomeBack" = "歡迎回來！";
+"system.focus" = "專注";
+"system.active" = "使用中";
+
+/* Widget Navigation */
+"nav.home" = "首頁";
+"nav.weather" = "天氣";
+"nav.youtube" = "YouTube";
+"nav.media" = "媒體";
+"nav.focus" = "專注";
+"nav.clipboard" = "剪貼簿";
+"nav.calendar" = "日曆";
+"nav.battery" = "電池";
+"nav.shortcuts" = "捷徑";
+"nav.activity" = "活動";
+"nav.capture" = "擷取";
+
+
+/* Language Settings */
+"settings.appearance.language" = "語言";
+"settings.language.restartTitle" = "需要重新啟動";
+"settings.language.restartMessage" = "Top Notch 需要重新啟動才能套用新語言。";
+"settings.language.restartNow" = "立即重新啟動";
+"settings.language.later" = "稍後";
+
+/* Additional Strings */
+"clipboard.edit" = "編輯";
+"media.controlsTooltip" = "媒體控制項 (全域捷徑)";
+"youtube.watchPageMode" = "觀看頁面模式";
+"youtube.playingFromYT" = "正在從 YouTube 播放";
+"youtube.urlPlaceholder" = "貼上 YouTube 網址或影片 ID...";
+
+/* HUD */
+"hud.mute" = "靜音";
+
+/* File Shelf */
+"fileShelf.title" = "檔案架";
+"fileShelf.clear" = "清除";
+"fileShelf.dropFilesHere" = "將檔案拖曳至此";
+"fileShelf.releaseToAdd" = "放開以加入";
+
+/* Calendar */
+"calendar.allDay" = "全天";
+
+/* Clipboard */
+"clipboard.itemCount" = "%d 個項目";
+"clipboard.moreItems" = "+%d 更多";
+
+/* Tooltips */
+"tooltip.play" = "播放";
+"tooltip.pause" = "暫停";
+"tooltip.mute" = "靜音";
+"tooltip.unmute" = "取消靜音";
+"tooltip.close" = "關閉";
+"tooltip.playbackSpeed" = "播放速度";
+
+/* Time Ago */
+"time.now" = "現在";
+"time.minutesAgo" = "%d 分鐘前";
+"time.hoursAgo" = "%d 小時前";

@@ -1,10 +1,56 @@
 import Combine
 import Foundation
+import Security
 import SwiftUI
 
 // On-device AI helper.
 // Prioritizes Apple's FoundationModels (macOS 26+, no API key needed).
 // Falls back to Claude API if a key is configured in Settings.
+
+// MARK: - Keychain Helper for API Key
+
+enum KeychainHelper {
+    private static let service = "com.topnotch.apikeys"
+    private static let account = "claudeAPIKey"
+
+    static func save(_ key: String) {
+        let data = Data(key.utf8)
+        let query: [String: Any] = [
+            kSecClass as String: kSecClassGenericPassword,
+            kSecAttrService as String: service,
+            kSecAttrAccount as String: account
+        ]
+        SecItemDelete(query as CFDictionary)
+        guard !key.isEmpty else { return }
+        var addQuery = query
+        addQuery[kSecValueData as String] = data
+        SecItemAdd(addQuery as CFDictionary, nil)
+    }
+
+    static func load() -> String {
+        let query: [String: Any] = [
+            kSecClass as String: kSecClassGenericPassword,
+            kSecAttrService as String: service,
+            kSecAttrAccount as String: account,
+            kSecReturnData as String: true,
+            kSecMatchLimit as String: kSecMatchLimitOne
+        ]
+        var result: AnyObject?
+        guard SecItemCopyMatching(query as CFDictionary, &result) == errSecSuccess,
+              let data = result as? Data,
+              let key = String(data: data, encoding: .utf8) else { return "" }
+        return key
+    }
+
+    static func delete() {
+        let query: [String: Any] = [
+            kSecClass as String: kSecClassGenericPassword,
+            kSecAttrService as String: service,
+            kSecAttrAccount as String: account
+        ]
+        SecItemDelete(query as CFDictionary)
+    }
+}
 
 @MainActor
 final class OnDeviceAIHelper: ObservableObject {
@@ -17,10 +63,11 @@ final class OnDeviceAIHelper: ObservableObject {
     @Published var isAvailable: Bool = false
 
     private init() {
+        migrateKeyFromUserDefaults()
         refreshAvailability()
-        // Re-check when API key changes
+        // Re-check when API key changes via Keychain notification
         NotificationCenter.default.addObserver(
-            forName: UserDefaults.didChangeNotification,
+            forName: NSNotification.Name("TopNotch.APIKeyChanged"),
             object: nil,
             queue: .main
         ) { [weak self] _ in
@@ -28,13 +75,20 @@ final class OnDeviceAIHelper: ObservableObject {
         }
     }
 
-    func refreshAvailability() {
-        let hasClaudeKey = !(UserDefaults.standard.string(forKey: "claudeAPIKey") ?? "").isEmpty
-        if #available(macOS 26.0, *) {
-            isAvailable = true   // FoundationModels available
-        } else {
-            isAvailable = hasClaudeKey
+    /// One-time migration from UserDefaults to Keychain
+    private func migrateKeyFromUserDefaults() {
+        let legacyKey = UserDefaults.standard.string(forKey: "claudeAPIKey") ?? ""
+        if !legacyKey.isEmpty {
+            KeychainHelper.save(legacyKey)
+            UserDefaults.standard.removeObject(forKey: "claudeAPIKey")
         }
+    }
+
+    func refreshAvailability() {
+        let hasClaudeKey = !KeychainHelper.load().isEmpty
+        // Only show as available if Claude API key is configured
+        // FoundationModels integration will be enabled when SDK is stable
+        isAvailable = hasClaudeKey
     }
 
     // MARK: - Summarize
@@ -60,7 +114,7 @@ final class OnDeviceAIHelper: ObservableObject {
         }
 
         // 2. Claude API fallback
-        let apiKey = UserDefaults.standard.string(forKey: "claudeAPIKey") ?? ""
+        let apiKey = KeychainHelper.load()
         guard !apiKey.isEmpty else { return nil }
         return await claudeSummarize(trimmed, apiKey: apiKey)
     }
@@ -78,7 +132,7 @@ final class OnDeviceAIHelper: ObservableObject {
             // FoundationModels categorization stub
         }
 
-        let apiKey = UserDefaults.standard.string(forKey: "claudeAPIKey") ?? ""
+        let apiKey = KeychainHelper.load()
         guard !apiKey.isEmpty else { return nil }
         return await claudeCategorize(trimmed, apiKey: apiKey)
     }
@@ -134,7 +188,7 @@ final class OnDeviceAIHelper: ObservableObject {
 // MARK: - View Helper
 
 struct AIAvailableBadge: View {
-    @ObservedObject private var ai = OnDeviceAIHelper.shared
+    @StateObject private var ai = OnDeviceAIHelper.shared
 
     var body: some View {
         if ai.isAvailable {

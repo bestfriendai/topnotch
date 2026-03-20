@@ -124,8 +124,11 @@ struct BatteryBarView: View {
             }
         }
         .onAppear {
-            withAnimation(.spring(duration: 0.6)) { animatedLevel = CGFloat(level) }
+            withAnimation(.easeOut(duration: 0.5)) { animatedLevel = CGFloat(level) }
             if isCharging { withAnimation(.easeInOut(duration: 0.8).repeatForever(autoreverses: true)) { pulseAnimation = true } }
+        }
+        .onChange(of: level) { _, newLevel in
+            withAnimation(.easeOut(duration: 0.4)) { animatedLevel = CGFloat(newLevel) }
         }
     }
 }
@@ -134,56 +137,61 @@ struct BatteryBarView: View {
 
 struct CalendarWidgetView: View {
     private let calendar = Calendar.current
-    private var currentDay: Int { calendar.component(.day, from: Date()) }
-    private var currentWeekday: String {
-        let f = DateFormatter(); f.dateFormat = "EEE"
-        return f.string(from: Date()).uppercased()
-    }
-    private var currentMonth: String {
-        let f = DateFormatter(); f.dateFormat = "MMM"
-        return f.string(from: Date()).uppercased()
-    }
-    private var currentYear: String {
-        let f = DateFormatter(); f.dateFormat = "yyyy"
-        return f.string(from: Date())
-    }
-    private var timeString: String {
-        let f = DateFormatter(); f.dateFormat = "HH:mm"
-        return f.string(from: Date())
-    }
+
+    private static let weekdayFmt: DateFormatter = {
+        let f = DateFormatter(); f.dateFormat = "EEE"; return f
+    }()
+    private static let monthFmt: DateFormatter = {
+        let f = DateFormatter(); f.dateFormat = "MMM"; return f
+    }()
+    private static let yearFmt: DateFormatter = {
+        let f = DateFormatter(); f.dateFormat = "yyyy"; return f
+    }()
+    private static let timeFmt: DateFormatter = {
+        let f = DateFormatter(); f.dateFormat = "HH:mm"; return f
+    }()
 
     var body: some View {
-        HStack(spacing: 0) {
-            HStack(spacing: 12) {
-                ZStack {
-                    RoundedRectangle(cornerRadius: 12)
-                        .fill(LinearGradient(colors: [Color(red: 1.0, green: 0.4, blue: 0.2), Color(red: 1.0, green: 0.2, blue: 0.4)], startPoint: .topLeading, endPoint: .bottomTrailing))
-                        .frame(width: 44, height: 44)
-                    Text("\(currentDay)").font(.system(size: 22, weight: .bold, design: .rounded)).foregroundStyle(.white)
+        TimelineView(.periodic(from: .now, by: 60)) { context in
+            let now = context.date
+            let currentDay = calendar.component(.day, from: now)
+            let currentWeekday = Self.weekdayFmt.string(from: now).uppercased()
+            let currentMonth = Self.monthFmt.string(from: now).uppercased()
+            let currentYear = Self.yearFmt.string(from: now)
+            let timeString = Self.timeFmt.string(from: now)
+
+            HStack(spacing: 0) {
+                HStack(spacing: 12) {
+                    ZStack {
+                        RoundedRectangle(cornerRadius: 12)
+                            .fill(LinearGradient(colors: [Color(red: 1.0, green: 0.4, blue: 0.2), Color(red: 1.0, green: 0.2, blue: 0.4)], startPoint: .topLeading, endPoint: .bottomTrailing))
+                            .frame(width: 44, height: 44)
+                        Text("\(currentDay)").font(.system(size: 22, weight: .bold, design: .rounded)).foregroundStyle(.white)
+                    }
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(currentWeekday).font(.system(size: 11, weight: .bold, design: .rounded)).foregroundStyle(.white.opacity(0.9))
+                        Text("\(currentMonth) \(currentYear)").font(.system(size: 10, weight: .medium)).foregroundStyle(.white.opacity(0.5))
+                    }
                 }
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(currentWeekday).font(.system(size: 11, weight: .bold, design: .rounded)).foregroundStyle(.white.opacity(0.9))
-                    Text("\(currentMonth) \(currentYear)").font(.system(size: 10, weight: .medium)).foregroundStyle(.white.opacity(0.5))
+                .fixedSize()
+                Spacer()
+                HStack(spacing: 6) {
+                    ForEach(0..<7, id: \.self) { index in
+                        let dayOfWeek = calendar.component(.weekday, from: now)
+                        let adjustedIndex = (index + 2) % 7
+                        let isToday = (dayOfWeek - 1) == adjustedIndex || (dayOfWeek == 1 && index == 6)
+                        Circle()
+                            .fill(isToday ?
+                                AnyShapeStyle(LinearGradient(colors: [Color(red: 1.0, green: 0.4, blue: 0.2), Color(red: 1.0, green: 0.2, blue: 0.4)], startPoint: .top, endPoint: .bottom)) :
+                                AnyShapeStyle(Color.white.opacity(index < dayOfWeek - 1 || (dayOfWeek == 1 && index < 6) ? 0.4 : 0.15)))
+                            .frame(width: isToday ? 8 : 5, height: isToday ? 8 : 5)
+                    }
                 }
+                Spacer()
+                Text(timeString).font(.system(size: 28, weight: .bold, design: .rounded)).foregroundStyle(.white).monospacedDigit().fixedSize()
             }
-            .fixedSize()
-            Spacer()
-            HStack(spacing: 6) {
-                ForEach(0..<7, id: \.self) { index in
-                    let dayOfWeek = calendar.component(.weekday, from: Date())
-                    let adjustedIndex = (index + 2) % 7
-                    let isToday = (dayOfWeek - 1) == adjustedIndex || (dayOfWeek == 1 && index == 6)
-                    Circle()
-                        .fill(isToday ?
-                            AnyShapeStyle(LinearGradient(colors: [Color(red: 1.0, green: 0.4, blue: 0.2), Color(red: 1.0, green: 0.2, blue: 0.4)], startPoint: .top, endPoint: .bottom)) :
-                            AnyShapeStyle(Color.white.opacity(index < dayOfWeek - 1 || (dayOfWeek == 1 && index < 6) ? 0.4 : 0.15)))
-                        .frame(width: isToday ? 8 : 5, height: isToday ? 8 : 5)
-                }
-            }
-            Spacer()
-            Text(timeString).font(.system(size: 28, weight: .bold, design: .rounded)).foregroundStyle(.white).monospacedDigit().fixedSize()
+            .padding(.horizontal, 8)
         }
-        .padding(.horizontal, 8)
     }
 }
 
@@ -276,6 +284,7 @@ struct ProgressBarBrightnessHUD: View {
 struct NotchedVolumeHUD: View {
     let level: CGFloat
     let muted: Bool
+    @AppStorage("volumeShowPercent") private var showPercent = true
 
     private var volumeIcon: String {
         if muted { return "speaker.slash.fill" }
@@ -294,14 +303,17 @@ struct NotchedVolumeHUD: View {
                         .frame(width: 6, height: 16)
                 }
             }
-            Text("\(Int(level * 100))%").font(.system(size: 14, weight: .bold, design: .rounded))
-                .foregroundStyle(muted ? .gray : .white).monospacedDigit().frame(width: 44, alignment: .trailing)
+            if showPercent {
+                Text("\(Int(level * 100))%").font(.system(size: 14, weight: .bold, design: .rounded))
+                    .foregroundStyle(muted ? .gray : .white).monospacedDigit().frame(width: 44, alignment: .trailing)
+            }
         }
     }
 }
 
 struct NotchedBrightnessHUD: View {
     let level: CGFloat
+    @AppStorage("brightnessShowPercent") private var showPercent = true
 
     var body: some View {
         HStack(spacing: 12) {
@@ -313,8 +325,10 @@ struct NotchedBrightnessHUD: View {
                         .frame(width: 6, height: 16)
                 }
             }
-            Text("\(Int(level * 100))%").font(.system(size: 14, weight: .bold, design: .rounded))
-                .foregroundStyle(.yellow).monospacedDigit().frame(width: 44, alignment: .trailing)
+            if showPercent {
+                Text("\(Int(level * 100))%").font(.system(size: 14, weight: .bold, design: .rounded))
+                    .foregroundStyle(.yellow).monospacedDigit().frame(width: 44, alignment: .trailing)
+            }
         }
     }
 }

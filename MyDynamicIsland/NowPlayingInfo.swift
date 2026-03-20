@@ -13,6 +13,7 @@ struct NowPlayingInfo: Equatable {
     var playbackRate: Double = 0
     var bundleIdentifier: String = ""
     var appName: String = ""
+    var dominantColor: NSColor?
     
     /// Progress as a value between 0 and 1
     var progress: Double {
@@ -79,6 +80,7 @@ struct NowPlayingInfo: Equatable {
     
     /// Get the theme color for the source app
     var appColor: NSColor {
+        if let dynamic = dominantColor { return dynamic }
         switch appName.lowercased() {
         case "spotify":
             return NSColor(red: 0.12, green: 0.84, blue: 0.38, alpha: 1.0) // Spotify green

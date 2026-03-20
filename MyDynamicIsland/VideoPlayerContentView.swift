@@ -11,7 +11,7 @@ struct VideoPlayerContentView: View {
     let onClose: () -> Void
 
     @State private var showControls: Bool = true
-    @State private var controlsTimer: Timer?
+    @State private var controlsWorkItem: DispatchWorkItem?
     @State private var isDraggingScrubber: Bool = false
     @State private var scrubberValue: Double = 0
     @State private var showVolumeSlider: Bool = false
@@ -100,8 +100,8 @@ struct VideoPlayerContentView: View {
                     NSEvent.removeMonitor(monitor)
                     keyMonitor = nil
                 }
-                controlsTimer?.invalidate()
-                controlsTimer = nil
+                controlsWorkItem?.cancel()
+                controlsWorkItem = nil
             }
         }
     }
@@ -150,7 +150,7 @@ struct VideoPlayerContentView: View {
                     .font(.system(size: 48, weight: .medium))
                     .foregroundStyle(NotchDesign.red)
 
-                Text("Video Unavailable")
+                Text(NSLocalizedString("youtube.videoUnavailable", comment: ""))
                     .font(.system(size: 18, weight: .bold))
                     .foregroundColor(NotchDesign.textPrimary)
                     .lineLimit(1)
@@ -165,7 +165,7 @@ struct VideoPlayerContentView: View {
                     Button(action: {
                         playerState.clearError()
                     }) {
-                        Text("Try Another")
+                        Text(NSLocalizedString("youtube.tryAnother", comment: ""))
                             .font(.system(size: 13, weight: .semibold))
                             .foregroundStyle(NotchDesign.textPrimary)
                             .padding(.horizontal, 16)
@@ -184,7 +184,7 @@ struct VideoPlayerContentView: View {
                                 NSWorkspace.shared.open(url)
                             }
                         }) {
-                            Text("Open in Safari")
+                            Text(NSLocalizedString("youtube.openInSafari", comment: ""))
                                 .font(.system(size: 13, weight: .semibold))
                                 .foregroundStyle(.white)
                                 .padding(.horizontal, 16)
@@ -202,7 +202,7 @@ struct VideoPlayerContentView: View {
                     HStack(spacing: 4) {
                         Image(systemName: "xmark")
                             .font(.system(size: 10, weight: .bold))
-                        Text("Close Player")
+                        Text(NSLocalizedString("youtube.closePlayer", comment: ""))
                             .font(.system(size: 12, weight: .semibold))
                     }
                     .foregroundStyle(NotchDesign.textMuted)
@@ -294,7 +294,7 @@ struct VideoPlayerContentView: View {
                     HStack(spacing: 5) {
                         Image(systemName: "safari")
                             .font(.system(size: 10, weight: .semibold))
-                        Text("Watch page mode")
+                        Text(NSLocalizedString("youtube.watchPageMode", comment: ""))
                             .font(.system(size: 11, weight: .medium))
                     }
                     .foregroundStyle(NotchDesign.textMuted)
@@ -340,7 +340,7 @@ struct VideoPlayerContentView: View {
                 }
 
                 // "Playing from YouTube" — 12px, red
-                Text("Playing from YouTube")
+                Text(NSLocalizedString("youtube.playingFromYT", comment: ""))
                     .font(.system(size: 12, weight: .medium))
                     .foregroundColor(NotchDesign.red)
             }
@@ -360,7 +360,7 @@ struct VideoPlayerContentView: View {
             .onHover { hovering in
                 isCloseHovered = hovering
             }
-            .help("Close")
+            .help(NSLocalizedString("tooltip.close", comment: ""))
         }
         .padding(.horizontal, 10)
         .padding(.vertical, 8)
@@ -518,7 +518,7 @@ struct VideoPlayerContentView: View {
                 )
         }
         .buttonStyle(.plain)
-        .help(playerState.isPlaying ? "Pause" : "Play")
+        .help(playerState.isPlaying ? NSLocalizedString("tooltip.pause", comment: "") : NSLocalizedString("tooltip.play", comment: ""))
     }
 
     // MARK: - Volume Control
@@ -535,7 +535,7 @@ struct VideoPlayerContentView: View {
                     .background(Color.white.opacity(0.08), in: Circle())
             }
             .buttonStyle(.plain)
-            .help(playerState.isMuted ? "Unmute" : "Mute")
+            .help(playerState.isMuted ? NSLocalizedString("tooltip.unmute", comment: "") : NSLocalizedString("tooltip.mute", comment: ""))
 
             if showVolumeSlider {
                 Slider(value: Binding(
@@ -600,7 +600,7 @@ struct VideoPlayerContentView: View {
                 )
         }
         .menuStyle(.borderlessButton)
-        .help("Playback speed")
+        .help(NSLocalizedString("tooltip.playbackSpeed", comment: ""))
     }
 
     // MARK: - Controls Visibility
@@ -613,23 +613,21 @@ struct VideoPlayerContentView: View {
     }
 
     private func resetControlsTimer() {
-        controlsTimer?.invalidate()
-        controlsTimer = nil
+        controlsWorkItem?.cancel()
+        controlsWorkItem = nil
 
         guard playerState.isPlaying else { return }
 
-        controlsTimer = Timer.scheduledTimer(withTimeInterval: controlsHideDelay, repeats: false) { _ in
-            Task { @MainActor in
-                // Only hide if still playing and not hovering/dragging
-                // The closure captures the binding to playerState (reference type)
-                // and @State storage. No retain cycle since View is a value type.
-                if playerState.isPlaying && !isDraggingScrubber && !isHovering {
-                    withAnimation(.easeInOut(duration: 0.3)) {
-                        showControls = false
-                    }
+        let work = DispatchWorkItem { [self] in
+            // Only hide if still playing and not hovering/dragging
+            if playerState.isPlaying && !isDraggingScrubber && !isHovering {
+                withAnimation(.easeInOut(duration: 0.3)) {
+                    showControls = false
                 }
             }
         }
+        controlsWorkItem = work
+        DispatchQueue.main.asyncAfter(deadline: .now() + controlsHideDelay, execute: work)
     }
 
     // MARK: - Time Formatting

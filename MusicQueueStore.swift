@@ -1,3 +1,4 @@
+import Combine
 import Foundation
 
 struct UpcomingTrack: Identifiable {
@@ -35,8 +36,9 @@ final class MusicQueueStore: ObservableObject {
                     set pList to current playlist
                     set curIdx to index of current track
                     set totalCount to count of tracks of pList
-                    set endIdx to min(curIdx + 3, totalCount)
                     if curIdx + 1 > totalCount then return "|||QUEUE_EMPTY|||"
+                    set endIdx to curIdx + 3
+                    if endIdx > totalCount then set endIdx to totalCount
                     set result to ""
                     repeat with i from (curIdx + 1) to endIdx
                         set t to track i of pList

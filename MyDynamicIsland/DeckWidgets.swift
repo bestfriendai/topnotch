@@ -10,7 +10,7 @@ private let accentCyan = Color(red: 0.024, green: 0.714, blue: 0.831)
 // MARK: - Pomodoro Timer Card
 
 struct PomodoroDeckCard: View {
-    @ObservedObject private var timer = PomodoroTimer.shared
+    @StateObject private var timer = PomodoroTimer.shared
 
     var body: some View {
         VStack(alignment: .center, spacing: 10) {
@@ -19,7 +19,7 @@ struct PomodoroDeckCard: View {
                 Image(systemName: "timer")
                     .font(.system(size: 12, weight: .semibold))
                     .foregroundStyle(NotchDesign.orange)
-                Text("Focus")
+                Text(NSLocalizedString("pomodoro.focus", comment: ""))
                     .font(.system(size: 14, weight: .semibold))
                     .foregroundStyle(NotchDesign.textPrimary)
             }
@@ -44,12 +44,15 @@ struct PomodoroDeckCard: View {
                     .monospacedDigit()
             }
 
-            // Session dots
+            // Session dots — scale up on completion
             HStack(spacing: 6) {
                 ForEach(0..<timer.totalSessions, id: \.self) { i in
+                    let filled = i < timer.completedSessions
                     Circle()
-                        .fill(i < timer.completedSessions ? NotchDesign.orange : NotchDesign.borderSubtle)
-                        .frame(width: 6, height: 6)
+                        .fill(filled ? NotchDesign.orange : NotchDesign.borderSubtle)
+                        .frame(width: filled ? 8 : 6, height: filled ? 8 : 6)
+                        .shadow(color: filled ? NotchDesign.orange.opacity(0.6) : .clear, radius: 4)
+                        .animation(.spring(duration: 0.35, bounce: 0.5), value: timer.completedSessions)
                 }
             }
 
@@ -72,7 +75,7 @@ struct PomodoroDeckCard: View {
                         Image(systemName: timer.isRunning ? "pause.fill" : "play.fill")
                             .font(.system(size: 14))
                             .foregroundStyle(.black)
-                            .offset(x: 1)
+                            .offset(x: timer.isRunning ? 0 : 1)
                     }
                 }
                 .buttonStyle(.plain)
@@ -109,6 +112,34 @@ final class PomodoroTimer: ObservableObject {
     private let shortBreakDuration: Double = 5 * 60
     private let longBreakDuration: Double = 15 * 60
 
+    // MARK: - Persistence keys
+    private static let kRemaining  = "pomodoro.remainingSeconds"
+    private static let kCompleted  = "pomodoro.completedSessions"
+    private static let kWorkMins   = "pomodoro.workDurationMinutes"
+    private static let kIsBreak    = "pomodoro.isBreak"
+
+    private init() {
+        let ud = UserDefaults.standard
+        let savedMins = ud.double(forKey: Self.kWorkMins)
+        if savedMins > 0 {
+            workDuration = savedMins * 60
+        }
+        let savedRemaining = ud.double(forKey: Self.kRemaining)
+        if savedRemaining > 0 {
+            remainingSeconds = min(savedRemaining, workDuration)
+        }
+        completedSessions = ud.integer(forKey: Self.kCompleted)
+        isBreak = ud.bool(forKey: Self.kIsBreak)
+    }
+
+    private func persist() {
+        let ud = UserDefaults.standard
+        ud.set(remainingSeconds, forKey: Self.kRemaining)
+        ud.set(completedSessions, forKey: Self.kCompleted)
+        ud.set(workDuration / 60, forKey: Self.kWorkMins)
+        ud.set(isBreak, forKey: Self.kIsBreak)
+    }
+
     var timeString: String {
         let mins = Int(remainingSeconds) / 60
         let secs = Int(remainingSeconds) % 60
@@ -116,9 +147,9 @@ final class PomodoroTimer: ObservableObject {
     }
 
     var statusText: String {
-        if !isRunning && remainingSeconds == workDuration { return "\u{1F3AF} Ready to focus" }
-        if isBreak { return "\u{2615} Take a break" }
-        return "\u{1F3AF} Deep focus"
+        if !isRunning && remainingSeconds == workDuration { return NSLocalizedString("pomodoro.readyToFocus", comment: "") }
+        if isBreak { return NSLocalizedString("pomodoro.takeABreak", comment: "") }
+        return NSLocalizedString("pomodoro.deepFocus", comment: "")
     }
 
     var progress: CGFloat {
@@ -153,12 +184,14 @@ final class PomodoroTimer: ObservableObject {
         isRunning = false
         timer?.invalidate()
         timer = nil
+        persist()
     }
 
     func reset() {
         pause()
         isBreak = false
         remainingSeconds = workDuration
+        persist()
     }
 
     func skip() {
@@ -171,6 +204,7 @@ final class PomodoroTimer: ObservableObject {
         if !isRunning && !isBreak {
             remainingSeconds = newDuration
         }
+        persist()
     }
 
     func adjustDuration(byMinutes delta: Double) {
@@ -191,18 +225,19 @@ final class PomodoroTimer: ObservableObject {
             isBreak = false
             remainingSeconds = workDuration
         } else {
-            // Work finished
+            // Work finished — dot completion is animated by .animation(..., value:) on the view
             completedSessions += 1
             isBreak = true
             remainingSeconds = completedSessions % 4 == 0 ? longBreakDuration : shortBreakDuration
         }
+        persist()
     }
 }
 
 // MARK: - Calendar Card
 
 struct CalendarDeckCard: View {
-    @ObservedObject private var store = CalendarStore.shared
+    @StateObject private var store = CalendarStore.shared
     @State private var badgeAppeared = false
     @State private var hoveredEventId: String?
     @State private var openCalHovered = false
@@ -211,12 +246,14 @@ struct CalendarDeckCard: View {
     private let calendar = Calendar.current
     private var today: Date { Date() }
     private var dayNumber: Int { calendar.component(.day, from: today) }
-    private var weekdayShort: String {
-        let f = DateFormatter(); f.dateFormat = "EEE"; return f.string(from: today).uppercased()
-    }
-    private var monthYearLabel: String {
-        let f = DateFormatter(); f.dateFormat = "MMMM yyyy"; return f.string(from: today).uppercased()
-    }
+    private static let weekdayFormatter: DateFormatter = {
+        let f = DateFormatter(); f.dateFormat = "EEE"; return f
+    }()
+    private static let monthYearFormatter: DateFormatter = {
+        let f = DateFormatter(); f.dateFormat = "MMMM yyyy"; return f
+    }()
+    private var weekdayShort: String { Self.weekdayFormatter.string(from: today).uppercased() }
+    private var monthYearLabel: String { Self.monthYearFormatter.string(from: today).uppercased() }
 
     // Always red per spec — #FF453A
     private let calendarRed = Color(red: 1.0, green: 0.271, blue: 0.227)
@@ -269,12 +306,27 @@ struct CalendarDeckCard: View {
                 .frame(height: 1)
 
             // Events: colored dot (6px) + title (11px semibold white) + time (9px gray)
-            if store.events.isEmpty {
+            if store.permissionDenied {
+                HStack(spacing: 5) {
+                    Image(systemName: "lock.shield")
+                        .font(.system(size: 12, weight: .medium))
+                        .foregroundStyle(.orange.opacity(0.7))
+                    Text(NSLocalizedString("calendar.permissionNeeded", comment: "Calendar access needed"))
+                        .font(.system(size: 10, weight: .medium))
+                        .foregroundStyle(.white.opacity(0.45))
+                        .lineLimit(1)
+                }
+                .onTapGesture {
+                    if let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Calendars") {
+                        NSWorkspace.shared.open(url)
+                    }
+                }
+            } else if store.events.isEmpty {
                 HStack(spacing: 5) {
                     Image(systemName: "checkmark.circle.fill")
                         .font(.system(size: 12, weight: .medium))
                         .foregroundStyle(.green.opacity(0.7))
-                    Text("No events today")
+                    Text(NSLocalizedString("calendar.noEvents", comment: ""))
                         .font(.system(size: 10, weight: .medium))
                         .foregroundStyle(.white.opacity(0.45))
                         .lineLimit(1)
@@ -326,7 +378,7 @@ struct CalendarDeckCard: View {
                 NSWorkspace.shared.open(URL(fileURLWithPath: "/System/Applications/Calendar.app"))
             }) {
                 HStack(spacing: 3) {
-                    Text("Open Calendar")
+                    Text(NSLocalizedString("calendar.openCalendar", comment: ""))
                         .font(.system(size: 9, weight: .medium))
                         .foregroundStyle(NotchDesign.blue)
                     Image(systemName: "arrow.right")
@@ -335,10 +387,14 @@ struct CalendarDeckCard: View {
                         .offset(x: openCalHovered ? 3 : 0)
                         .animation(.easeOut(duration: 0.2), value: openCalHovered)
                 }
-                .opacity(openCalHovered ? 0.8 : 1.0)
+                .opacity(openCalHovered ? 1.0 : 0.8)
             }
             .buttonStyle(.plain)
             .onHover { openCalHovered = $0 }
+        }
+        .onDisappear {
+            badgeAppeared = false
+            eventDotPulse = false
         }
     }
 
@@ -360,10 +416,15 @@ struct CalendarDeckCard: View {
         }
     }
 
-    private static func formatEventTime(_ event: EKEvent) -> String {
+    private static let eventTimeFormatter: DateFormatter = {
         let f = DateFormatter()
         f.dateFormat = "h:mm a"
-        if event.isAllDay { return "All day" }
+        return f
+    }()
+
+    private static func formatEventTime(_ event: EKEvent) -> String {
+        if event.isAllDay { return NSLocalizedString("calendar.allDay", comment: "") }
+        let f = Self.eventTimeFormatter
         return "\(f.string(from: event.startDate)) - \(f.string(from: event.endDate))"
     }
 }
@@ -375,10 +436,11 @@ final class CalendarStore: ObservableObject {
     static let shared = CalendarStore()
 
     @Published var events: [EKEvent] = []
+    @Published var permissionDenied = false
     private let store = EKEventStore()
     private var refreshTimer: Timer?
 
-    init() {
+    private init() {
         requestAccess()
     }
 
@@ -389,18 +451,26 @@ final class CalendarStore: ObservableObject {
     private func requestAccess() {
         if #available(macOS 14.0, *) {
             store.requestFullAccessToEvents { [weak self] granted, error in
-                guard granted, error == nil else { return }
                 Task { @MainActor [weak self] in
-                    self?.fetchTodayEvents()
-                    self?.startPeriodicRefresh()
+                    if granted && error == nil {
+                        self?.permissionDenied = false
+                        self?.fetchTodayEvents()
+                        self?.startPeriodicRefresh()
+                    } else {
+                        self?.permissionDenied = true
+                    }
                 }
             }
         } else {
             store.requestAccess(to: .event) { [weak self] granted, error in
-                guard granted, error == nil else { return }
                 Task { @MainActor [weak self] in
-                    self?.fetchTodayEvents()
-                    self?.startPeriodicRefresh()
+                    if granted && error == nil {
+                        self?.permissionDenied = false
+                        self?.fetchTodayEvents()
+                        self?.startPeriodicRefresh()
+                    } else {
+                        self?.permissionDenied = true
+                    }
                 }
             }
         }

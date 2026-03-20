@@ -1,0 +1,265 @@
+/* Menu Bar */
+"menu.settings" = "Setări...";
+"menu.quit" = "Ieși din Top Notch";
+"window.settings.title" = "Top Notch Setări";
+
+/* Settings Sections */
+"settings.section.general" = "GENERAL";
+"settings.section.appearance" = "ASPECT";
+"settings.section.media" = "MEDIA";
+"settings.section.hud" = "HUD ÎNLOCUIRE";
+"settings.section.indicators" = "INDICATORI ȘI FEEDBACK";
+"settings.section.widgets" = "WIDGET-uri";
+"settings.section.intelligence" = "INTELIGENTA";
+"settings.section.shortcuts" = "SCURTĂTURILE DE LA TASTATĂ";
+"settings.section.privacy" = "CONFIDENTIALITATE";
+
+/* General Settings */
+"settings.general.launchAtLogin" = "Lansați la Logare";
+"settings.general.hoverToExpand" = "Plasați cursorul pentru a extinde";
+"settings.general.autoCollapseDelay" = "Întârziere colaps automat";
+"settings.general.showInMenuBar" = "Afișați în bara de meniu";
+
+/* Appearance Settings */
+"settings.appearance.theme" = "Temă";
+"settings.appearance.theme.auto" = "Auto";
+"settings.appearance.theme.light" = "Aprinde";
+"settings.appearance.theme.dark" = "Întuneric";
+"settings.appearance.accentColor" = "Culoare de accent";
+"color.blue" = "Albastru";
+"color.orange" = "Orange";
+"color.green" = "Verde";
+"color.red" = "Roşu";
+"color.purple" = "Violet";
+"color.cyan" = "Cyan";
+
+/* Media Settings */
+"settings.media.nowPlaying" = "Acum se joacă controale";
+"settings.media.albumArtwork" = "Afișează ilustrația albumului";
+"settings.media.vinylSpin" = "Vinyl Spin Animation";
+"settings.media.colorMatch" = "Aplicația Color Match";
+
+/* HUD Settings */
+"settings.hud.replaceVolume" = "Înlocuiți volumul HUD";
+"settings.hud.replaceBrightness" = "Înlocuiți luminozitatea HUD";
+"settings.hud.style" = "HUD Stil";
+"settings.hud.style.minimal" = "Minim";
+"settings.hud.style.bar" = "Bar";
+"settings.hud.style.notched" = "Crestat";
+
+/* Indicators Settings */
+"settings.indicators.battery" = "Indicator baterie";
+"settings.indicators.lockUnlock" = "Indicator de blocare/deblocare";
+"settings.indicators.chargingSound" = "Sunet de încărcare";
+"settings.indicators.haptic" = "Feedback haptic";
+
+/* Widget Toggles */
+"widget.calendar" = "Calendaristic";
+"widget.weather" = "Vreme";
+"widget.pomodoro" = "Pomodoro Temporizator";
+"widget.clipboard" = "Istoricul clipboard-ului";
+"widget.youtube" = "YouTube Player";
+"widget.battery" = "Monitor baterie";
+"widget.shortcuts" = "Lansatorul de comenzi rapide";
+"widget.activityFeed" = "Feed de activitate";
+"widget.quickCapture" = "Captură rapidă";
+"widget.lyrics" = "Versuri sincronizate";
+
+/* Intelligence Settings */
+"settings.ai.onDevice" = "AI pe dispozitiv";
+"settings.ai.available" = "Disponibil";
+"settings.ai.requiresMacOS26" = "Necesită macOS 26";
+"settings.ai.summarization" = "Rezumat AI";
+"settings.ai.claudeApiKey" = "Claude Cheie API";
+
+/* Keyboard Shortcuts */
+"shortcut.playPause" = "Redare/Pauză";
+"shortcut.previousTrack" = "Piesa anterioară";
+"shortcut.nextTrack" = "Următoarea piesă";
+"shortcut.volumeUpDown" = "Volum sus/jos";
+"shortcut.openYouTube" = "Deschide YouTube";
+
+/* Privacy Settings */
+"settings.privacy.clipboardMonitoring" = "Monitorizare clipboard";
+"settings.privacy.calendarAccess" = "Acces la calendar";
+"settings.privacy.analytics" = "Analytics";
+"settings.privacy.showOnboarding" = "Afișați din nou integrarea";
+"settings.privacy.clearAllData" = "Ștergeți toate datele";
+
+/* Calendar Access Status */
+"access.granted" = "De acord";
+"access.fullAccess" = "Acces complet";
+"access.writeOnly" = "Doar scrie";
+"access.denied" = "Negat";
+"access.notGranted" = "Nu este acordat";
+"access.unknown" = "Necunoscut";
+
+/* About Section */
+"about.appName" = "Top Notch";
+"about.version" = "Versiunea %@ (Build %@ )";
+"about.madeWith" = "Realizat cu ❤️ pentru Mac";
+"about.website" = "Site-ul web";
+"about.support" = "Sprijin";
+"about.privacy" = "Confidențialitate";
+
+/* Media Player */
+"media.noMediaPlaying" = "Fără redare media";
+"media.playMusicPrompt" = "Redați muzică sau conținut media pentru a vedea comenzile aici";
+"media.notPlaying" = "Nu se joacă";
+"media.unknownArtist" = "Artist necunoscut";
+"media.noMedia" = "Fără media";
+"media.music" = "Muzică";
+"media.podcasts" = "Podcasts";
+"media.spotify" = "Spotify";
+"media.playingFrom" = "Se joacă de la %@";
+
+/* YouTube Player */
+"youtube.title" = "YouTube";
+"youtube.pasteUrl" = "Lipiți adresa URL...";
+"youtube.browse" = "Răsfoiește";
+"youtube.play" = "Juca";
+"youtube.paste" = "Pastă";
+"youtube.pasteAndPlay" = "Lipiți și jucați";
+"youtube.playingInWindow" = "Se joacă în fereastră";
+"youtube.paused" = "Întrerupt";
+"youtube.show" = "Spectacol";
+"youtube.pinned" = "Fixat";
+"youtube.recentlyPlayed" = "JUCAT RECENT";
+"youtube.linkDetected" = "YouTube Link detectat";
+"youtube.videoUnavailable" = "Videoclipul nu este disponibil";
+"youtube.tryAnother" = "Încearcă Altul";
+"youtube.openInSafari" = "Deschide în Safari";
+"youtube.closePlayer" = "Închide Player";
+"youtube.buffering" = "Buffering";
+"youtube.playing" = "Joc";
+"youtube.openVideo" = "Deschide YouTube Video... ⌘⇧Y";
+"youtube.playDetected" = "Redați videoclipul detectat";
+
+/* Weather */
+"weather.title" = "Vreme";
+"weather.high" = "H:";
+"weather.low" = "L:";
+"weather.enterCity" = "Introduceți un oraș pentru a încărca vremea";
+"weather.invalidCity" = "Nume oraș invalid";
+"weather.cityNotFound" = "Oraș negăsit";
+"weather.unavailable" = "Vreme indisponibilă";
+"weather.condition.clear" = "Cer senin";
+"weather.condition.partlyCloudy" = "Parțial noros";
+"weather.condition.fog" = "Ceață";
+"weather.condition.drizzle" = "Burniță";
+"weather.condition.rain" = "Ploaie";
+"weather.condition.snow" = "Ninsoare";
+"weather.condition.rainShowers" = "Averse de ploaie";
+"weather.condition.snowShowers" = "Averse de ninsoare";
+"weather.condition.thunderstorm" = "Furtună";
+"weather.condition.updating" = "Condiții în actualizare";
+
+/* Calendar */
+"calendar.todaysEvents" = "Evenimentele de azi";
+"calendar.noEvents" = "Nu există evenimente astăzi";
+"calendar.noUpcoming" = "Nu există evenimente viitoare";
+"calendar.openCalendar" = "Deschide Calendar";
+
+/* Pomodoro */
+"pomodoro.title" = "Temporizator de focalizare";
+"pomodoro.focus" = "Concentrează-te";
+"pomodoro.session" = "Sesiunea %d din %d";
+"pomodoro.minutes" = "%d min";
+"pomodoro.readyToFocus" = "\U0001F3AF Gata de concentrare";
+"pomodoro.takeABreak" = "\u2615 Ia o pauză";
+"pomodoro.deepFocus" = "\U0001F3AF Concentrare profundă";
+
+/* Clipboard */
+"clipboard.title" = "Istoricul clipboard-ului";
+"clipboard.items" = "%d articole";
+"clipboard.nothingCopied" = "Nu s-a copiat încă nimic";
+"clipboard.copyPrompt" = "Copiați textul sau adresele URL pentru a le vedea aici";
+"clipboard.copySomething" = "Copiați ceva pentru a-l vedea aici";
+"clipboard.clearAll" = "Ștergeți tot";
+"clipboard.copied" = "Copiat!";
+"clipboard.copy" = "Copie";
+"clipboard.more" = "+ %d mai mult";
+
+/* Battery */
+"battery.title" = "Baterie";
+"battery.noDevices" = "Nu s-au găsit dispozitive";
+"battery.charging" = "Încărcare";
+"battery.unplugged" = "Deconectat";
+"battery.remaining" = "• %@ rămas";
+
+/* Shortcuts */
+"shortcuts.title" = "Comenzi rapide";
+"shortcuts.noShortcuts" = "Nu s-au găsit comenzi rapide";
+
+/* Quick Capture */
+"capture.title" = "Captură rapidă";
+"capture.notesAppear" = "Notele apar aici";
+
+/* Activity Feed */
+"activity.title" = "Activitate";
+
+/* System States */
+"system.locked" = "Blocat";
+"system.macLocked" = "Mac Blocat";
+"system.touchIdPrompt" = "Touch ID sau introduceți parola";
+"system.unlocked" = "Deblocat";
+"system.welcomeBack" = "Bine ai revenit!";
+"system.focus" = "Concentrează-te";
+"system.active" = "Activ";
+
+/* Widget Navigation */
+"nav.home" = "Acasă";
+"nav.weather" = "Vreme";
+"nav.youtube" = "YouTube";
+"nav.media" = "Media";
+"nav.focus" = "Concentrează-te";
+"nav.clipboard" = "Clipboard";
+"nav.calendar" = "Calendaristic";
+"nav.battery" = "Baterie";
+"nav.shortcuts" = "Comenzi rapide";
+"nav.activity" = "Activitate";
+"nav.capture" = "Capta";
+
+
+/* Language Settings */
+"settings.appearance.language" = "Limbă";
+"settings.language.restartTitle" = "Este necesară repornirea";
+"settings.language.restartMessage" = "Top Notch trebuie să repornească pentru a aplica noua limbă.";
+"settings.language.restartNow" = "Reporniți acum";
+"settings.language.later" = "Mai târziu";
+
+/* Additional Strings */
+"clipboard.edit" = "Edita";
+"media.controlsTooltip" = "Comenzi media (comenzi rapide globale)";
+"youtube.watchPageMode" = "Modul pagină de vizionare";
+"youtube.playingFromYT" = "Se joacă de la YouTube";
+"youtube.urlPlaceholder" = "Lipiți URL-ul YouTube sau ID-ul video...";
+
+/* HUD */
+"hud.mute" = "Oprește sunetul";
+
+/* File Shelf */
+"fileShelf.title" = "Raft de fișiere";
+"fileShelf.clear" = "Golește";
+"fileShelf.dropFilesHere" = "Trageți fișiere aici";
+"fileShelf.releaseToAdd" = "Eliberați pentru a adăuga";
+
+/* Calendar */
+"calendar.allDay" = "Toată ziua";
+
+/* Clipboard */
+"clipboard.itemCount" = "%d elemente";
+"clipboard.moreItems" = "+%d în plus";
+
+/* Tooltips */
+"tooltip.play" = "Redă";
+"tooltip.pause" = "Pauză";
+"tooltip.mute" = "Oprește sunetul";
+"tooltip.unmute" = "Activează sunetul";
+"tooltip.close" = "Închide";
+"tooltip.playbackSpeed" = "Viteză redare";
+
+/* Time Ago */
+"time.now" = "acum";
+"time.minutesAgo" = "acum %d m";
+"time.hoursAgo" = "acum %d h";

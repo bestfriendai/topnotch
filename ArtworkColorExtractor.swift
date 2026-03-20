@@ -2,11 +2,11 @@ import AppKit
 import Foundation
 
 enum ArtworkColorExtractor {
-    // Cache: image hash -> vibrant color
+    // Cache: content hash -> vibrant color
     private static var cache: [Int: NSColor] = [:]
 
     static func extract(from image: NSImage) -> NSColor? {
-        let hash = Int(bitPattern: ObjectIdentifier(image))
+        let hash = image.tiffRepresentation?.hashValue ?? Int(bitPattern: ObjectIdentifier(image))
         if let cached = cache[hash] { return cached }
 
         guard let cgImage = image.cgImage(forProposedRect: nil, context: nil, hints: nil) else { return nil }
@@ -56,7 +56,10 @@ enum ArtworkColorExtractor {
 
         // Fallback: if no vibrant color found, return dominant
         let result = bestColor ?? NSColor(red: 0.12, green: 0.84, blue: 0.38, alpha: 1.0)
-        if cache.count > 30 { cache.removeAll() }
+        // Evict oldest entries when cache grows too large
+        if cache.count > 30, let keyToRemove = cache.keys.first {
+            cache.removeValue(forKey: keyToRemove)
+        }
         cache[hash] = result
         return result
     }

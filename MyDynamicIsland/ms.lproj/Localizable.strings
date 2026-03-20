@@ -1,0 +1,265 @@
+/* Menu Bar */
+"menu.settings" = "tetapan...";
+"menu.quit" = "Berhenti Top Notch";
+"window.settings.title" = "Top Notch Tetapan";
+
+/* Settings Sections */
+"settings.section.general" = "UMUM";
+"settings.section.appearance" = "PENAMPILAN";
+"settings.section.media" = "MEDIA";
+"settings.section.hud" = "HUD PENGGANTIAN";
+"settings.section.indicators" = "INDIKATOR & MAKLUM BALAS";
+"settings.section.widgets" = "WIDGET";
+"settings.section.intelligence" = "KECERDASAN";
+"settings.section.shortcuts" = "PINTAS PAPAN KEkunci";
+"settings.section.privacy" = "PRIVASI";
+
+/* General Settings */
+"settings.general.launchAtLogin" = "Lancarkan di Log Masuk";
+"settings.general.hoverToExpand" = "Tuding untuk Kembangkan";
+"settings.general.autoCollapseDelay" = "Kelewatan Autoruntuh";
+"settings.general.showInMenuBar" = "Tunjukkan dalam Bar Menu";
+
+/* Appearance Settings */
+"settings.appearance.theme" = "Tema";
+"settings.appearance.theme.auto" = "Auto";
+"settings.appearance.theme.light" = "Cahaya";
+"settings.appearance.theme.dark" = "Gelap";
+"settings.appearance.accentColor" = "Warna Aksen";
+"color.blue" = "Biru";
+"color.orange" = "Orange";
+"color.green" = "hijau";
+"color.red" = "merah";
+"color.purple" = "Ungu";
+"color.cyan" = "Cyan";
+
+/* Media Settings */
+"settings.media.nowPlaying" = "Kini Memainkan Kawalan";
+"settings.media.albumArtwork" = "Tunjukkan Karya Seni Album";
+"settings.media.vinylSpin" = "Animasi Putaran Vinyl";
+"settings.media.colorMatch" = "Apl Padanan Warna";
+
+/* HUD Settings */
+"settings.hud.replaceVolume" = "Gantikan Kelantangan HUD";
+"settings.hud.replaceBrightness" = "Gantikan Kecerahan HUD";
+"settings.hud.style" = "HUD Gaya";
+"settings.hud.style.minimal" = "minima";
+"settings.hud.style.bar" = "Bar";
+"settings.hud.style.notched" = "bertakuk";
+
+/* Indicators Settings */
+"settings.indicators.battery" = "Penunjuk Bateri";
+"settings.indicators.lockUnlock" = "Penunjuk Kunci/Buka Kunci";
+"settings.indicators.chargingSound" = "Mengecas Bunyi";
+"settings.indicators.haptic" = "Maklum Balas Haptic";
+
+/* Widget Toggles */
+"widget.calendar" = "Kalendar";
+"widget.weather" = "Cuaca";
+"widget.pomodoro" = "Pomodoro Pemasa";
+"widget.clipboard" = "Sejarah papan klip";
+"widget.youtube" = "YouTube Pemain";
+"widget.battery" = "Monitor Bateri";
+"widget.shortcuts" = "Pelancar Pintasan";
+"widget.activityFeed" = "Suapan Aktiviti";
+"widget.quickCapture" = "Tangkap Cepat";
+"widget.lyrics" = "Lirik yang disegerakkan";
+
+/* Intelligence Settings */
+"settings.ai.onDevice" = "AI Pada Peranti";
+"settings.ai.available" = "Tersedia";
+"settings.ai.requiresMacOS26" = "Memerlukan macOS 26";
+"settings.ai.summarization" = "Ringkasan AI";
+"settings.ai.claudeApiKey" = "Claude Kunci API";
+
+/* Keyboard Shortcuts */
+"shortcut.playPause" = "Main / Jeda";
+"shortcut.previousTrack" = "Trek Sebelumnya";
+"shortcut.nextTrack" = "Trek Seterusnya";
+"shortcut.volumeUpDown" = "Kelantangan Naik / Turun";
+"shortcut.openYouTube" = "Buka YouTube";
+
+/* Privacy Settings */
+"settings.privacy.clipboardMonitoring" = "Pemantauan Papan Klip";
+"settings.privacy.calendarAccess" = "Akses Kalendar";
+"settings.privacy.analytics" = "Analitis";
+"settings.privacy.showOnboarding" = "Tunjukkan Onboarding Lagi";
+"settings.privacy.clearAllData" = "Kosongkan Semua Data";
+
+/* Calendar Access Status */
+"access.granted" = "Dibenarkan";
+"access.fullAccess" = "Akses Penuh";
+"access.writeOnly" = "Tulis Sahaja";
+"access.denied" = "dinafikan";
+"access.notGranted" = "Tidak Diberikan";
+"access.unknown" = "Tidak diketahui";
+
+/* About Section */
+"about.appName" = "Top Notch";
+"about.version" = "Versi %@ (Bina %@ )";
+"about.madeWith" = "Dibuat dengan ❤️ untuk Mac";
+"about.website" = "laman web";
+"about.support" = "Sokongan";
+"about.privacy" = "Privasi";
+
+/* Media Player */
+"media.noMediaPlaying" = "Tiada Media Dimainkan";
+"media.playMusicPrompt" = "Mainkan muzik atau media untuk melihat kawalan di sini";
+"media.notPlaying" = "Bukan Bermain";
+"media.unknownArtist" = "Artis Tidak Dikenali";
+"media.noMedia" = "Tiada media";
+"media.music" = "Muzik";
+"media.podcasts" = "Podcasts";
+"media.spotify" = "Spotify";
+"media.playingFrom" = "Bermain dari %@";
+
+/* YouTube Player */
+"youtube.title" = "YouTube";
+"youtube.pasteUrl" = "Tampal URL...";
+"youtube.browse" = "Semak imbas";
+"youtube.play" = "Main";
+"youtube.paste" = "tampal";
+"youtube.pasteAndPlay" = "Tampal & Main";
+"youtube.playingInWindow" = "Bermain di tingkap";
+"youtube.paused" = "Dijeda";
+"youtube.show" = "Tunjukkan";
+"youtube.pinned" = "Disemat";
+"youtube.recentlyPlayed" = "BARU-BARU DIMAINKAN";
+"youtube.linkDetected" = "YouTube Pautan Dikesan";
+"youtube.videoUnavailable" = "Video Tidak Tersedia";
+"youtube.tryAnother" = "Cuba Lain";
+"youtube.openInSafari" = "Buka dalam Safari";
+"youtube.closePlayer" = "Tutup Pemain";
+"youtube.buffering" = "Penimbalan";
+"youtube.playing" = "bermain";
+"youtube.openVideo" = "Buka YouTube Video… ⌘⇧Y";
+"youtube.playDetected" = "Mainkan Video Dikesan";
+
+/* Weather */
+"weather.title" = "Cuaca";
+"weather.high" = "H:";
+"weather.low" = "L:";
+"weather.enterCity" = "Masukkan bandar untuk memuatkan cuaca";
+"weather.invalidCity" = "Nama bandar tidak sah";
+"weather.cityNotFound" = "Bandar tidak ditemui";
+"weather.unavailable" = "Cuaca tidak tersedia";
+"weather.condition.clear" = "Langit cerah";
+"weather.condition.partlyCloudy" = "Berawan separa";
+"weather.condition.fog" = "Kabus";
+"weather.condition.drizzle" = "Hujan renyai";
+"weather.condition.rain" = "Hujan";
+"weather.condition.snow" = "Salji";
+"weather.condition.rainShowers" = "Hujan sebentar";
+"weather.condition.snowShowers" = "Salji sebentar";
+"weather.condition.thunderstorm" = "Ribut petir";
+"weather.condition.updating" = "Keadaan sedang dikemas kini";
+
+/* Calendar */
+"calendar.todaysEvents" = "Peristiwa Hari Ini";
+"calendar.noEvents" = "Tiada acara hari ini";
+"calendar.noUpcoming" = "Tiada acara akan datang";
+"calendar.openCalendar" = "Buka Kalendar";
+
+/* Pomodoro */
+"pomodoro.title" = "Pemasa Fokus";
+"pomodoro.focus" = "Fokus";
+"pomodoro.session" = "Sesi %d daripada %d";
+"pomodoro.minutes" = "%d min";
+"pomodoro.readyToFocus" = "\U0001F3AF Sedia untuk fokus";
+"pomodoro.takeABreak" = "\u2615 Berehat";
+"pomodoro.deepFocus" = "\U0001F3AF Fokus mendalam";
+
+/* Clipboard */
+"clipboard.title" = "Sejarah papan klip";
+"clipboard.items" = "%d item";
+"clipboard.nothingCopied" = "Belum ada yang disalin";
+"clipboard.copyPrompt" = "Salin teks atau URL untuk melihatnya di sini";
+"clipboard.copySomething" = "Salin sesuatu untuk melihatnya di sini";
+"clipboard.clearAll" = "Kosongkan Semua";
+"clipboard.copied" = "disalin!";
+"clipboard.copy" = "salin";
+"clipboard.more" = "+ %d lagi";
+
+/* Battery */
+"battery.title" = "Bateri";
+"battery.noDevices" = "Tiada peranti ditemui";
+"battery.charging" = "Mengecas";
+"battery.unplugged" = "Dicabut plag";
+"battery.remaining" = "• Baki %@";
+
+/* Shortcuts */
+"shortcuts.title" = "Jalan pintas";
+"shortcuts.noShortcuts" = "Tiada jalan pintas ditemui";
+
+/* Quick Capture */
+"capture.title" = "Tangkap Cepat";
+"capture.notesAppear" = "Nota muncul di sini";
+
+/* Activity Feed */
+"activity.title" = "Aktiviti";
+
+/* System States */
+"system.locked" = "Terkunci";
+"system.macLocked" = "Mac Dikunci";
+"system.touchIdPrompt" = "Touch ID atau masukkan kata laluan";
+"system.unlocked" = "Dibuka kunci";
+"system.welcomeBack" = "Selamat kembali!";
+"system.focus" = "Fokus";
+"system.active" = "Aktif";
+
+/* Widget Navigation */
+"nav.home" = "Rumah";
+"nav.weather" = "Cuaca";
+"nav.youtube" = "YouTube";
+"nav.media" = "Media";
+"nav.focus" = "Fokus";
+"nav.clipboard" = "Papan klip";
+"nav.calendar" = "Kalendar";
+"nav.battery" = "Bateri";
+"nav.shortcuts" = "Jalan pintas";
+"nav.activity" = "Aktiviti";
+"nav.capture" = "Tangkap";
+
+
+/* Language Settings */
+"settings.appearance.language" = "Bahasa";
+"settings.language.restartTitle" = "Mulakan semula Diperlukan";
+"settings.language.restartMessage" = "Top Notch perlu dimulakan semula untuk menggunakan bahasa baharu.";
+"settings.language.restartNow" = "Mulakan semula Sekarang";
+"settings.language.later" = "Nanti";
+
+/* Additional Strings */
+"clipboard.edit" = "Sunting";
+"media.controlsTooltip" = "Kawalan Media (pintasan global)";
+"youtube.watchPageMode" = "Mod halaman tonton";
+"youtube.playingFromYT" = "Bermain dari YouTube";
+"youtube.urlPlaceholder" = "Tampal URL YouTube atau ID video...";
+
+/* HUD */
+"hud.mute" = "Redam";
+
+/* File Shelf */
+"fileShelf.title" = "Rak Fail";
+"fileShelf.clear" = "Kosongkan";
+"fileShelf.dropFilesHere" = "Lepaskan fail di sini";
+"fileShelf.releaseToAdd" = "Lepaskan untuk tambah";
+
+/* Calendar */
+"calendar.allDay" = "Sepanjang hari";
+
+/* Clipboard */
+"clipboard.itemCount" = "%d item";
+"clipboard.moreItems" = "+%d lagi";
+
+/* Tooltips */
+"tooltip.play" = "Main";
+"tooltip.pause" = "Jeda";
+"tooltip.mute" = "Redam";
+"tooltip.unmute" = "Nyahredam";
+"tooltip.close" = "Tutup";
+"tooltip.playbackSpeed" = "Kelajuan main balik";
+
+/* Time Ago */
+"time.now" = "sekarang";
+"time.minutesAgo" = "%dm lalu";
+"time.hoursAgo" = "%dj lalu";

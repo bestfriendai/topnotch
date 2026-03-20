@@ -9,11 +9,13 @@ struct YouTubeHistoryItem: Codable, Equatable, Identifiable {
     let addedAt: Date
 }
 
+@MainActor
 final class YouTubeHistoryStore: ObservableObject {
+    static let shared = YouTubeHistoryStore()
     private static let key = "yt.recentlyPlayed"
     @Published var items: [YouTubeHistoryItem] = []
 
-    init() {
+    private init() {
         if let data = UserDefaults.standard.data(forKey: Self.key),
            let decoded = try? JSONDecoder().decode([YouTubeHistoryItem].self, from: data) {
             items = decoded
@@ -25,6 +27,11 @@ final class YouTubeHistoryStore: ObservableObject {
         items.insert(YouTubeHistoryItem(videoID: videoID, addedAt: .now), at: 0)
         if items.count > 5 { items = Array(items.prefix(5)) }
         save()
+    }
+
+    func clearAll() {
+        items = []
+        UserDefaults.standard.removeObject(forKey: Self.key)
     }
 
     private func save() {

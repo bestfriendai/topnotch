@@ -3,6 +3,20 @@ import WebKit
 import Combine
 import OSLog
 
+// MARK: - Weak Script Message Handler Proxy
+
+/// Breaks the WKUserContentController → Coordinator strong-reference cycle.
+/// WKUserContentController retains its message handlers, so adding the coordinator
+/// directly would prevent deallocation. This proxy holds only a weak reference.
+private final class WeakScriptMessageHandlerProxy: NSObject, WKScriptMessageHandler {
+    weak var delegate: WKScriptMessageHandler?
+    init(_ delegate: WKScriptMessageHandler) { self.delegate = delegate }
+    func userContentController(_ userContentController: WKUserContentController,
+                                didReceive message: WKScriptMessage) {
+        delegate?.userContentController(userContentController, didReceive: message)
+    }
+}
+
 /// NSViewRepresentable wrapper for YouTube iframe player
 struct YouTubePlayerWebView: NSViewRepresentable {
     let videoID: String
@@ -353,12 +367,13 @@ struct YouTubePlayerWebView: NSViewRepresentable {
     }
     
     /// Coordinator handles JavaScript message callbacks
-    class Coordinator: NSObject, WKNavigationDelegate, WKScriptMessageHandler {
+    class Coordinator: NSObject, WKNavigationDelegate, WKScriptMessageHandler, WKUIDelegate {
         var parent: YouTubePlayerWebView
         weak var webView: WKWebView?
         private var timeUpdateTimer: Timer?
         var lastLoadedVideoID: String?
         var lastPlaybackMode: YouTubePlaybackMode?
+        private var errorRetryCount: Int = 0
         
         init(_ parent: YouTubePlayerWebView) {
             self.parent = parent
@@ -401,6 +416,7 @@ struct YouTubePlayerWebView: NSViewRepresentable {
         private func handlePlayerReady(_ data: [String: Any]) {
             YouTubePlayerWebView.logger.info("YouTube player ready for video \(self.parent.videoID, privacy: .public)")
             YouTubePlayerWebView.trace("player ready for video \(self.parent.videoID)")
+            errorRetryCount = 0  // Reset retry count on successful load
             parent.playerState.isReady = true
             if let duration = data["duration"] as? Double {
                 parent.playerState.duration = duration
@@ -433,6 +449,8 @@ struct YouTubePlayerWebView: NSViewRepresentable {
             let error = YouTubePlayerError.fromYouTubeErrorCode(code)
             YouTubePlayerWebView.logger.error("YouTube player error \(code, privacy: .public) for video \(self.parent.videoID, privacy: .public)")
             YouTubePlayerWebView.trace("player error \(code) for video \(self.parent.videoID)")
+
+            // Embedding disabled → switch to watch-page fallback
             if case .embeddingDisabled = error, let webView, let currentVideoID = parent.playerState.currentVideoID {
                 YouTubePlayerWebView.logger.notice("Embedding blocked for video \(currentVideoID, privacy: .public); switching to watch-page fallback")
                 YouTubePlayerWebView.trace("embedding blocked for video \(currentVideoID); switching to watch-page fallback")
@@ -442,6 +460,28 @@ struct YouTubePlayerWebView: NSViewRepresentable {
                 lastPlaybackMode = .watchPageFallback
                 return
             }
+
+            // Transient HTML5 player errors (code 5) — attempt recovery
+            // instead of immediately showing the permanent error overlay.
+            // First retry: reload the embed. Second retry: switch to watch page.
+            if case .playbackError(5) = error, let webView, let currentVideoID = parent.playerState.currentVideoID {
+                errorRetryCount += 1
+                if errorRetryCount == 1 {
+                    YouTubePlayerWebView.logger.notice("Transient HTML5 error for \(currentVideoID, privacy: .public); retrying embed")
+                    parent.loadYouTubePlayer(in: webView)
+                    return
+                } else if errorRetryCount == 2 {
+                    YouTubePlayerWebView.logger.notice("Persistent HTML5 error for \(currentVideoID, privacy: .public); switching to watch-page fallback")
+                    parent.playerState.switchToWatchPageFallback()
+                    parent.loadWatchPage(in: webView, videoID: currentVideoID)
+                    lastLoadedVideoID = currentVideoID
+                    lastPlaybackMode = .watchPageFallback
+                    return
+                }
+                // errorRetryCount >= 3: fall through to show error overlay
+            }
+
+            stopTimeUpdateTimer()
             parent.playerState.setError(error)
         }
         
@@ -493,6 +533,17 @@ struct YouTubePlayerWebView: NSViewRepresentable {
         
         // MARK: - WKNavigationDelegate
         
+        // MARK: - WKUIDelegate
+
+        func webView(_ webView: WKWebView, createWebViewWith configuration: WKWebViewConfiguration, for navigationAction: WKNavigationAction, windowFeatures: WKWindowFeatures) -> WKWebView? {
+            // YouTube/ads trying to open a popup or new tab.
+            // Open the URL in the default browser instead.
+            if let url = navigationAction.request.url {
+                NSWorkspace.shared.open(url)
+            }
+            return nil
+        }
+
         func webView(_ webView: WKWebView, decidePolicyFor navigationAction: WKNavigationAction, decisionHandler: @escaping (WKNavigationActionPolicy) -> Void) {
             guard let url = navigationAction.request.url else {
                 decisionHandler(.allow)
@@ -500,6 +551,19 @@ struct YouTubePlayerWebView: NSViewRepresentable {
             }
 
             let host = url.host?.lowercased() ?? ""
+            let isInitialLoad = url.scheme == "about" || url.scheme == "data" || url.absoluteString.hasPrefix("blob:")
+
+            // New-window requests (window.open, target="_blank"):
+            // Open in the default browser and cancel the in-webview navigation
+            // to prevent the main frame from being navigated away from the player.
+            if navigationAction.targetFrame == nil {
+                if !isInitialLoad {
+                    NSWorkspace.shared.open(url)
+                }
+                decisionHandler(.cancel)
+                return
+            }
+
             let isMainFrameNavigation = navigationAction.targetFrame?.isMainFrame ?? false
 
             // Always allow YouTube domains and initial about:blank / data loads
@@ -509,7 +573,6 @@ struct YouTubePlayerWebView: NSViewRepresentable {
                                 "www.youtube-nocookie.com",
                                 "www.google.com"]
             let isYouTubeDomain = allowedHosts.contains(where: { host.hasSuffix($0) })
-            let isInitialLoad = url.scheme == "about" || url.scheme == "data" || url.absoluteString.hasPrefix("blob:")
 
             if isMainFrameNavigation && !isInitialLoad {
                 switch parent.playerState.playbackMode {
@@ -628,12 +691,14 @@ struct YouTubePlayerWebView: NSViewRepresentable {
             )
         )
         let messageNames = ["playerReady", "stateChange", "timeUpdate", "error", "videoData", "volumeChange", "playbackRateChange"]
+        let proxy = WeakScriptMessageHandlerProxy(context.coordinator)
         for name in messageNames {
-            contentController.add(context.coordinator, name: name)
+            contentController.add(proxy, name: name)
         }
         
         let webView = WKWebView(frame: .zero, configuration: configuration)
         webView.navigationDelegate = context.coordinator
+        webView.uiDelegate = context.coordinator
         webView.allowsBackForwardNavigationGestures = false
         webView.allowsLinkPreview = false
         webView.customUserAgent = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Safari/605.1.15"
@@ -687,6 +752,7 @@ struct YouTubePlayerWebView: NSViewRepresentable {
             contentController.removeScriptMessageHandler(forName: name)
         }
         webView.navigationDelegate = nil
+        webView.uiDelegate = nil
 
         // Stop any pending loads
         webView.stopLoading()
@@ -966,7 +1032,9 @@ extension YouTubePlayerWebView {
         }
         
         func loadVideo(id: String) {
-            webView?.evaluateJavaScript("loadVideo('\(id)')", completionHandler: nil)
+            // Escape single quotes to prevent JS injection via a crafted video ID
+            let safeID = id.replacingOccurrences(of: "'", with: "\\'")
+            webView?.evaluateJavaScript("loadVideo('\(safeID)')", completionHandler: nil)
         }
     }
 }

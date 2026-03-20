@@ -24,6 +24,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         syncLaunchAtLogin()
         island = DynamicIsland()
         runAutomatedLaunchTestIfRequested()
+
+        // Re-sync launch-at-login and menu bar item whenever any setting changes
+        NotificationCenter.default.addObserver(
+            forName: UserDefaults.didChangeNotification,
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            self?.syncLaunchAtLogin()
+            self?.syncMenuBarItem()
+        }
     }
 
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {
@@ -38,18 +48,34 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
         if let button = statusItem?.button {
-            button.image = NSImage(systemSymbolName: "sparkle", accessibilityDescription: "Top Notch")
+            if let icon = NSImage(named: "TopNotchIcon") {
+                icon.isTemplate = false
+                icon.size = NSSize(width: 18, height: 18)
+                button.image = icon
+            } else {
+                button.image = NSImage(systemSymbolName: "sparkle", accessibilityDescription: "Top Notch")
+            }
         }
 
         let menu = NSMenu()
-        menu.addItem(NSMenuItem(title: "Settings...", action: #selector(openSettings), keyEquivalent: ","))
+        menu.addItem(NSMenuItem(title: NSLocalizedString("menu.settings", comment: "Menu bar settings item"), action: #selector(openSettings), keyEquivalent: ","))
         menu.addItem(.separator())
-        menu.addItem(NSMenuItem(title: "Quit Top Notch", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q"))
+        menu.addItem(NSMenuItem(title: NSLocalizedString("menu.quit", comment: "Menu bar quit item"), action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q"))
         statusItem?.menu = menu
     }
 
     @objc private func openSettings() {
         SettingsWindowController.shared.showSettings()
+    }
+
+    private func syncMenuBarItem() {
+        let shouldShow = UserDefaults.standard.object(forKey: "showInMenuBar") as? Bool ?? true
+        if shouldShow && statusItem == nil {
+            setupMenuBarItem()
+        } else if !shouldShow, let item = statusItem {
+            NSStatusBar.system.removeStatusItem(item)
+            statusItem = nil
+        }
     }
 
     // MARK: - Launch at Login
@@ -73,11 +99,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     // MARK: - Automated Testing
 
     private func runAutomatedLaunchTestIfRequested() {
+        #if DEBUG
         let environment = ProcessInfo.processInfo.environment
 
         if let videoID = environment["TOPNOTCH_TEST_VIDEO_ID"], !videoID.isEmpty {
             let launchDelay = TimeInterval(environment["TOPNOTCH_TEST_LAUNCH_DELAY"] ?? "1.5") ?? 1.5
-            print("[TopNotchTest] Scheduling inline YouTube test for video: \(videoID)")
+            AppLogger.lifecycle.info("[TopNotchTest] Scheduling inline YouTube test for video: \(videoID, privacy: .public)")
             DispatchQueue.main.asyncAfter(deadline: .now() + launchDelay) {
                 NotificationCenter.default.post(name: .openInlineYouTubeVideo, object: videoID)
             }
@@ -86,10 +113,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         if let exitValue = environment["TOPNOTCH_EXIT_AFTER_TEST_SECONDS"],
            let exitDelay = TimeInterval(exitValue),
            exitDelay > 0 {
-            print("[TopNotchTest] App will terminate after \(exitDelay) seconds")
+            AppLogger.lifecycle.info("[TopNotchTest] App will terminate after \(exitDelay, privacy: .public) seconds")
             DispatchQueue.main.asyncAfter(deadline: .now() + exitDelay) {
                 NSApp.terminate(nil)
             }
         }
+        #endif
     }
 }

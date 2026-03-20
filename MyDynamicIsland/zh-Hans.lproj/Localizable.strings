@@ -1,0 +1,265 @@
+/* Menu Bar */
+"menu.settings" = "设置...";
+"menu.quit" = "退出 Top Notch";
+"window.settings.title" = "Top Notch 设置";
+
+/* Settings Sections */
+"settings.section.general" = "通用";
+"settings.section.appearance" = "外观";
+"settings.section.media" = "媒体";
+"settings.section.hud" = "HUD 替换";
+"settings.section.indicators" = "指示器与反馈";
+"settings.section.widgets" = "小组件";
+"settings.section.intelligence" = "智能";
+"settings.section.shortcuts" = "键盘快捷键";
+"settings.section.privacy" = "隐私";
+
+/* General Settings */
+"settings.general.launchAtLogin" = "登录时启动";
+"settings.general.hoverToExpand" = "悬停展开";
+"settings.general.autoCollapseDelay" = "自动收起延迟";
+"settings.general.showInMenuBar" = "在菜单栏中显示";
+
+/* Appearance Settings */
+"settings.appearance.theme" = "主题";
+"settings.appearance.theme.auto" = "自动";
+"settings.appearance.theme.light" = "浅色";
+"settings.appearance.theme.dark" = "深色";
+"settings.appearance.accentColor" = "强调色";
+"color.blue" = "蓝色";
+"color.orange" = "橙色";
+"color.green" = "绿色";
+"color.red" = "红色";
+"color.purple" = "紫色";
+"color.cyan" = "青色";
+
+/* Media Settings */
+"settings.media.nowPlaying" = "正在播放控制";
+"settings.media.albumArtwork" = "显示专辑封面";
+"settings.media.vinylSpin" = "黑胶唱片旋转动画";
+"settings.media.colorMatch" = "颜色匹配应用";
+
+/* HUD Settings */
+"settings.hud.replaceVolume" = "替换音量 HUD";
+"settings.hud.replaceBrightness" = "替换亮度 HUD";
+"settings.hud.style" = "HUD 样式";
+"settings.hud.style.minimal" = "极简";
+"settings.hud.style.bar" = "条形";
+"settings.hud.style.notched" = "刘海屏样式";
+
+/* Indicators Settings */
+"settings.indicators.battery" = "电池指示器";
+"settings.indicators.lockUnlock" = "锁定/解锁指示器";
+"settings.indicators.chargingSound" = "充电音效";
+"settings.indicators.haptic" = "触觉反馈";
+
+/* Widget Toggles */
+"widget.calendar" = "日历";
+"widget.weather" = "天气";
+"widget.pomodoro" = "Pomodoro 计时器";
+"widget.clipboard" = "剪贴板历史";
+"widget.youtube" = "YouTube 播放器";
+"widget.battery" = "电池监控器";
+"widget.shortcuts" = "快捷指令启动器";
+"widget.activityFeed" = "活动源";
+"widget.quickCapture" = "快速捕捉";
+"widget.lyrics" = "同步歌词";
+
+/* Intelligence Settings */
+"settings.ai.onDevice" = "设备端 AI";
+"settings.ai.available" = "可用";
+"settings.ai.requiresMacOS26" = "需要 macOS 26";
+"settings.ai.summarization" = "AI 摘要";
+"settings.ai.claudeApiKey" = "Claude API 密钥";
+
+/* Keyboard Shortcuts */
+"shortcut.playPause" = "播放 / 暂停";
+"shortcut.previousTrack" = "上一曲";
+"shortcut.nextTrack" = "下一曲";
+"shortcut.volumeUpDown" = "音量增大 / 减小";
+"shortcut.openYouTube" = "打开 YouTube";
+
+/* Privacy Settings */
+"settings.privacy.clipboardMonitoring" = "剪贴板监控";
+"settings.privacy.calendarAccess" = "日历访问权限";
+"settings.privacy.analytics" = "分析";
+"settings.privacy.showOnboarding" = "再次显示引导";
+"settings.privacy.clearAllData" = "清除所有数据";
+
+/* Calendar Access Status */
+"access.granted" = "已授予";
+"access.fullAccess" = "完全访问";
+"access.writeOnly" = "仅写入";
+"access.denied" = "已拒绝";
+"access.notGranted" = "未授予";
+"access.unknown" = "未知";
+
+/* About Section */
+"about.appName" = "Top Notch";
+"about.version" = "版本 %@ (内部版本 %@)";
+"about.madeWith" = "为 Mac 倾心打造 ❤️";
+"about.website" = "网站";
+"about.support" = "支持";
+"about.privacy" = "隐私";
+
+/* Media Player */
+"media.noMediaPlaying" = "无媒体播放";
+"media.playMusicPrompt" = "播放音乐或媒体以在此处查看控件";
+"media.notPlaying" = "未播放";
+"media.unknownArtist" = "未知艺人";
+"media.noMedia" = "无媒体";
+"media.music" = "音乐";
+"media.podcasts" = "播客";
+"media.spotify" = "Spotify";
+"media.playingFrom" = "正在从 %@ 播放";
+
+/* YouTube Player */
+"youtube.title" = "YouTube";
+"youtube.pasteUrl" = "粘贴网址...";
+"youtube.browse" = "浏览";
+"youtube.play" = "播放";
+"youtube.paste" = "粘贴";
+"youtube.pasteAndPlay" = "粘贴并播放";
+"youtube.playingInWindow" = "在窗口中播放";
+"youtube.paused" = "已暂停";
+"youtube.show" = "显示";
+"youtube.pinned" = "已置顶";
+"youtube.recentlyPlayed" = "最近播放";
+"youtube.linkDetected" = "检测到 YouTube 链接";
+"youtube.videoUnavailable" = "视频不可用";
+"youtube.tryAnother" = "尝试其他";
+"youtube.openInSafari" = "在 Safari 中打开";
+"youtube.closePlayer" = "关闭播放器";
+"youtube.buffering" = "正在缓冲";
+"youtube.playing" = "正在播放";
+"youtube.openVideo" = "打开 YouTube 视频… ⌘⇧Y";
+"youtube.playDetected" = "播放检测到的视频";
+
+/* Weather */
+"weather.title" = "天气";
+"weather.high" = "H:";
+"weather.low" = "L:";
+"weather.enterCity" = "输入城市以加载天气";
+"weather.invalidCity" = "无效的城市名称";
+"weather.cityNotFound" = "未找到城市";
+"weather.unavailable" = "天气信息不可用";
+"weather.condition.clear" = "晴朗";
+"weather.condition.partlyCloudy" = "多云";
+"weather.condition.fog" = "雾";
+"weather.condition.drizzle" = "毛毛雨";
+"weather.condition.rain" = "雨";
+"weather.condition.snow" = "雪";
+"weather.condition.rainShowers" = "阵雨";
+"weather.condition.snowShowers" = "阵雪";
+"weather.condition.thunderstorm" = "雷暴";
+"weather.condition.updating" = "天气状况更新中";
+
+/* Calendar */
+"calendar.todaysEvents" = "今日日程";
+"calendar.noEvents" = "今日无日程";
+"calendar.noUpcoming" = "无即将到来的日程";
+"calendar.openCalendar" = "打开日历";
+
+/* Pomodoro */
+"pomodoro.title" = "专注计时器";
+"pomodoro.focus" = "专注";
+"pomodoro.session" = "第 %d/%d 个会话";
+"pomodoro.minutes" = "%d 分钟";
+"pomodoro.readyToFocus" = "\U0001F3AF 准备专注";
+"pomodoro.takeABreak" = "\u2615 休息一下";
+"pomodoro.deepFocus" = "\U0001F3AF 深度专注";
+
+/* Clipboard */
+"clipboard.title" = "剪贴板历史";
+"clipboard.items" = "%d 项";
+"clipboard.nothingCopied" = "尚未复制任何内容";
+"clipboard.copyPrompt" = "复制文本或网址以在此处查看";
+"clipboard.copySomething" = "复制一些内容以在此处查看";
+"clipboard.clearAll" = "清除全部";
+"clipboard.copied" = "已复制！";
+"clipboard.copy" = "复制";
+"clipboard.more" = "另有 %d 项";
+
+/* Battery */
+"battery.title" = "电池";
+"battery.noDevices" = "未找到设备";
+"battery.charging" = "正在充电";
+"battery.unplugged" = "未连接电源";
+"battery.remaining" = "• 剩余 %@";
+
+/* Shortcuts */
+"shortcuts.title" = "快捷指令";
+"shortcuts.noShortcuts" = "未找到快捷指令";
+
+/* Quick Capture */
+"capture.title" = "快速捕捉";
+"capture.notesAppear" = "备忘录显示在此处";
+
+/* Activity Feed */
+"activity.title" = "活动";
+
+/* System States */
+"system.locked" = "已锁定";
+"system.macLocked" = "Mac 已锁定";
+"system.touchIdPrompt" = "Touch ID 或输入密码";
+"system.unlocked" = "已解锁";
+"system.welcomeBack" = "欢迎回来！";
+"system.focus" = "专注";
+"system.active" = "活跃";
+
+/* Widget Navigation */
+"nav.home" = "主页";
+"nav.weather" = "天气";
+"nav.youtube" = "YouTube";
+"nav.media" = "媒体";
+"nav.focus" = "专注";
+"nav.clipboard" = "剪贴板";
+"nav.calendar" = "日历";
+"nav.battery" = "电池";
+"nav.shortcuts" = "快捷指令";
+"nav.activity" = "活动";
+"nav.capture" = "捕捉";
+
+
+/* Language Settings */
+"settings.appearance.language" = "语言";
+"settings.language.restartTitle" = "需要重新启动";
+"settings.language.restartMessage" = "Top Notch 需要重新启动以应用新语言。";
+"settings.language.restartNow" = "立即重新启动";
+"settings.language.later" = "稍后";
+
+/* Additional Strings */
+"clipboard.edit" = "编辑";
+"media.controlsTooltip" = "媒体控制（全局快捷指令）";
+"youtube.watchPageMode" = "观看页面模式";
+"youtube.playingFromYT" = "正在从 YouTube 播放";
+"youtube.urlPlaceholder" = "粘贴 YouTube 网址或视频 ID...";
+
+/* HUD */
+"hud.mute" = "静音";
+
+/* File Shelf */
+"fileShelf.title" = "文件架";
+"fileShelf.clear" = "清空";
+"fileShelf.dropFilesHere" = "将文件拖放到此处";
+"fileShelf.releaseToAdd" = "松开以添加";
+
+/* Calendar */
+"calendar.allDay" = "全天";
+
+/* Clipboard */
+"clipboard.itemCount" = "%d 项";
+"clipboard.moreItems" = "+%d 项";
+
+/* Tooltips */
+"tooltip.play" = "播放";
+"tooltip.pause" = "暂停";
+"tooltip.mute" = "静音";
+"tooltip.unmute" = "取消静音";
+"tooltip.close" = "关闭";
+"tooltip.playbackSpeed" = "播放速度";
+
+/* Time Ago */
+"time.now" = "现在";
+"time.minutesAgo" = "%d 分钟前";
+"time.hoursAgo" = "%d 小时前";
