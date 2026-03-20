@@ -120,6 +120,8 @@ struct NowPlayingInfo: Equatable {
         lhs.album == rhs.album &&
         lhs.isPlaying == rhs.isPlaying &&
         lhs.bundleIdentifier == rhs.bundleIdentifier &&
-        abs(lhs.duration - rhs.duration) < 0.5 // Allow small tolerance
+        abs(lhs.duration - rhs.duration) < 0.5 &&
+        abs(lhs.elapsedTime - rhs.elapsedTime) < 0.3 &&
+        lhs.playbackRate == rhs.playbackRate
     }
 }

@@ -8,6 +8,7 @@ final class ClipboardCoordinator {
     private let state: NotchState
     private var clipboardTask: Task<Void, Never>?
     private var lastClipboardChangeCount: Int = 0
+    private var dismissWorkItem: DispatchWorkItem?
 
     init(state: NotchState) {
         self.state = state
@@ -65,7 +66,8 @@ final class ClipboardCoordinator {
                 state.youtube.showPrompt = true
             }
 
-            DispatchQueue.main.asyncAfter(deadline: .now() + 4.0) { [weak self] in
+            dismissWorkItem?.cancel()
+            let workItem = DispatchWorkItem { [weak self] in
                 guard let self else { return }
                 if !self.state.isHovered && !self.state.youtube.isShowingPlayer {
                     withAnimation(.spring(duration: 0.3, bounce: 0.2)) {
@@ -73,6 +75,8 @@ final class ClipboardCoordinator {
                     }
                 }
             }
+            dismissWorkItem = workItem
+            DispatchQueue.main.asyncAfter(deadline: .now() + 4.0, execute: workItem)
         }
     }
 }

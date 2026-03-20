@@ -56,10 +56,9 @@ final class LyricsStore: ObservableObject {
         
         let parsed = parseLRC(syncedLyrics)
         cache[key] = parsed
-        // Keep cache under 20 entries
+        // Keep cache under 20 entries — don't evict the current track
         if cache.count > 20 {
-            // Evict a random entry since Dictionary is unordered
-            if let keyToRemove = cache.keys.randomElement() {
+            if let keyToRemove = cache.keys.first(where: { $0 != key }) {
                 cache.removeValue(forKey: keyToRemove)
             }
         }

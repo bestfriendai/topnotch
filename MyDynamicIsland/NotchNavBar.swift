@@ -139,9 +139,13 @@ struct NotchNavBar: View {
         }
     }
 
-    static func formatHeaderTime(_ date: Date) -> String {
+    private static let headerTimeFormatter: DateFormatter = {
         let formatter = DateFormatter()
         formatter.dateFormat = "h:mm a"
-        return formatter.string(from: date)
+        return formatter
+    }()
+
+    static func formatHeaderTime(_ date: Date) -> String {
+        headerTimeFormatter.string(from: date)
     }
 }

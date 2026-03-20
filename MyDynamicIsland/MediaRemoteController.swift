@@ -68,7 +68,9 @@ final class MediaRemoteController: ObservableObject, MediaControlling {
                 guard let self else { return }
                 self.tickCount += 1
 
-                if self.tickCount % 6 == 0 {
+                // Poll less frequently when idle (every 10s vs 3s)
+                let pollInterval = self.nowPlayingInfo.isPlaying ? 6 : 20
+                if self.tickCount % pollInterval == 0 {
                     await self.fetchNowPlayingInfo()
                     return
                 }
@@ -287,9 +289,11 @@ final class MediaRemoteController: ObservableObject, MediaControlling {
     func seekToTime(_ time: TimeInterval) {
         let app = currentAppName
         let script = "tell application \"\(app)\" to set player position to \(time)"
-        if let scriptObject = NSAppleScript(source: script) {
-            var errorInfo: NSDictionary?
-            scriptObject.executeAndReturnError(&errorInfo)
+        Task.detached(priority: .userInitiated) {
+            if let scriptObject = NSAppleScript(source: script) {
+                var errorInfo: NSDictionary?
+                scriptObject.executeAndReturnError(&errorInfo)
+            }
         }
         var updatedInfo = nowPlayingInfo
         updatedInfo.elapsedTime = max(0, min(time, nowPlayingInfo.duration))

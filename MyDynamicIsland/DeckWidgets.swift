@@ -153,7 +153,7 @@ final class PomodoroTimer: ObservableObject {
     }
 
     var progress: CGFloat {
-        let total = isBreak ? (completedSessions % 4 == 0 ? longBreakDuration : shortBreakDuration) : workDuration
+        let total = isBreak ? (completedSessions > 0 && completedSessions % 4 == 0 ? longBreakDuration : shortBreakDuration) : workDuration
         guard total > 0 else { return 0 }
         return max(0, min(1, 1.0 - (remainingSeconds / total)))
     }
@@ -168,6 +168,7 @@ final class PomodoroTimer: ObservableObject {
 
     func start() {
         isRunning = true
+        timer?.invalidate()
         timer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { [weak self] _ in
             guard let self else { return }
             Task { @MainActor in

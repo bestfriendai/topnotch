@@ -56,14 +56,16 @@ enum MediaRemoteHelpers {
         }.value
     }
 
-    /// Send a simple command to a media app via AppleScript (fire-and-forget on main thread).
+    /// Send a simple command to a media app via AppleScript (fire-and-forget off main thread).
     static func sendAppleScriptCommand(_ command: String, to appName: String) {
         let script = "tell application \"\(appName)\" to \(command)"
-        if let scriptObject = NSAppleScript(source: script) {
-            var errorInfo: NSDictionary?
-            scriptObject.executeAndReturnError(&errorInfo)
-            if let error = errorInfo {
-                AppLogger.media.error("AppleScript error: \(error, privacy: .public)")
+        Task.detached(priority: .userInitiated) {
+            if let scriptObject = NSAppleScript(source: script) {
+                var errorInfo: NSDictionary?
+                scriptObject.executeAndReturnError(&errorInfo)
+                if let error = errorInfo {
+                    AppLogger.media.error("AppleScript error: \(error, privacy: .public)")
+                }
             }
         }
     }
