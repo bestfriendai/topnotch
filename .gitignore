@@ -1,0 +1,29 @@
+# Build artifacts
+build/
+DerivedData/
+*.xcarchive
+
+# macOS junk
+.DS_Store
+*.swp
+*~
+
+# Xcode user data
+*.xcuserstate
+xcuserdata/
+
+# Provisioning profiles
+*.provisionprofile
+*.mobileprovision
+
+# One-time scripts
+translate_*.py
+
+# Distribution binaries
+*.dmg
+*.pkg
+*.ipa
+
+# Secrets
+.env
+*.key
