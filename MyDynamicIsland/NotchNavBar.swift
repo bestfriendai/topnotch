@@ -87,6 +87,14 @@ struct NotchNavBar: View {
         }
         .padding(.horizontal, 20)
         .frame(height: 42)
+        .contentShape(Rectangle())
+        .onTapGesture(count: 2) {
+            withAnimation(.spring(duration: 0.45, bounce: 0.3)) {
+                state.isExpanded = false
+                isClickExpanded = false
+                state.hud = .none
+            }
+        }
     }
 
     // MARK: - Nav Button
